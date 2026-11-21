@@ -116,3 +116,32 @@ $paper: #fcf8f1;
   >:last-child { margin-bottom: 0; }
 }
 @media (max-width: 680px) { .workspace-app .prep-content { padding: 18px 16px; font-size: .9rem; .brief-title { font-size: 1.1rem; } } }
+
+// Compact football directory; full notes and prep live in a separate detail view.
+.workspace-app {
+  .directory-heading { margin-bottom: 20px; h2 { font-size: 1.9rem; letter-spacing: -.04em; } p:not(.eyebrow) { color: #8a725a; font-size: .9rem; margin: 7px 0 0; } }
+  .player-filters { display: grid; grid-template-columns: minmax(230px,1fr) 220px 240px; gap: 12px; margin-bottom: 18px; label { min-width: 0; } input, select { margin: 0; height: 43px; font-size: .875rem; } }
+  .player-search { position: relative; .ui-icon { position: absolute; top: 12px; left: 13px; width: 19px; height: 19px; color: #92775b; } input { padding-left: 41px; } }
+  .directory-layout { display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 22px; align-items: start; }
+  .roster-table-area { min-width: 0; }
+  .unit-tabs { display: flex; flex-wrap: wrap; gap: 0; width: fit-content; border: 1px solid #ddccb5; background: #fcf7ed; border-radius: 8px; padding: 3px; margin-bottom: 18px; button { display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; background: transparent; color: #745338; font-size: .85rem; padding: 10px 16px; border-radius: 6px; font-weight: 550; &[aria-pressed='true'] { background: #4f2c1d; color: #fff3e2; box-shadow: 0 1px 4px #4f2c1d15; } &:hover:not([aria-pressed='true']) { background: #eee0cb; } span { font-variant-numeric: tabular-nums; opacity: .75; } } }
+  .roster-table-wrap { border: 1px solid #ddcfbb; border-radius: 10px; background: #fffbf4; overflow: auto; max-height: min(64dvh,700px); }
+  .roster-table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 680px; text-align: left; font-size: .875rem; th, td { padding: 9px 13px; border-bottom: 1px solid #eee3d3; vertical-align: middle; white-space: nowrap; } thead th { position: sticky; top: 0; z-index: 1; background: #f2e9dc; color: #846447; padding-block: 14px; font-size: .71rem; text-transform: uppercase; letter-spacing: .055em; font-weight: 700; border-bottom: 1px solid #dfcfb9; } tbody tr { cursor: pointer; &:hover { background: #faf0e0; } &.selected { background: #f8e2ca; } &:last-child td, &:last-child th { border-bottom: 0; } } abbr { text-decoration: none; font-weight: 600; } td:last-child { text-align: right; } .cell-detail { color: #95806a; } .empty { padding: 28px; font-size: .9rem; text-align: center; white-space: normal; } }
+  .table-player { display: flex; align-items: center; gap: 11px; border: 0; background: transparent; padding: 0; min-height: 35px; color: #49301e; font-weight: 650; text-align: left; font-size: .9rem; &:hover { text-decoration: underline; text-underline-offset: 3px; } }
+  .initial-avatar { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 7px; color: #fdf2e0; background: #755039; font-size: .8rem; font-weight: 650; flex-shrink: 0; &.large { width: 50px; height: 50px; font-size: 1.2rem; border-radius: 9px; background: #4f2c1d; } }
+  .unit-badge { font-size: .75rem; border-radius: 12px; padding: 4px 9px; color: #8b4c22; background: #f4dec5; &.defense { color: #6e5942; background: #eae1d3; } &.special { color: #885f36; background: #f3e8cd; } }
+  .action-count { font-size: .78rem; font-variant-numeric: tabular-nums; color: #a18c75; padding: 4px 9px; border-radius: 6px; &.has-actions { background: #fbd9bf; color: #a14b1c; font-weight: 650; } }
+  .row-details { background: transparent; color: #9c542a; border: 1px solid transparent; border-radius: 5px; font-size: .78rem; padding: 6px; font-weight: 600; &:hover { border-color: #d5b692; background: #fff5e7; } }
+  .directory-results { font-size: .75rem; color: #a08b73; line-height: 1.6; margin: 11px 0 0; }
+  .player-summary-rail { display: grid; gap: 18px; padding-top: 60px; }
+  .player-snapshot { padding: 0 18px 18px; overflow: hidden; h3 { background: #4f2c1d; color: #fff1df; font-size: 1.1rem; font-weight: 650; letter-spacing: -.02em; margin: 0 -18px 20px; padding: 14px 18px; } }
+  .snapshot-profile { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; min-width: 0; h4 { font-size: 1.15rem; letter-spacing: -.025em; margin: 0 0 5px; line-height: 1.3; } p { font-size: .8rem; color: #8d7358; margin: 0; } }
+  .snapshot-stats, .unit-summary dl { margin: 0; >div { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid #e9dcc9; padding: 11px 0; font-size: .85rem; } dt { color: #8d755c; } dd { font-weight: 650; color: #4f2c1d; margin: 0; font-variant-numeric: tabular-nums; } .overdue-number { color: #bb4f17; } }
+  .snapshot-followup { margin-top: 17px; h4 { font-size: .85rem; font-weight: 650; margin-bottom: 7px; } p { font-size: .82rem; line-height: 1.7; color: #8b7258; margin-bottom: 14px; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; } time { color: #a26a3e; } }
+  .snapshot-link { border: 0; border-bottom: 1px solid #b98a5f; padding: 0 0 3px; background: none; color: #8f481e; font-size: .85rem; font-weight: 650; &:hover { color: #582d12; } }
+  .unit-summary { padding: 18px; h3 { font-size: 1rem; margin-bottom: 8px; color: #66442b; } dl>div { font-size: .82rem; padding-block: 10px; &:last-child { border: 0; padding-bottom: 0; } &.total { dt { color: #65452d; font-weight: 650; } } } }
+  .back-to-roster { margin-bottom: 18px; font-size: .85rem; padding: 9px 13px; }
+  .player-detail-panel { max-width: 1050px; .player-profile { margin-bottom: 20px; } }
+}
+@media (max-width: 1180px) { .workspace-app { .directory-layout { grid-template-columns: 1fr; } .player-summary-rail { grid-template-columns: 1.4fr 1fr; padding-top: 0; } .player-filters { grid-template-columns: minmax(200px,1fr) 180px 180px; } } }
+@media (max-width: 760px) { .workspace-app { .player-filters { grid-template-columns: 1fr 1fr; gap: 9px; .player-search { grid-column: 1/-1; } select { font-size: .8rem; } } .unit-tabs { width: 100%; display: grid; grid-template-columns: repeat(4,1fr); button { font-size: .75rem; padding: 9px 6px; gap: 5px; } } .player-summary-rail { grid-template-columns: 1fr; } .roster-table-wrap { max-height: 55dvh; } .player-snapshot { .snapshot-followup p { -webkit-line-clamp: 3; } } .directory-heading h2 { font-size: 1.7rem; } .player-detail-panel { padding: 16px; } } }

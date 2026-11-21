@@ -5,6 +5,7 @@ import { extractDemo } from './demo-extraction.js';
 import { workspaceMode } from './access.js';
 import { loadSharedNotebook } from './shared-notebook.js';
 import { formatBrief } from './brief-format.js';
+import { summarizePlayers, filterPlayers } from './player-directory.js';
 
 const $ = (s) => document.querySelector(s);
 const escape = (s = '') => String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -12,6 +13,7 @@ const clone = (x) => structuredClone(x);
 let meetings = [];
 let mode = workspaceMode(window.location.search), view = 'desk', draft = [], origin = 'demo', selectedPlayer = 'p01', busy = false, connected = false, prepSource = null;
 let current = clone(demo.samples[0]);
+let playerDetailOpen = false, playerUnitFilter = 'all';
 const player = (id) => demo.players.find(p => p.id === id);
 const name = (id) => player(id)?.name ?? 'Unknown player';
 const positionLabel = (p) => p.position_label ? `${p.position} · ${p.position_label}` : p.position;
@@ -86,7 +88,16 @@ document.querySelector('#app').innerHTML = `
           </aside>
         </div>
       </section>
-      <section id="players" class="view" hidden><div class="section-heading"><div><p class="eyebrow">THE FOOTBALL PLAYER NOTEBOOK</p><h2>Player timelines</h2></div></div><div class="player-layout"><div class="panel roster" id="roster"></div><div class="panel"><div id="player-heading"></div><div id="timeline"></div><div class="prep-box"><h3>Prepare for the next conversation</h3><p>Build a brief from this player's approved records.</p><button id="prep" class="secondary">Build preparation brief</button><div id="prep-text" class="prep-content" aria-live="polite"></div></div></div></div></section>
+      <section id="players" class="view" hidden>
+        <div id="player-directory">
+          <div class="section-heading directory-heading"><div><p class="eyebrow">THE FOOTBALL ROSTER</p><h2 id="players-title" tabindex="-1">Players</h2><p>${demo.players.length} players · Synthetic football roster</p></div></div>
+          <div class="player-filters"><label class="player-search">${icon('people')}<span class="sr-only">Search players or jersey numbers</span><input id="player-search" type="search" placeholder="Search players or jersey numbers" autocomplete="off"></label><label><span class="sr-only">Position group</span><select id="player-group"><option value="all">All position groups</option>${[...new Set(demo.players.map(p => p.position_group))].sort().map(g => `<option value="${escape(g)}">${escape(g)}</option>`).join('')}</select></label><label><span class="sr-only">Position</span><select id="player-position"><option value="all">All positions</option>${[...new Map(demo.players.map(p => [p.position, p.position_label || p.position]))].sort((a,b) => a[1].localeCompare(b[1])).map(([code,label]) => `<option value="${escape(code)}">${escape(code)} · ${escape(label)}</option>`).join('')}</select></label></div>
+          <div class="directory-layout"><div class="roster-table-area"><div class="unit-tabs" aria-label="Filter roster by team unit" id="player-unit-tabs"></div><div class="roster-table-wrap"><table class="roster-table"><caption class="sr-only">Football players, meetings attended, and open actions. Select a player for a snapshot or open their timeline.</caption><thead><tr><th scope="col">Player</th><th scope="col">#</th><th scope="col">Position</th><th scope="col">Unit</th><th scope="col">Meetings</th><th scope="col">Open actions</th><th scope="col"><span class="sr-only">Details</span></th></tr></thead><tbody id="roster"></tbody></table></div><p id="player-results" class="directory-results" role="status"></p></div>
+            <aside class="player-summary-rail"><section class="player-snapshot panel"><h3>Player snapshot</h3><div id="player-snapshot"></div></section><section class="unit-summary panel"><h3>Team units</h3><dl id="player-unit-summary"></dl></section></aside>
+          </div>
+        </div>
+        <div id="player-detail" hidden><button class="secondary back-to-roster" id="back-to-roster">Back to players</button><div class="panel player-detail-panel"><div id="player-heading"></div><div id="timeline"></div><div class="prep-box"><h3>Prepare for the next conversation</h3><p>Build a brief from this player's approved records.</p><button id="prep" class="secondary">Build preparation brief</button><div id="prep-text" class="prep-content" aria-live="polite"></div></div></div></div>
+      </section>
       <section id="tasks" class="view" hidden><div class="section-heading"><div><p class="eyebrow">A LITTLE FOLLOW-THROUGH</p><h2>Action board</h2></div><label>Show <select id="task-filter"><option value="open">Open actions</option><option value="overdue">Overdue</option><option value="done">Completed</option><option value="all">All actions</option></select></label></div><div id="task-list"></div></section>
       <footer><span>FALCON FOLLOW-UP <b> / </b> picInfiniti</span><span>Every conversation deserves a next step. · Synthetic data only</span></footer>
     </main>
@@ -143,6 +154,38 @@ function statusBadge(i) { return i.completed ? '<span class="badge completed">Co
 function recordMarkup(i, m) {
   return `<article class="record"><div class="record-top">${statusBadge(i)}<span>${escape(i.skill)}</span>${m.id.startsWith('m-seed-') ? '<span class="badge">Earlier practice pack</span>' : ''}</div><h4>${escape(i.text)}</h4><p class="record-meta">${escape(name(i.player_id))} · ${escape(m.date)}${i.due_date ? ` · Due ${escape(i.due_date)}` : ''}</p><details><summary>Source meeting note</summary><blockquote>${escape(i.quote)}</blockquote><p>${escape(m.note)}</p></details>${i.kind === 'action' ? `<button class="secondary compact" data-meeting="${escape(m.id)}" data-item="${escape(i.id)}">${i.completed?'Reopen action':'Mark complete'}</button>` : ''}</article>`;
 }
+const initials = (p) => p.name.split(' ').map(part => part[0]).slice(0,2).join('');
+function renderPlayerDirectory() {
+  const summaries = summarizePlayers(demo.players, meetings, today());
+  const visible = filterPlayers(summaries, {search: $('#player-search').value, unit: playerUnitFilter, group: $('#player-group').value, position: $('#player-position').value});
+  if (!playerDetailOpen && visible.length && !visible.some(p => p.id === selectedPlayer)) selectedPlayer = visible[0].id;
+  const count = (unit) => unit === 'all' ? summaries.length : summaries.filter(p => p.unit === unit).length;
+  $('#player-unit-tabs').innerHTML = ['all','Offense','Defense','Special Teams'].map(unit => `<button type="button" data-player-unit="${unit}" aria-pressed="${unit === playerUnitFilter}">${unit === 'all' ? 'All' : unit}<span>${count(unit)}</span></button>`).join('');
+  $('#roster').innerHTML = visible.map(p => `<tr data-select-player="${p.id}" class="${p.id === selectedPlayer ? 'selected' : ''}"><th scope="row"><button class="table-player" data-select-player="${p.id}" aria-pressed="${p.id === selectedPlayer}"><span class="initial-avatar">${escape(initials(p))}</span><span>${escape(p.name)}</span></button></th><td>${p.number}</td><td><abbr title="${escape(p.position_label || p.position)}">${escape(p.position)}</abbr></td><td><span class="unit-badge ${p.unit === 'Offense' ? 'offense' : p.unit === 'Defense' ? 'defense' : 'special'}">${escape(p.unit)}</span></td><td>${p.meetingCount} <span class="cell-detail">meeting${p.meetingCount === 1 ? '' : 's'}</span></td><td><span class="action-count ${p.openCount ? 'has-actions' : ''}">${p.openCount} open</span></td><td><button class="row-details" data-player="${p.id}" aria-label="View ${escape(p.name)}'s timeline">View</button></td></tr>`).join('') || '<tr><td colspan="7" class="empty">No matching players. Try another name, jersey number, or filter.</td></tr>';
+  $('#player-results').textContent = `Showing ${visible.length} of ${summaries.length} players. Select a row for a snapshot; View opens the full timeline.`;
+  const selected = visible.length ? summaries.find(p => p.id === selectedPlayer) : null;
+  $('#player-snapshot').innerHTML = selected ? `<div class="snapshot-profile"><span class="initial-avatar large">${escape(initials(selected))}</span><div><h4>${escape(selected.name)}</h4><p>#${selected.number} · ${escape(selected.position_label || selected.position)}</p></div></div><dl class="snapshot-stats"><div><dt>Meetings attended</dt><dd>${selected.meetingCount}</dd></div><div><dt>Open actions</dt><dd>${selected.openCount}</dd></div><div><dt>Overdue</dt><dd class="${selected.overdueCount ? 'overdue-number' : ''}">${selected.overdueCount}</dd></div></dl><div class="snapshot-followup"><h4>Latest reviewed record</h4>${selected.latest ? `<p><time>${escape(selected.latest.meeting.date)}</time> · ${escape(selected.latest.text)}</p>` : '<p>No reviewed records yet. Save a meeting to start this timeline.</p>'}</div><button class="snapshot-link" data-player="${selected.id}">View timeline</button>` : '<p class="empty">No player matches these filters.</p>';
+  $('#player-unit-summary').innerHTML = ['Offense','Defense','Special Teams'].map(unit => `<div><dt>${unit}</dt><dd>${count(unit)}</dd></div>`).join('') + `<div class="total"><dt>Total</dt><dd>${summaries.length}</dd></div>`;
+  $('#player-directory').hidden = playerDetailOpen;
+  $('#player-detail').hidden = !playerDetailOpen;
+}
+function openPlayerTimeline(id) {
+  selectedPlayer = id; playerDetailOpen = true; cancelPrep(); render(); switchView('players');
+  $('#player-heading').tabIndex = -1; $('#player-heading').focus({preventScroll:true});
+  $('#player-heading').scrollIntoView({block:'start', behavior:'instant'});
+}
+$('#back-to-roster').addEventListener('click', () => {
+  playerDetailOpen = false; cancelPrep(); render(); $('#players-title').focus({preventScroll:true});
+  $('#players-title').scrollIntoView({block:'start', behavior:'instant'});
+});
+$('#player-search').addEventListener('input', renderPlayerDirectory);
+$('#player-group').addEventListener('change', renderPlayerDirectory);
+$('#player-position').addEventListener('change', renderPlayerDirectory);
+$('#player-unit-tabs').addEventListener('click', e => {
+  const tab = e.target.closest('[data-player-unit]');
+  if (tab) { playerUnitFilter = tab.dataset.playerUnit; renderPlayerDirectory(); if (e.detail === 0) $(`[data-player-unit="${playerUnitFilter}"]`).focus({preventScroll:true}); }
+});
+
 function render() {
   const all = items(), actions = all.filter(i => i.kind === 'action'), open = actions.filter(i => !i.completed);
   $('#meeting-count').textContent = meetings.length; $('#open-count').textContent = open.length; $('#overdue-count').textContent = open.filter(overdue).length;
@@ -152,7 +195,7 @@ function render() {
   $('#extract').textContent = mode === 'demo' ? 'Extract sample records' : 'Extract with Aivana';
   $('#extract').disabled = busy || !connected;
   $('#recent').innerHTML = [...meetings].sort((a,b) => b.date.localeCompare(a.date)).map(m => `<button class="meeting-row" data-open-player="${escape(m.attendees[0])}"><span class="meeting-date">${icon('note')}</span><span class="meeting-title"><strong>${escape(m.title)}</strong><small>${escape(m.date)} · ${m.items.length} records</small></span><span class="badge">${m.origin === 'demo' ? 'Demo fixture' : 'Reviewed'}</span></button>`).join('') || '<div class="panel empty">No meetings yet. Save your first reviewed extraction.</div>';
-  $('#roster').innerHTML = `<p class="eyebrow">FICTIONAL FOOTBALL ROSTER</p>${demo.players.map(p => `<button data-player="${p.id}" class="player-row ${p.id === selectedPlayer ? 'selected':''}"><span class="avatar">${p.number}</span><span><strong>${escape(p.name)}</strong><small>${escape(positionLabel(p))}</small></span></button>`).join('')}`;
+  renderPlayerDirectory();
   renderPlanning();
   const p = player(selectedPlayer);
   $('#player-heading').innerHTML = `<div class="player-profile"><span class="avatar large">${p.number}</span><div><p class="eyebrow">${escape(positionLabel(p))}</p><h2>${escape(p.name)}</h2><p>Approved feedback and follow-up, in context.</p></div></div>`;
@@ -213,8 +256,7 @@ $('#calendar').addEventListener('click', e => {
   const saved = meetings.filter(m => m.date === date);
   notify(`${date}: ${saved.length} saved meeting${saved.length === 1 ? '' : 's'} and ${pending.length} open action${pending.length === 1 ? '' : 's'} due.`);
   if (pending.length || saved.length) {
-    selectedPlayer = pending[0]?.player_id || saved[0].attendees[0];
-    cancelPrep(); render(); switchView('players');
+    openPlayerTimeline(pending[0]?.player_id || saved[0].attendees[0]);
   }
 });
 
@@ -258,7 +300,7 @@ $('#review').addEventListener('click', async e => {
     meetings.unshift(meeting);
     draft = []; renderReview(); cancelPrep(); render(); notify('Meeting approved and saved. Its records are now in player timelines and the action board.');
   } catch (error) { notify(error.message,true); if ($('#save')) $('#save').disabled = false; }
-  finally { busy = false; }
+  finally { busy = false; $('#extract').disabled = !connected; }
 });
 document.addEventListener('click', async e => {
   const summary = e.target.closest('[data-stat]');
@@ -269,7 +311,7 @@ document.addEventListener('click', async e => {
     if (destination === 'meetings') {
       switchView('desk'); target = $('#recent-heading');
     } else if (destination === 'players') {
-      switchView('players'); target = $('#player-heading');
+      playerDetailOpen = false; render(); switchView('players'); target = $('#players-title');
     } else {
       $('#task-filter').value = destination; render(); switchView('tasks'); target = $('#tasks h2');
     }
@@ -277,9 +319,11 @@ document.addEventListener('click', async e => {
     target.focus({preventScroll: true});
     target.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start'});
   }
-  const tab = e.target.closest('[data-view]'); if (tab) switchView(tab.dataset.view);
+  const tab = e.target.closest('[data-view]'); if (tab) { if (tab.dataset.view === 'players') { playerDetailOpen = false; cancelPrep(); render(); } switchView(tab.dataset.view); }
   const targetPlayer = e.target.closest('[data-player],[data-open-player]');
-  if (targetPlayer) { selectedPlayer = targetPlayer.dataset.player || targetPlayer.dataset.openPlayer; cancelPrep(); render(); switchView('players'); }
+  if (targetPlayer) openPlayerTimeline(targetPlayer.dataset.player || targetPlayer.dataset.openPlayer);
+  const selectedRow = e.target.closest('[data-select-player]');
+  if (selectedRow && !targetPlayer) { selectedPlayer = selectedRow.dataset.selectPlayer; cancelPrep(); render(); if (e.detail === 0) $(`.table-player[data-select-player="${selectedPlayer}"]`)?.focus({preventScroll:true}); }
   const action = e.target.closest('[data-item]');
   if (action && !busy) {
     try {
@@ -289,7 +333,7 @@ document.addEventListener('click', async e => {
       meetings = meetings.map(m => m.id === updated.id ? updated : m);
       cancelPrep(); render(); notify('Action status updated.');
     } catch (error) { action.disabled = false; notify(error.message,true); }
-    finally { busy = false; }
+    finally { busy = false; $('#extract').disabled = !connected; }
   }
 });
 $('#task-filter').addEventListener('change',render);
