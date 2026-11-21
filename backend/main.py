@@ -13,6 +13,7 @@ from .extraction_schema import CATEGORIES
 from .assistant import select_context, checked_answer, selected_players
 from .grouping import annotate_shared_records
 from . import strategy
+from .preparation import preparation_context, demo_brief
 
 load_environment()
 app = FastAPI(title='Falcon Follow-up prototype')
@@ -110,33 +111,43 @@ def complete(meeting_id: str, item_id: str, body: dict):
         raise HTTPException(422, str(error)) from None
 
 
-@app.get('/api/players/{player_id}/prep')
-def prep(player_id: str):
-    if player_id not in PLAYERS:
-        raise HTTPException(404, 'Player not found.')
-    records = []
-    remaining = 10
-    for meeting in store.list():
-        items = [{key: x.get(key) for key in ('kind', 'text', 'skill', 'topic', 'due_date', 'completed')} for x in meeting['items'] if applies_to(x, player_id) and not x.get('sensitive')]
-        if items:
-            records.append({'date': meeting['date'], 'items': items[:remaining]})
-            remaining -= len(items[:remaining])
-        if not remaining:
-            break
-    if not records:
-        raise HTTPException(422, 'No non-sensitive approved records are available for this player.')
-    if not os.environ.get('AIVANA_API_KEY'):
+def preparation_response(player_id, body):
+    try:
+        context = preparation_context(store.list(), player_id, body)
+    except KeyError:
+        raise HTTPException(404, 'Player not found.') from None
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from None
+    mode = body.get('mode', 'live')
+    if mode not in ('demo','live'):
+        raise HTTPException(422, 'Choose demo or live preparation.')
+    if mode == 'live' and not os.environ.get('AIVANA_API_KEY'):
         raise HTTPException(503, 'Set AIVANA_API_KEY in the backend environment first.')
 
     def events():
+        metadata = {key:context[key] for key in ('record_count','matched_count','limited','target')}
+        yield f'event: context\ndata: {json.dumps(metadata)}\n\n'
         try:
-            context = {'player': next(p for p in DEMO['players'] if p['id'] == player_id), 'records': records, 'context_window': 'Up to 10 latest non-sensitive approved records'}
-            for event, payload in aivana.preparation_events(context):
-                yield f'event: {event}\ndata: {json.dumps(payload)}\n\n'
+            if mode == 'demo':
+                yield f'event: delta\ndata: {json.dumps({"text":demo_brief(context)})}\n\n'
+                yield 'event: done\ndata: {"finish_reason":"stop"}\n\n'
+            else:
+                for event, payload in aivana.preparation_events(context):
+                    yield f'event: {event}\ndata: {json.dumps(payload)}\n\n'
         except (aivana.AivanaError, OSError) as error:
             message = str(error) if isinstance(error, aivana.AivanaError) else 'The Aivana connection was interrupted. Please retry.'
-            yield f'event: error\ndata: {json.dumps({"message": message})}\n\n'
-    return StreamingResponse(events(), media_type='text/event-stream', headers={'Cache-Control': 'no-cache'})
+            yield f'event: error\ndata: {json.dumps({"message":message})}\n\n'
+    return StreamingResponse(events(), media_type='text/event-stream', headers={'Cache-Control':'no-cache'})
+
+
+@app.get('/api/players/{player_id}/prep')
+def prep(player_id: str):
+    return preparation_response(player_id, {})
+
+
+@app.post('/api/players/{player_id}/prep')
+def selected_prep(player_id: str, body: dict):
+    return preparation_response(player_id, body)
 
 
 @app.post('/api/assistant')

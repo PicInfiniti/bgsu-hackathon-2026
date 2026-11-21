@@ -30,3 +30,24 @@ assert.ok(playerMeetingHistory([privateMeeting],'p1',players,true,render).includ
 const noteOnly={...team,id:'n',note_only:true,items:[]};
 assert.ok(playerMeetingHistory([noteOnly],'p1',players,false,render).includes('Original conversation saved without extracted feedback or tasks'));
 assert.ok(playerMeetingHistory([],'p1',players,false,render).includes('No saved meetings'));
+
+assert.ok(avery.includes('data-meeting-disclosure="t"'));
+assert.ok(!avery.includes('data-meeting-disclosure="t" open'));
+assert.ok(avery.includes('data-prepare-meeting="t"'));
+assert.ok(avery.includes('View details'));
+const datedActions={...group,id:'actions',items:[{id:'a1',kind:'action',player_id:'p1',text:'Open task',completed:false,due_date:'2026-11-25'},
+  {id:'a2',kind:'action',player_id:'p1',text:'Late task',completed:false,due_date:'2026-11-20'},
+  {id:'a3',kind:'action',player_id:'p1',text:'Done task',completed:true,due_date:'2026-11-19'},
+  {id:'a4',kind:'action',player_id:'p2',text:'Other player',completed:false,due_date:'2026-11-19'}]};
+const dueHtml=playerMeetingHistory([datedActions],'p1',players,false,render,'2026-11-21');
+assert.ok(dueHtml.includes('has-overdue-actions'));
+assert.ok(dueHtml.includes('2 open · 1 overdue'));
+const openHtml=playerMeetingHistory([{...datedActions,items:[datedActions.items[0]]}],'p1',players,false,render,'2026-11-25');
+assert.ok(openHtml.includes('has-open-actions'));
+assert.ok(openHtml.includes('1 open action'));
+assert.ok(!openHtml.includes('has-overdue-actions'));
+const doneHtml=playerMeetingHistory([{...datedActions,items:[datedActions.items[2]]}],'p1',players,false,render,'2026-11-21');
+assert.ok(doneHtml.includes('has-completed-actions'));
+assert.ok(doneHtml.includes('1 completed action'));
+const hiddenAction=playerMeetingHistory([{...datedActions,items:[{...datedActions.items[1],sensitive:true}]}],'p1',players,false,render,'2026-11-21');
+assert.ok(!hiddenAction.includes('timeline-action-status'));

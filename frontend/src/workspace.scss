@@ -486,3 +486,33 @@ $paper: #fcf8f1;
   .calendar-export-footer { display: flex; justify-content: end; gap: 12px; border-top: 1px solid $line; padding-top: 18px; margin-top: 18px; }
 }
 @media (max-width:680px) { .workspace-app { .followup-heading-actions { justify-content: start; } .calendar-export-dialog { padding: 18px; width: calc(100vw - 24px); max-height: calc(100dvh - 24px); } .calendar-export-choice { padding: 13px; } .calendar-export-footer >button { flex: 1; } } }
+
+.workspace-app {
+  .player-history-profile { margin-bottom: 17px; padding: 10px 0 17px; .player-profile { gap: 13px; .avatar { width: 46px; height: 46px; font-size: 1.15rem; } h2 { font-size: 1.5rem; margin: 3px 0 5px; } } }
+  .player-history-stats { gap: 9px; margin-bottom: 18px; >div { padding: 11px 13px; } strong { font-size: 1.35rem; } }
+  .player-history-main .timeline-meeting-card.compact-meeting { padding: 0; margin: 9px 0; overflow: hidden;
+    >details>summary { display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 7px 12px; padding: 12px 15px 8px; text-decoration: none; list-style: none; cursor: pointer; &::-webkit-details-marker { display:none; } strong { font-size: .87rem; color: #6c452d; line-height: 1.5; overflow-wrap: anywhere; } time { font-size: .7rem; color: #a18465; } small { grid-column: 1/3; font-size: .7rem; color: #a18465; } .timeline-expand-hint { text-align: right; font-size: .68rem; color: #9a6a3c; &::after { content:' ⌄'; } } .meeting-type-badge { padding: 3px 6px; font-size: .6rem; } }
+    >details[open]>summary { border-bottom: 1px solid #eee1cf; padding-bottom: 12px; .timeline-expand-hint::after { content:' ⌃'; } }
+    .timeline-meeting-prep { padding: 0 15px 9px; text-align: right; .rail-link { padding: 0; font-size: .68rem; } }
+    .timeline-meeting-body { padding: 0 15px 12px; .record { border: 0; border-radius: 0; background: transparent; border-bottom: 1px solid #eee2d1; margin: 0; padding: 11px 0; h4 { font-size: .84rem; line-height: 1.6; margin: 7px 0; } .record-origin { display: none; } .record-meta { font-size: .7rem; margin: 7px 0; } .record-top { font-size: .67rem; gap: 7px; } summary { font-size: .7rem; } .secondary { font-size: .7rem; min-height: 30px; padding: 6px 9px; margin-top: 8px; } } .timeline-original-note { padding-top: 10px; gap: 8px; } .timeline-no-records { margin: 11px 0; font-size: .76rem; } }
+  }
+  .player-history-main .prep-box { padding: 17px; margin-top: 18px; h3 { font-size: .98rem; margin: 6px 0; } .prep-panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 14px; .primary { font-size: .79rem; padding: 9px 12px; white-space: nowrap; } } .eyebrow { font-size: .6rem; } }
+  .prep-target-controls { display: grid; grid-template-columns: minmax(0,1fr) minmax(130px,.5fr); gap: 11px 13px; label { min-width: 0; font-size: .73rem; } select,input { display: block; width: 100%; min-width: 0; margin: 6px 0 0; font-size: .8rem; min-height: 37px; padding: 8px 10px; } label:last-child { grid-column: 1/-1; } }
+  .prep-source-picker { margin-top: 15px; border: 1px solid #dfcbae; border-radius: 7px; padding: 11px 12px; >summary { font-size: .77rem; color: #805a37; >span { margin-left: 7px; font-size: .69rem; color: #9e805f; } } }
+  .prep-source-actions { display: flex; gap: 16px; padding: 12px 0; .rail-link { padding: 0; font-size: .73rem; } }
+  .prep-source-list { max-height: 220px; overflow-y: auto; label { display: flex; align-items: start; gap: 9px; padding: 9px 0; border-top: 1px solid #e9dac4; input { width: 15px; height: 15px; margin-top: 2px; accent-color: #c56b2c; flex-shrink: 0; } strong { display: block; font-size: .76rem; font-weight: 550; color: #775336; } small { display: block; font-size: .69rem; color: #a18465; margin-top: 4px; } } >p { font-size: .76rem; line-height: 1.7; } }
+  .prep-context-note { font-size: .71rem!important; line-height: 1.7; color: #a18465; margin: 10px 0 0; }
+  #prep-text:empty { display:none; }
+  #prep-text:not(:empty) { max-height: 440px; overflow-y: auto; margin-top: 15px; padding: 15px 17px; font-size: .82rem; line-height: 1.7; .brief-title { font-size: .98rem; padding-bottom: 11px; margin-bottom: 13px; } li { margin: 7px 0; } }
+}
+@media (max-width:680px) { .workspace-app { .player-history-main .timeline-meeting-card.compact-meeting>details>summary { grid-template-columns: auto 1fr; padding-inline: 12px; strong { font-size: .81rem; } time { grid-column: 1; grid-row: 2; } small { grid-column: 2; grid-row: 2; } .timeline-expand-hint { grid-column: 1/-1; } } .prep-target-controls { grid-template-columns: 1fr; label:last-child { grid-column: 1; } } .prep-panel-heading { flex-wrap: wrap; } } }
+
+.workspace-app .player-history-main .timeline-meeting-card.compact-meeting {
+  >details>summary { width: 100%; grid-template-columns: auto minmax(0,1fr) auto auto; time { grid-column: 4; grid-row: 1; } .timeline-action-status { grid-column: 3; grid-row: 1; } small { grid-column: 1/4; } .timeline-expand-hint { grid-column: 4; } }
+  .timeline-action-status { display: inline-flex; align-items: center; gap: 5px; border: 1px solid #e7d7c0; border-radius: 5px; padding: 3px 7px; font-size: .68rem; font-weight: 650; white-space: nowrap; }
+  &.has-open-actions { border-left: 4px solid #d67a35; .timeline-action-status { background: #fff0dc; border-color: #e7be88; color: #a25c20; } }
+  &.has-overdue-actions { border-left: 4px solid #bd4d35; .timeline-action-status { background: #fce9e3; border-color: #dfa797; color: #a33f2a; } }
+  &.has-completed-actions { border-left: 4px solid #7b9259; .timeline-action-status { background: #edf1e3; border-color: #cad5b6; color: #60753f; } }
+  .timeline-meeting-body { .record-meta,.timeline-no-records { padding: 0; background: transparent; } .record-meta { margin: 6px 0; } }
+}
+@media (max-width:680px) { .workspace-app .player-history-main .timeline-meeting-card.compact-meeting>details>summary { grid-template-columns: auto 1fr; .timeline-action-status { grid-column: 2; grid-row: 1; justify-self: end; } strong { grid-column: 1/-1; grid-row: 2; } time { grid-column: 1; grid-row: 3; } small { grid-column: 2; grid-row: 3; } .timeline-expand-hint { grid-column: 1/-1; grid-row: 4; } } }

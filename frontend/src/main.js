@@ -6,6 +6,7 @@ import demo from '../../data/demo.json';
 import { workspaceMode } from './access.js';
 import { loadSharedNotebook } from './shared-notebook.js';
 import { formatBrief } from './brief-format.js';
+import { preparationMeetings, preparationChoices, consumePreparation } from './preparation.js';
 import { summarizePlayers, filterPlayers } from './player-directory.js';
 import { checkInRecency, checkInMarkup } from './check-in-recency.js';
 import categories from '../../data/categories.json';
@@ -27,6 +28,7 @@ const escape = (s = '') => String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<
 const clone = (x) => structuredClone(x);
 let meetings = [];
 let selectedMeetingId = null, meetingLibrarySensitive = false;
+let prepRevision = 0, prepPlayer = null, prepSelectedSources = null;
 let mode = workspaceMode(window.location.search), view = 'desk', draft = [], origin = 'demo', selectedPlayer = 'p01', busy = false, connected = false, prepSource = null;
 let current = clone(demo.samples[0]);
 let playerDetailOpen = false, playerUnitFilter = 'all';
@@ -129,7 +131,7 @@ document.querySelector('#app').innerHTML = `
             <aside class="player-summary-rail"><section class="player-snapshot panel"><h3>Player snapshot</h3><div id="player-snapshot"></div></section><section class="unit-summary panel"><h3>Team units</h3><dl id="player-unit-summary"></dl></section></aside>
           </div>
         </div>
-        <div id="player-detail" hidden><button class="secondary back-to-roster" id="back-to-roster">← Back to players</button><div id="player-heading" class="player-history-profile"></div><div class="player-history-layout"><div class="player-history-main"><div id="player-history-stats" class="player-history-stats"></div><div class="player-history-toolbar"><h3>Conversation history</h3><label class="sensitive-toggle"><input id="show-sensitive" type="checkbox"> Show sensitive records</label></div><div id="timeline"></div><section class="prep-box panel"><p class="eyebrow">BEFORE THE NEXT CHECK-IN</p><h3>Prepare for your next conversation</h3><p>A brief from this player's approved, non-sensitive records.</p><button id="prep" class="secondary">Build preparation brief</button><div id="prep-text" class="prep-content" aria-live="polite"></div></section></div><aside class="player-calendar-rail"><section class="calendar-panel panel"><p class="eyebrow">THIS PLAYER'S NOTEBOOK</p><div class="calendar-heading"><h3 id="player-calendar-title"></h3><div><button class="icon-button" id="player-calendar-prev" aria-label="Previous player calendar month">${icon('chevron')}</button><button class="icon-button" id="player-calendar-next" aria-label="Next player calendar month">${icon('chevron')}</button></div></div><label class="action-calendar-filter"><span class="sr-only">Player calendar meeting type</span><select id="player-calendar-type"><option value="">All meeting types</option><option value="individual">Individual</option><option value="group">Group</option><option value="team">Team</option></select></label><div id="player-calendar" class="calendar-grid"></div><div class="calendar-key"><span class="meeting-individual">Individual</span><span class="meeting-group">Group</span><span class="meeting-team">Team</span><span class="action-due-key">Action due</span></div><div id="player-calendar-activities" class="calendar-activities" aria-live="polite"></div></section></aside></div></div>
+        <div id="player-detail" hidden><button class="secondary back-to-roster" id="back-to-roster">← Back to players</button><div id="player-heading" class="player-history-profile"></div><div class="player-history-layout"><div class="player-history-main"><div id="player-history-stats" class="player-history-stats"></div><div class="player-history-toolbar"><h3>Conversation history</h3><label class="sensitive-toggle"><input id="show-sensitive" type="checkbox"> Show sensitive records</label></div><div id="timeline"></div><section class="prep-box panel" id="preparation-panel"><div class="prep-panel-heading"><div><p class="eyebrow">YOUR FOCUS. YOUR SOURCE CONVERSATIONS.</p><h3 id="prep-heading" tabindex="-1">Prepare for a meeting or game</h3></div><button id="prep" class="primary" type="button">Build brief</button></div><div class="prep-target-controls"><label>Prepare for<select id="prep-target"><option value="">Custom meeting or game</option></select></label><label>Target date<input id="prep-date" type="date"></label><label>Purpose<select id="prep-purpose"><option value="meeting">Meeting / check-in</option><option value="game-plan">Future game plan</option><option value="game-review">Past game review</option><option value="custom">Custom focus</option></select></label><label>Focus<input id="prep-goal" maxlength="800" placeholder="e.g. coverage feedback before the Toledo game"></label></div><details class="prep-source-picker"><summary>Source conversations <span id="prep-source-count"></span></summary><div class="prep-source-actions"><button type="button" class="rail-link" id="prep-source-all">Select all</button><button type="button" class="rail-link" id="prep-source-none">Clear selection</button></div><div id="prep-sources" class="prep-source-list"></div></details><p id="prep-context-note" class="prep-context-note">Only your chosen approved, non-sensitive records are used; up to 10 records per brief.</p><div id="prep-text" class="prep-content" aria-live="polite"></div></section></div><aside class="player-calendar-rail"><section class="calendar-panel panel"><p class="eyebrow">THIS PLAYER'S NOTEBOOK</p><div class="calendar-heading"><h3 id="player-calendar-title"></h3><div><button class="icon-button" id="player-calendar-prev" aria-label="Previous player calendar month">${icon('chevron')}</button><button class="icon-button" id="player-calendar-next" aria-label="Next player calendar month">${icon('chevron')}</button></div></div><label class="action-calendar-filter"><span class="sr-only">Player calendar meeting type</span><select id="player-calendar-type"><option value="">All meeting types</option><option value="individual">Individual</option><option value="group">Group</option><option value="team">Team</option></select></label><div id="player-calendar" class="calendar-grid"></div><div class="calendar-key"><span class="meeting-individual">Individual</span><span class="meeting-group">Group</span><span class="meeting-team">Team</span><span class="action-due-key">Action due</span></div><div id="player-calendar-activities" class="calendar-activities" aria-live="polite"></div></section></aside></div></div>
 
       </section>
       <section id="tasks" class="view" hidden>
@@ -278,7 +280,7 @@ function renderPlayerDirectory() {
 }
 function openPlayerTimeline(id) {
   playerCalendarMonth = today().slice(0,7); playerCalendarDate = today(); $('#player-calendar-type').value = '';
-  if (id !== selectedPlayer) $('#show-sensitive').checked = false;
+  if (id !== selectedPlayer) { $('#show-sensitive').checked = false; $('#timeline').innerHTML = ''; }
   selectedPlayer = id; playerDetailOpen = true; cancelPrep(); render(); switchView('players');
   $('#player-heading').tabIndex = -1; $('#player-heading').focus({preventScroll:true});
   $('#player-heading').scrollIntoView({block:'start', behavior:'instant'});
@@ -316,7 +318,10 @@ function render() {
   const playerActions = all.filter(i => appliesTo(i,selectedPlayer) && i.kind === 'action');
   $('#player-heading').innerHTML = `<div class="player-profile"><span class="avatar large">${p.number}</span><div><p class="eyebrow">${escape(positionLabel(p))}</p><h2>${escape(p.name)}</h2><p>Every conversation. Every next step.</p></div><button class="secondary" type="button" data-ask-player="${p.id}">${icon('chat')} Ask about this player</button></div>`;
   $('#player-history-stats').innerHTML = `<div><strong>${playerMeetings.length}</strong><span>Saved meetings</span></div><div><strong>${playerActions.filter(i => !i.completed).length}</strong><span>Open actions</span></div><div class="${playerActions.some(overdue)?'is-overdue':''}"><strong>${playerActions.filter(overdue).length}</strong><span>Overdue</span></div>`;
-  $('#timeline').innerHTML = playerMeetingHistory(meetings,selectedPlayer,demo.players,$('#show-sensitive').checked,recordMarkup);
+  const expandedMeetings = new Set([...$('#timeline').querySelectorAll('[data-meeting-disclosure][open]')].map(el=>el.dataset.meetingDisclosure));
+  $('#timeline').innerHTML = playerMeetingHistory(meetings,selectedPlayer,demo.players,$('#show-sensitive').checked,recordMarkup,today());
+  $('#timeline').querySelectorAll('[data-meeting-disclosure]').forEach(el=>el.open=expandedMeetings.has(el.dataset.meetingDisclosure));
+  renderPreparationOptions();
   renderPlayerCalendar();
   renderActionBoard(actions);
 
@@ -459,7 +464,7 @@ function switchView(next) {
   document.querySelectorAll('.view').forEach(el => el.hidden = el.id !== view);
   document.querySelectorAll('[data-view]').forEach(el => { const active = el.dataset.view === view || el.closest('nav') && view === 'meetings' && el.dataset.view === 'meeting-library'; el.classList.toggle('active', Boolean(active)); if (active) el.setAttribute('aria-current','page'); else el.removeAttribute('aria-current'); });
 }
-function cancelPrep() { prepSource?.close(); prepSource = null; $('#prep').disabled = false; $('#prep-text').textContent = ''; }
+function cancelPrep() { prepRevision++; prepSource?.close(); prepSource = null; $('#prep').disabled = !connected; $('#prep-text').textContent = ''; }
 
 let calendarMonth = today().slice(0, 7), selectedCalendarDate = null;
 let actionCalendarMonth = today().slice(0,7), actionCalendarDate = today();
@@ -490,7 +495,7 @@ for (const [id,offset] of [['player-calendar-prev',-1],['player-calendar-next',1
 }
 $('#player-calendar-type').addEventListener('change',renderPlayerCalendar);
 $('#player-calendar').addEventListener('click',e => { const day = e.target.closest('[data-calendar-date]'); if (!day) return; playerCalendarDate = day.dataset.calendarDate; renderPlayerCalendar(); if (e.detail===0) $('#player-calendar').querySelector(`[data-calendar-date="${playerCalendarDate}"]`)?.focus({preventScroll:true}); });
-$('#player-calendar-activities').addEventListener('click',e => { const target = e.target.closest('[data-player-meeting]'); if (!target) return; const meeting = document.getElementById(`timeline-meeting-${target.dataset.playerMeeting}`); if (meeting) { meeting.focus({preventScroll:true}); meeting.scrollIntoView({block:'start',behavior:'smooth'}); } });
+$('#player-calendar-activities').addEventListener('click',e => { const target = e.target.closest('[data-player-meeting]'); if (!target) return; const meeting = document.getElementById(`timeline-meeting-${target.dataset.playerMeeting}`); if (meeting) { const disclosure=meeting.querySelector('[data-meeting-disclosure]'); if(disclosure)disclosure.open=true; meeting.focus({preventScroll:true}); meeting.scrollIntoView({block:'start',behavior:'smooth'}); } });
 function renderActionCalendar() {
   const sensitiveOnly = $('#show-sensitive-actions').checked;
   const calendarSource = sensitiveOnly ? meetings.filter(m => m.items.some(i => i.kind === 'action' && i.sensitive)).map(m => ({...m,items:m.items.filter(i => i.kind === 'action' && i.sensitive)})) : meetings;
@@ -706,19 +711,50 @@ $('#mode').addEventListener('change', e => {
   if (!connected) { initializeNotebook(); return; }
   showModeAlert(`${mode === 'demo' ? 'Demo' : 'Live'} extraction enabled. Saved records unchanged.`);
 });
-$('#prep').addEventListener('click', () => {
-  cancelPrep();
-  const records = items().filter(i => appliesTo(i,selectedPlayer) && !i.sensitive);
-  if (!records.length) { notify('No non-sensitive approved records are available for this player.',true); return; }
-  if (mode === 'demo') {
-    $('#prep-text').innerHTML = formatBrief(`## Preparation checklist\n\nDemo · Application-generated checklist, not Aivana output.\n\n${records.map(i => `- **${i.kind[0].toUpperCase()+i.kind.slice(1)}** · ${i.meeting.date}: ${i.text}${i.kind === 'action' ? ` (${i.completed ? 'complete' : 'open'}${i.due_date ? `; due ${i.due_date}`:''})`:''}`).join('\n')}\n\n### Suggested discussion\n\nAsk the player for an update on open actions.`);
-    return;
+function renderPreparationOptions() {
+  if (prepPlayer !== selectedPlayer) {
+    prepPlayer=selectedPlayer; prepSelectedSources=null;
+    $('#prep-target').value=''; $('#prep-date').value=''; $('#prep-purpose').value='meeting'; $('#prep-goal').value='';
   }
-  $('#prep').disabled = true; $('#prep-text').textContent = 'Connecting to Aivana…'; let content = '';
-  prepSource = new EventSource(`/api/players/${encodeURIComponent(selectedPlayer)}/prep`);
-  prepSource.addEventListener('delta', e => { try { content += JSON.parse(e.data).text || ''; $('#prep-text').innerHTML = formatBrief(content); } catch { notify('Unreadable preparation event.',true); prepSource?.close(); $('#prep').disabled = false; } });
-  prepSource.addEventListener('done', e => { const data = JSON.parse(e.data); prepSource?.close(); prepSource = null; $('#prep').disabled = false; if (data.finish_reason === 'length') notify('The brief was cut short. Treat this as an incomplete draft.',true); });
-  prepSource.addEventListener('error', e => { let message = 'Preparation stream failed. Check your backend, key, balance, and connection.'; try { message = JSON.parse(e.data).message || message; } catch {} notify(message,true); prepSource?.close(); prepSource = null; $('#prep').disabled = false; $('#prep-text').innerHTML = formatBrief(content || 'No brief was generated.'); });
+  const target=$('#prep-target').value;
+  $('#prep-target').innerHTML='<option value="">Custom meeting or game</option>'+meetings.filter(m=>m.approved===true&&m.attendees.includes(selectedPlayer)).sort((a,b)=>b.date.localeCompare(a.date)).map(m=>`<option value="${escape(m.id)}">${escape(meetingDisplayTitle(m.title))} · ${escape(m.date)}</option>`).join('');
+  $('#prep-target').value=target;
+  const sources=preparationMeetings(meetings,selectedPlayer);
+  if(prepSelectedSources!==null)prepSelectedSources=new Set([...prepSelectedSources].filter(id=>sources.some(m=>m.id===id)));
+  $('#prep-sources').innerHTML=preparationChoices(sources,prepSelectedSources);
+  const selected=sources.filter(m=>prepSelectedSources===null||prepSelectedSources.has(m.id));
+  const count=selected.reduce((sum,m)=>sum+m.items.length,0);
+  $('#prep-source-count').textContent=`${selected.length} selected · ${count} records`;
+  $('#prep-context-note').textContent=`${Math.min(10,count)} of ${count} matching records will be used${count>10?' · Limited to the 10 latest records from your selected conversations':''}. Sensitive records and full notes are excluded.`;
+  $('#prep').disabled=!connected||!count||Boolean(prepSource);
+}
+$('#prep-target').addEventListener('change',()=>{cancelPrep();const meeting=meetings.find(m=>m.id===$('#prep-target').value);if(meeting)$('#prep-date').value=meeting.date;renderPreparationOptions();});
+for(const id of ['prep-date','prep-purpose','prep-goal'])$(`#${id}`).addEventListener('input',()=>{cancelPrep();renderPreparationOptions();});
+$('#prep-sources').addEventListener('change',event=>{const focusId=event.target.value;cancelPrep();prepSelectedSources=new Set([...$('#prep-sources').querySelectorAll('[name="prep-source"]:checked')].map(el=>el.value));renderPreparationOptions();[...$('#prep-sources').querySelectorAll('[name="prep-source"]')].find(el=>el.value===focusId)?.focus({preventScroll:true});});
+for(const [id,all] of [['prep-source-all',true],['prep-source-none',false]])$(`#${id}`).addEventListener('click',()=>{cancelPrep();prepSelectedSources=all?null:new Set();renderPreparationOptions();});
+$('#timeline').addEventListener('click',event=>{
+  const button=event.target.closest('[data-prepare-meeting]');if(!button)return;
+  const meeting=meetings.find(m=>m.id===button.dataset.prepareMeeting);if(!meeting)return;
+  cancelPrep();$('#prep-target').value=meeting.id;$('#prep-date').value=meeting.date;
+  if(preparationMeetings([meeting],selectedPlayer).length)prepSelectedSources=new Set([meeting.id]);
+  renderPreparationOptions();$('#prep-heading').focus({preventScroll:true});$('#preparation-panel').scrollIntoView({block:'start',behavior:'smooth'});
+});
+$('#prep').addEventListener('click',async()=>{
+  const sourceIds=[...$('#prep-sources').querySelectorAll('[name="prep-source"]:checked')].map(el=>el.value);
+  if(!sourceIds.length){notify('Choose at least one source conversation.',true);return;}
+  const body={mode,meeting_ids:sourceIds,target_meeting_id:$('#prep-target').value,purpose:$('#prep-purpose').value,target_date:$('#prep-date').value,goal:$('#prep-goal').value};
+  cancelPrep();const revision=prepRevision,controller=new AbortController();prepSource={close:()=>controller.abort()};$('#prep').disabled=true;
+  $('#prep-text').textContent=mode==='demo'?'Building your selected checklist…':'Connecting to Aivana…';let content='';
+  try {
+    const response=await fetch(`/api/players/${encodeURIComponent(selectedPlayer)}/prep`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal});
+    const done=await consumePreparation(response,(event,data)=>{
+      if(revision!==prepRevision)return;
+      if(event==='context')$('#prep-context-note').textContent=`${data.record_count} of ${data.matched_count} matching records supplied${data.limited?' · Partial selected history':''}. Sensitive records and full notes excluded.`;
+      if(event==='delta'){if(typeof data.text!=='string')throw Error('Unreadable preparation text.');content+=data.text;$('#prep-text').innerHTML=formatBrief(content);}
+    });
+    if(revision===prepRevision&&done.finish_reason==='length')notify('The brief was cut short. Treat this as an incomplete draft.',true);
+  }catch(error){if(revision!==prepRevision||error.name==='AbortError')return;notify(error.message||'Preparation failed. Check the backend and retry.',true);$('#prep-text').innerHTML=formatBrief(content||'No brief was generated.');}
+  finally{if(revision===prepRevision){prepSource=null;$('#prep').disabled=false;renderPreparationOptions();}}
 });
 function assistantPlayerIds() {
   return assistantScope === 'team' ? demo.players.map(p => p.id) : assistantScope === 'group'
@@ -808,7 +844,7 @@ $('#assistant-answer').addEventListener('click', e => {
     if (!source) return;
     openPlayerTimeline(source.player_ids?.[0] || assistantResult.player_id);
     const record = document.getElementById(`record-${source.meeting_id}-${source.record_id}`);
-    if (record) { record.querySelector('details').open = true; record.focus({preventScroll:true}); record.scrollIntoView({block:'center',behavior:'smooth'}); }
+    if (record) { const disclosure=record.closest('[data-meeting-disclosure]'); if(disclosure)disclosure.open=true; record.querySelector('details').open = true; record.focus({preventScroll:true}); record.scrollIntoView({block:'center',behavior:'smooth'}); }
     else notify('This record is no longer visible. Reload the notebook to check its latest state.',true);
   }
 });
