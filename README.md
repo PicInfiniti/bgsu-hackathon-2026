@@ -6,7 +6,7 @@ Built by **picInfiniti — Siavash and Salma** for **Project A: Coach Meeting Tr
 
 **Implemented:** Level 1 core, all three Level 2 options, and three Level 3 options: calendar export, voice dictation and a known-answer development benchmark. The workspace also includes a football Strategy room. Implementation and verification are distinguished below; no general AI accuracy score is claimed.
 
-[Quick start](#quick-start) · [Coaching workflow](#coaching-workflow) · [Feature coverage](#feature-coverage) · [Verification](#verification) · [Limitations](#limitations) · [Demo](#five-minute-demo) · [Technical reference](docs/technical-reference.md)
+[Quick start](#quick-start) · [Coaching workflow](#coaching-workflow) · [Feature coverage](#feature-coverage) · [Verification](#verification) · [Accuracy test](#extraction-accuracy-test-known-answer-development-benchmark) · [Limitations](#limitations) · [Demo](#five-minute-demo) · [Technical reference](docs/technical-reference.md)
 
 ## Quick start
 
@@ -170,7 +170,47 @@ The HTTP smoke script uses a disposable database. Its default run makes no AI ca
 
 Detailed evidence: [November 21 QA](docs/qa-2026-11-21.md), [historical November 20 QA](docs/qa-2026-11-20.md). Older entries describe their historical state.
 
-A [repeatable extraction development benchmark](docs/extraction-benchmark.md) now runs Live Aivana against the 19 team-authored scenarios and supports offline replay. It reports evidence/player/kind precision and recall, exact field agreement, failed calls and a discrepancy review queue. The [recorded run](docs/benchmarks/football-v2-r4-2026-11-21.md) is one pass over known development cases, not an independent held-out evaluation. Task meaning and extra records require review. Coach-edit logs are **not** an accuracy score.
+### Extraction accuracy test: known-answer development benchmark
+
+We tested Live Aivana extraction against **19 synthetic football scenarios with 86 author-written reference records**. The cases cover individual, group and team meetings; shared assignments and praise; explicit, relative, missing and ambiguous deadlines; non-attendee mentions; encouragement-only notes; and a 25-player broadcast.
+
+The November 21 run used **22 provider requests** with no transport or truncation failures. It called the production Aivana adapter and normalizer, including at most one content-correction call per case. Expected answers were never sent to the model. No notebook records were saved or approved.
+
+Eleven scorer/runner tests and the full 89-test backend suite passed at this benchmark checkpoint. Offline replay reproduced the original totals and alignment without new provider calls.
+
+**How scoring works:** the scorer checks source quotes against the note, expands shared records per player, and aligns candidate/reference records one to one using source-word overlap. A record match requires matching evidence, player and kind (action, praise, improvement or observation). Duplicate records cannot increase recall. Skill labels and deadlines are scored separately; task/feedback meaning and topic correctness are not automatically scored.
+
+| Measurement | Recorded result | Meaning |
+|---|---:|---|
+| Action recall | **69/69 — 100%** | All reference actions were recovered with matching evidence, player and action kind. |
+| Action precision | **69/72 — 95.8%** | Three additional action candidates were classified as improvements in the references. |
+| Action deadlines | **69/69 — 100%** | All aligned reference actions also had the expected deadline: 65 dated, 4 correctly undated. |
+| Overall record recall | **80/86 — 93.0%** | Reference records recovered with matching evidence, player and kind. |
+| Overall record precision | **80/119 — 67.2%** | Generated records matching the reference evidence, player and kind. |
+| Player agreement | **83/84 — 98.8%** | Correct player on evidence-aligned pairs; missing records are outside this denominator. |
+| Record-kind agreement | **81/84 — 96.4%** | Correct action/praise/improvement/observation kind on evidence-aligned pairs. |
+| Exact skill agreement | **54/84 — 64.3%** | Exact skill-label agreement on evidence-aligned pairs; reasonable alternatives still count as disagreements. |
+| Invalid source quotes | **0** | Every candidate quote occurred in the note under case/whitespace recovery; this alone does not establish correctness. |
+
+**Why 67.2%?** Of 119 generated per-player records, 80 matched, 35 were extra records not included in the reference answers, and 4 aligned with the evidence but disagreed on player or kind. For example, “Review the walkthrough sheet” should produce an action; the model also produced Improvement feedback repeating that assignment. “Extra” does not automatically mean invented: some source-backed observations may reasonably be missing from the reference list and require review.
+
+**Failures found:** praise addressed to three named linemen remained unmatched; pure assignments were also emitted as improvement feedback; some “Work on…” advice became actions instead of improvement records; and encouragement-only notes produced unwanted unmatched records. Three cases retained validation errors and required coach correction/removal before saving. Returning a response for all 19 cases did **not** mean all cases passed.
+
+**Evaluation limits:** this is one run on previously used, team-authored development examples, not an independent held-out evaluation or a general AI accuracy score. Two whole-team cases contribute 50 of the 69 reference actions, so pooled player counts are not independent samples. Lexical alignment can miss valid alternative quotes, and skill labels can be debatable. Coach-edit logs are also **not** an accuracy score. The next priorities are shared-praise attribution, redundant feedback and consistent encouragement handling, followed by a fresh run and separately reviewed unfamiliar notes.
+
+To repeat the full test with the backend key configured privately (consumes tokens; at most 38 requests), use a new output path:
+
+```bash
+.venv/bin/python scripts/benchmark_extraction.py --live --output /tmp/falcon-accuracy-run.json
+```
+
+To reproduce scores from saved outputs without AI calls:
+
+```bash
+.venv/bin/python scripts/benchmark_extraction.py --replay docs/benchmarks/football-v2-r4-2026-11-21.json --output /tmp/falcon-accuracy-replay.json
+```
+
+See the [benchmark method and options](docs/extraction-benchmark.md), [full results](docs/benchmarks/football-v2-r4-2026-11-21.md), [machine-readable evidence](docs/benchmarks/football-v2-r4-2026-11-21.json), and [review of discrepancies](docs/benchmarks/football-v2-r4-review.md).
 
 ## Limitations
 
