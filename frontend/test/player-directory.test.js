@@ -39,3 +39,14 @@ test('roster filters combine search, football unit, group, and position', () => 
   assert.equal(filterPlayers(summary, {search:'no such player'}).length, 0);
   assert.equal(filterPlayers(summary).length, players.length);
 });
+
+test('shared feedback appears in each player snapshot and sensitive text stays out of previews', () => {
+  const shared=[...meetings,{id:'team',date:'2026-11-21',attendees:['p01','p02'],items:[
+    {player_id:null,player_ids:['p01','p02'],kind:'praise',text:'Clear team communication.'},
+    {player_id:'p01',kind:'observation',sensitive:true,text:'Private appointment.'},
+  ]}];
+  const summary=summarizePlayers(players,shared,'2026-11-21');
+  assert.equal(summary[0].latest.text,'Clear team communication.');
+  assert.equal(summary[1].latest.text,'Clear team communication.');
+  assert.equal(summary[0].meetingCount,3);
+});

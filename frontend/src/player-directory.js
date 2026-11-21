@@ -7,9 +7,9 @@ export function playerUnit(player) {
 export function summarizePlayers(players, meetings, today) {
   return players.map(player => {
     const attended = meetings.filter(m => m.attendees.includes(player.id));
-    const records = meetings.flatMap(m => m.items.filter(i => i.player_id === player.id).map(i => ({...i, meeting: m})));
+    const records = meetings.flatMap(m => m.items.filter(i => i.player_id === player.id || i.player_ids?.includes(player.id)).map(i => ({...i, meeting: m})));
     const open = records.filter(i => i.kind === 'action' && !i.completed);
-    const latest = [...records].sort((a, b) => b.meeting.date.localeCompare(a.meeting.date))[0];
+    const latest = records.filter(i => !i.sensitive).sort((a, b) => b.meeting.date.localeCompare(a.meeting.date))[0];
     return {...player, unit: playerUnit(player), meetingCount: attended.length,
       openCount: open.length, overdueCount: open.filter(i => i.due_date && i.due_date < today).length,
       latest};
