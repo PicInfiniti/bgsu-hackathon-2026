@@ -41,4 +41,4 @@ export function meetingDetailMarkup(meeting, players, showSensitive, renderRecor
 }
 
 // Keep calendar deadlines consistent with the default sensitive-record visibility.
-export const meetingCalendarSource = meetings => meetings.map(m => ({...m, items:m.items.filter(i => !i.sensitive)}));
+export const meetingCalendarSource = meetings => meetings.map(m => ({...m, items:m.items.filter(i => !i.sensitive && !['Health & Injury Follow-up','Insurance & Administration'].includes(i.topic))}));

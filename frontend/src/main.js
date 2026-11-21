@@ -22,6 +22,7 @@ import { actionRows } from './action-board-view.js';
 import { noteOnlyReview } from './note-only.js';
 import { playerMeetingHistory } from './timeline-view.js';
 import { filterMeetings, meetingListMarkup, meetingDetailMarkup, meetingCalendarSource } from './meeting-library.js';
+import { meetingCalendarMarkup, calendarDays, shiftCalendarDay } from './meeting-calendar-view.js';
 
 const $ = (s) => document.querySelector(s);
 const escape = (s = '') => String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -39,7 +40,7 @@ const player = (id) => demo.players.find(p => p.id === id);
 const name = (id) => player(id)?.name ?? 'Unknown player';
 const positionLabel = (p) => p.position_label ? `${p.position} · ${p.position_label}` : p.position;
 const today = () => new Date().toLocaleDateString('en-CA');
-let meetingCalendarMonth = today().slice(0,7), meetingCalendarDate = null;
+let meetingCalendarMonth = today().slice(0,7), meetingCalendarDate = null, meetingCalendarView = 'month', meetingWeekAnchor = today(), meetingCalendarFiltersOpen = false;
 let playerCalendarMonth = today().slice(0,7), playerCalendarDate = today();
 const overdue = (x) => x.kind === 'action' && !x.completed && x.due_date && x.due_date < today();
 const items = () => meetings.flatMap(m => m.items.map(i => ({...i, meeting:m})));
@@ -101,10 +102,10 @@ document.querySelector('#app').innerHTML = `
         </aside></div>
       </section>
       <section id="meeting-library" class="view" hidden>
-        <div id="meeting-library-list"><div class="section-heading library-heading"><div><p class="eyebrow">EVERY CONVERSATION, TOGETHER</p><h2 id="meetings-title" tabindex="-1">Meetings</h2><p>Individual check-ins, group conversations, and team meetings.</p></div><button class="secondary" type="button" data-new-meeting>${icon('plus')} Create meeting</button></div>
+        <div id="meeting-library-list"><div class="section-heading library-heading"><div><p class="eyebrow">EVERY CONVERSATION, TOGETHER</p><h2 id="meetings-title" tabindex="-1">Meetings</h2><p>Individual check-ins, group conversations, and team meetings.</p></div><div class="library-heading-actions"><div class="meeting-view-switch" role="group" aria-label="Meetings display mode"><button type="button" data-meeting-view="month" aria-pressed="true">Month</button><button type="button" data-meeting-view="week" aria-pressed="false">Week</button><button type="button" data-meeting-view="list" aria-pressed="false">List</button></div><button class="secondary" type="button" data-new-meeting>${icon('plus')} Create meeting</button></div></div>
           <div class="library-layout"><div class="library-main"><div class="library-periods" role="group" aria-label="Meeting dates"><button type="button" data-meeting-period="all" aria-pressed="true">All meetings <span id="library-all-count"></span></button><button type="button" data-meeting-period="upcoming" aria-pressed="false">Today & future <span id="library-upcoming-count"></span></button><button type="button" data-meeting-period="past" aria-pressed="false">Past <span id="library-past-count"></span></button></div>
-          <input id="meeting-period" type="hidden" value="all"><div class="panel library-filters"><label class="library-search">Search meetings<input id="meeting-search" type="search" placeholder="Title, attendee, or words from a note…"></label><label>Meeting type<select id="meeting-type-filter"><option value="">All types</option><option value="individual">Individual</option><option value="group">Group</option><option value="team">Team</option></select></label><label>Attendee<select id="meeting-player-filter"><option value="">All players</option>${demo.players.map(p => `<option value="${p.id}">#${p.number} ${escape(p.name)}</option>`).join('')}</select></label><label>From<input id="meeting-start" type="date"></label><label>Through<input id="meeting-end" type="date"></label><label>Sort<select id="meeting-sort"><option value="recent">Newest date</option><option value="oldest">Oldest date</option><option value="title">Meeting title</option></select></label></div>
-          <div class="library-selected-day" id="meeting-selected-day" hidden><span id="meeting-selected-date"></span><button class="rail-link" id="meeting-clear-date" type="button">Clear date</button></div><div class="library-results"><p id="meeting-results" role="status"></p><button id="meeting-reset" class="rail-link" type="button">Reset filters</button></div><p class="library-date-note">Dates belong to saved meetings. Future dates appear here and on the calendar; no invitations or reminders are sent.</p><div id="meeting-list" class="library-meeting-list"></div></div>
+          <input id="meeting-period" type="hidden" value="all"><div class="meeting-calendar-filter-bar" id="meeting-calendar-filter-bar" hidden><button class="secondary" id="meeting-calendar-filter-toggle" type="button" aria-expanded="false" aria-controls="meeting-filter-panel">Filters</button><div id="meeting-calendar-filter-chips" class="meeting-calendar-filter-chips"></div></div><div class="panel library-filters" id="meeting-filter-panel"><label class="library-search">Search meetings<input id="meeting-search" type="search" placeholder="Title, attendee, or words from a note…"></label><label>Meeting type<select id="meeting-type-filter"><option value="">All types</option><option value="individual">Individual</option><option value="group">Group</option><option value="team">Team</option></select></label><label>Attendee<select id="meeting-player-filter"><option value="">All players</option>${demo.players.map(p => `<option value="${p.id}">#${p.number} ${escape(p.name)}</option>`).join('')}</select></label><label>From<input id="meeting-start" type="date"></label><label>Through<input id="meeting-end" type="date"></label><label class="meeting-sort-control">Sort<select id="meeting-sort"><option value="recent">Newest date</option><option value="oldest">Oldest date</option><option value="title">Meeting title</option></select></label></div>
+          <div class="library-selected-day" id="meeting-selected-day" hidden><span id="meeting-selected-date"></span><button class="rail-link" id="meeting-clear-date" type="button">Clear date</button></div><div class="library-results"><p id="meeting-results" role="status"></p><button id="meeting-reset" class="rail-link" type="button">Reset filters</button></div><p class="library-date-note">Dates belong to saved meetings. Future dates appear here and on the calendar; no invitations or reminders are sent.</p><div id="meeting-full-calendar" hidden><div class="meeting-wide-toolbar"><div class="meeting-wide-navigation"><button class="secondary" id="meeting-wide-today" type="button">Today</button><button class="icon-button" id="meeting-wide-prev" type="button" aria-label="Previous calendar period">${icon('chevron')}</button><button class="icon-button" id="meeting-wide-next" type="button" aria-label="Next calendar period">${icon('chevron')}</button><h3 id="meeting-wide-title"></h3></div><label><span class="sr-only">Jump to calendar month</span><input id="meeting-wide-jump" type="month"></label></div><div class="meeting-wide-key"><span class="event-individual">Individual</span><span class="event-group">Group</span><span class="event-team">Team</span><span class="event-due">Open action due</span></div><div class="meeting-large-scroll"><div id="meeting-large-grid"></div></div></div><div id="meeting-list" class="library-meeting-list"></div></div>
           <aside class="library-calendar-rail"><section class="calendar-panel panel"><div class="calendar-heading"><h3 id="meeting-calendar-title"></h3><div><button class="icon-button" id="meeting-calendar-prev" aria-label="Previous meetings calendar month">${icon('chevron')}</button><button class="icon-button" id="meeting-calendar-next" aria-label="Next meetings calendar month">${icon('chevron')}</button></div></div><p class="calendar-caption">Meeting dates & action deadlines</p><div class="calendar-grid" id="meeting-calendar"></div><div class="calendar-key"><span class="meeting-individual">Individual</span><span class="meeting-group">Group</span><span class="meeting-team">Team</span><span class="action-due-key">Action due</span></div><div id="meeting-calendar-activities" class="calendar-activities" aria-live="polite"></div></section></aside>
           </div>
         </div>
@@ -330,6 +331,18 @@ function renderMeetingLibrary() {
   $('#meeting-library-list').hidden = Boolean(selectedMeetingId);
   $('#meeting-library-detail').hidden = !selectedMeetingId;
   $('#meeting-show-sensitive').checked = meetingLibrarySensitive;
+  const wide=meetingCalendarView!=='list';
+  $('#meeting-library').classList.toggle('is-calendar-view',wide);
+  $('#meeting-full-calendar').hidden=!wide; $('#meeting-list').hidden=wide;
+  $('#meeting-calendar-filter-bar').hidden=!wide;
+  $('#meeting-filter-panel').hidden=wide&&!meetingCalendarFiltersOpen;
+  const filterLabels=[['meeting-search','Search'],['meeting-type-filter','Type'],['meeting-player-filter','Attendee'],['meeting-start','From'],['meeting-end','Through']].flatMap(([id,label])=>{
+    const field=$(`#${id}`);if(!field.value)return [];const value=field.tagName==='SELECT'?field.selectedOptions[0]?.textContent:field.value;return [{id,label:`${label}: ${value}`}];
+  });
+  $('#meeting-calendar-filter-toggle').textContent=`Filters${filterLabels.length?` · ${filterLabels.length}`:''}`;
+  $('#meeting-calendar-filter-toggle').setAttribute('aria-expanded',String(meetingCalendarFiltersOpen));
+  $('#meeting-calendar-filter-chips').innerHTML=filterLabels.length?filterLabels.map(filter=>`<button type="button" data-clear-meeting-filter="${filter.id}" aria-label="Remove ${escape(filter.label)}">${escape(filter.label)} <span aria-hidden="true">×</span></button>`).join(''):'<span>All meeting types · All players</span>';
+  document.querySelectorAll('[data-meeting-view]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.meetingView===meetingCalendarView)));
   $('#library-all-count').textContent = meetings.length;
   $('#library-upcoming-count').textContent = meetings.filter(m => m.date >= today()).length;
   $('#library-past-count').textContent = meetings.filter(m => m.date < today()).length;
@@ -337,10 +350,11 @@ function renderMeetingLibrary() {
   const filtered = filterMeetings(meetings, demo.players, {search:$('#meeting-search').value, type:$('#meeting-type-filter').value, player:$('#meeting-player-filter').value, start, end, period:$('#meeting-period').value, sort:$('#meeting-sort').value, today:today()});
   $('#meeting-results').textContent = start && end && start > end ? 'From must be on or before Through.' : `${filtered.length} of ${meetings.length} saved meetings`;
   renderMeetingCalendar(filtered);
+  if(meetingCalendarView!=='list')renderWideMeetingCalendar(filtered);
   const dated = meetingCalendarDate ? activityForDate(filtered,meetingCalendarDate).meetings : filtered;
-  if (!(start && end && start > end)) $('#meeting-results').textContent = `${dated.length} of ${meetings.length} saved meetings`;
+  if (!(start && end && start > end)) $('#meeting-results').textContent = `${meetingCalendarView==='list'?dated.length:filtered.length} of ${meetings.length} saved meetings`;
   $('#meeting-selected-day').hidden = !meetingCalendarDate;
-  $('#meeting-selected-date').textContent = meetingCalendarDate ? `Meeting date · ${new Date(`${meetingCalendarDate}T12:00:00`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}` : '';
+  $('#meeting-selected-date').textContent = meetingCalendarDate ? `Selected date · ${new Date(`${meetingCalendarDate}T12:00:00`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}` : '';
   $('#meeting-list').innerHTML = meetingListMarkup(dated,demo.players,today());
   document.querySelectorAll('[data-meeting-period]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.meetingPeriod === $('#meeting-period').value)));
   const meeting = meetings.find(m => m.id === selectedMeetingId);
@@ -353,6 +367,7 @@ function renderMeetingCalendar(filtered) {
   const [year,month] = meetingCalendarMonth.split('-').map(Number);
   $('#meeting-calendar-title').textContent = new Date(year,month-1,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
   $('#meeting-calendar').innerHTML = calendarGrid(source,meetingCalendarMonth,today(),meetingCalendarDate,true);
+  if(meetingCalendarView==='week'){const week=new Set(calendarDays(meetingCalendarMonth,'week',meetingWeekAnchor));$('#meeting-calendar').querySelectorAll('[data-calendar-date]').forEach(el=>el.classList.toggle('is-active-week',week.has(el.dataset.calendarDate)));}
   if (!meetingCalendarDate) { $('#meeting-calendar-activities').innerHTML = '<p class="date-empty">Choose a date to see its meetings and action deadlines. Calendar matches your meeting filters.</p>'; return; }
   const activity = activityForDate(source,meetingCalendarDate);
   const label = new Date(`${meetingCalendarDate}T12:00:00`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
@@ -364,15 +379,48 @@ for (const [id,offset] of [['meeting-calendar-prev',-1],['meeting-calendar-next'
   $(`#${id}`).addEventListener('click', () => {
     const [year,month] = meetingCalendarMonth.split('-').map(Number), next = new Date(year,month-1+offset,1);
     meetingCalendarMonth = `${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,'0')}`;
-    meetingCalendarDate = null; renderMeetingLibrary();
+    meetingWeekAnchor = `${meetingCalendarMonth}-01`; meetingCalendarDate = null; renderMeetingLibrary();
   });
 }
 $('#meeting-calendar').addEventListener('click', e => {
   const day = e.target.closest('[data-calendar-date]'); if (!day) return;
-  meetingCalendarDate = day.dataset.calendarDate; renderMeetingLibrary();
+  meetingCalendarDate = day.dataset.calendarDate; meetingWeekAnchor=meetingCalendarDate; renderMeetingLibrary();
   if (e.detail === 0) $('#meeting-calendar').querySelector(`[data-calendar-date="${meetingCalendarDate}"]`)?.focus({preventScroll:true});
 });
 $('#meeting-clear-date').addEventListener('click', () => { meetingCalendarDate = null; renderMeetingLibrary(); $('#meetings-title').focus({preventScroll:true}); });
+function renderWideMeetingCalendar(filtered) {
+  const source=meetingCalendarSource(filtered),week=meetingCalendarView==='week';
+  const days=calendarDays(meetingCalendarMonth,week?'week':'month',meetingWeekAnchor);
+  const dateLabel=date=>new Date(`${date}T12:00:00`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  $('#meeting-wide-title').textContent=week?`${dateLabel(days[0])} – ${dateLabel(days[6])}`:new Date(`${meetingCalendarMonth}-01T12:00:00`).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  $('#meeting-wide-jump').value=meetingCalendarMonth;
+  $('#meeting-large-grid').innerHTML=meetingCalendarMarkup(source,{month:meetingCalendarMonth,today:today(),selectedDate:meetingCalendarDate,view:week?'week':'month',anchor:meetingWeekAnchor});
+}
+function changeMeetingPeriod(offset) {
+  if(meetingCalendarView==='week') {meetingWeekAnchor=shiftCalendarDay(meetingWeekAnchor,offset*7);meetingCalendarMonth=meetingWeekAnchor.slice(0,7);}
+  else {const [year,month]=meetingCalendarMonth.split('-').map(Number),next=new Date(year,month-1+offset,1);meetingCalendarMonth=`${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,'0')}`;meetingWeekAnchor=`${meetingCalendarMonth}-01`;}
+  meetingCalendarDate=null;renderMeetingLibrary();
+}
+$('#meeting-calendar-filter-toggle').addEventListener('click',()=>{meetingCalendarFiltersOpen=!meetingCalendarFiltersOpen;renderMeetingLibrary();});
+$('#meeting-calendar-filter-chips').addEventListener('click',event=>{const chip=event.target.closest('[data-clear-meeting-filter]');if(!chip)return;$(`#${chip.dataset.clearMeetingFilter}`).value='';renderMeetingLibrary();$('#meeting-calendar-filter-toggle').focus({preventScroll:true});});
+$('.meeting-view-switch').addEventListener('click',event=>{
+  const button=event.target.closest('[data-meeting-view]');if(!button)return;
+  meetingCalendarView=button.dataset.meetingView; meetingCalendarFiltersOpen=false;
+  if(meetingCalendarView==='week')meetingWeekAnchor=meetingCalendarDate||(meetingWeekAnchor.slice(0,7)===meetingCalendarMonth?meetingWeekAnchor:`${meetingCalendarMonth}-01`);
+  renderMeetingLibrary();
+});
+$('#meeting-wide-prev').addEventListener('click',()=>changeMeetingPeriod(-1));$('#meeting-wide-next').addEventListener('click',()=>changeMeetingPeriod(1));
+$('#meeting-wide-today').addEventListener('click',()=>{meetingCalendarMonth=today().slice(0,7);meetingWeekAnchor=today();meetingCalendarDate=today();renderMeetingLibrary();});
+$('#meeting-wide-jump').addEventListener('change',event=>{if(!/^\d{4}-\d{2}$/.test(event.target.value))return;meetingCalendarMonth=event.target.value;meetingWeekAnchor=`${meetingCalendarMonth}-01`;meetingCalendarDate=null;renderMeetingLibrary();});
+$('#meeting-large-grid').addEventListener('click',event=>{
+  if(event.target.closest('[data-open-meeting]'))return;
+  const day=event.target.closest('[data-large-calendar-date]'),cell=event.target.closest('[data-large-calendar-cell]');
+  if(!day&&!cell)return;
+  meetingCalendarDate=day?.dataset.largeCalendarDate||cell.dataset.largeCalendarCell;meetingWeekAnchor=meetingCalendarDate;
+  renderMeetingLibrary();
+  if(event.target.closest('.meeting-calendar-more,.meeting-calendar-due'))$('#meeting-calendar-activities').scrollIntoView({block:'nearest',behavior:'smooth'});
+  if(event.detail===0)[...$('#meeting-large-grid').querySelectorAll('[data-large-calendar-date]')].find(el=>el.dataset.largeCalendarDate===meetingCalendarDate)?.focus({preventScroll:true});
+});
 function openMeeting(id) {
   if (!meetings.some(m => m.id === id)) return;
   selectedMeetingId = id; meetingLibrarySensitive = false; $('#meeting-detail').innerHTML = '';
@@ -381,7 +429,7 @@ function openMeeting(id) {
 }
 $('#meeting-back').addEventListener('click', () => {
   const id = selectedMeetingId; selectedMeetingId = null; meetingLibrarySensitive = false; renderMeetingLibrary();
-  const button = [...$('#meeting-list').querySelectorAll('[data-open-meeting]')].find(el => el.dataset.openMeeting === id);
+  const button = [...$(meetingCalendarView==='list'?'#meeting-list':'#meeting-large-grid').querySelectorAll('[data-open-meeting]')].find(el => el.dataset.openMeeting === id);
   (button || $('#meetings-title')).focus();
 });
 $('#meeting-show-sensitive').addEventListener('change', e => { meetingLibrarySensitive = e.target.checked; renderMeetingLibrary(); });

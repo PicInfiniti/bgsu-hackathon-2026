@@ -69,3 +69,5 @@ const onlyGroups = meetingCalendarSource(filterMeetings(calendarInput,players,{t
 assert.equal(activityForDate(onlyGroups,'2026-11-26').actions.length,0);
 assert.deepEqual(activityForDate(calendarSource,'2026-11-25').meetings,[]);
 assert.deepEqual(calendarInput,calendarBefore);
+
+assert.equal(meetingCalendarSource([{...team,items:[{...action,sensitive:false,topic:'Health & Injury Follow-up'}]}])[0].items.length,0);
