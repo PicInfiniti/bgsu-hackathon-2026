@@ -14,6 +14,7 @@ let mode = workspaceMode(window.location.search), view = 'desk', draft = [], ori
 let current = clone(demo.samples[0]);
 const player = (id) => demo.players.find(p => p.id === id);
 const name = (id) => player(id)?.name ?? 'Unknown player';
+const positionLabel = (p) => p.position_label ? `${p.position} · ${p.position_label}` : p.position;
 const today = () => new Date().toLocaleDateString('en-CA');
 const overdue = (x) => x.kind === 'action' && !x.completed && x.due_date && x.due_date < today();
 const items = () => meetings.flatMap(m => m.items.map(i => ({...i, meeting:m})));
@@ -21,6 +22,7 @@ const items = () => meetings.flatMap(m => m.items.map(i => ({...i, meeting:m})))
 
 const icon = (name) => {
   const paths = {
+    football: '<path d="M3 21C1 11 11 1 21 3c2 10-8 20-18 18Z"/><path d="m8 16 8-8M9 11l4 4M12 8l4 4"/>',
     home: '<path d="m3 10 9-7 9 7v10H3z"/><path d="M9 20v-7h6v7"/>',
     note: '<rect x="5" y="3" width="15" height="18" rx="2"/><path d="M9 8h7M9 12h7M9 16h4M3 7h4M3 12h4M3 17h4"/>',
     people: '<circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6M18 15a5 5 0 0 1 3 5"/>',
@@ -36,19 +38,19 @@ document.querySelector('#app').classList.add('workspace-app');
 document.querySelector('#app').innerHTML = `
   <aside class="sidebar">
     <a class="brand" href="/workspace"><span class="brand-mark">F<span>·</span></span><span>Falcon<small>Follow-up</small></span></a>
-    <div class="workspace-label">THE COACH'S NOTEBOOK</div>
+    <div class="workspace-label">THE FOOTBALL NOTEBOOK</div>
     <nav aria-label="Main navigation">
       <button data-view="desk" class="active">${icon('home')} Overview</button>
       <button data-view="players">${icon('people')} Players</button>
       <button data-view="tasks">${icon('check')} Actions <b id="nav-count"></b></button>
     </nav>
-    <div class="sidebar-note">A good conversation<br>is just the beginning.<span>Make the follow-up count.</span></div>
-    <div class="sidebar-bottom"><span class="team-avatar">pi</span><div>picInfiniti<small>Coach Meeting Tracker</small></div></div>
+    <div class="sidebar-note">From the film room<br>to the next practice.<span>Make the follow-up count.</span></div>
+    <div class="sidebar-bottom"><span class="team-avatar">pi</span><div>picInfiniti<small>Football Meeting Tracker</small></div></div>
   </aside>
   <div class="shell">
-    <header class="topbar"><div><h1>Your coaching workspace</h1><p>A place for every conversation. A plan for what comes next.</p></div><div class="header-actions"><button class="primary" id="new-meeting">${icon('plus')} New meeting</button><a class="profile-link" href="/login" aria-label="Open coach sign-in preview">${icon('user')}</a></div></header>
+    <header class="topbar"><div><h1>Your football workspace</h1><p>A place for every conversation. A plan for what comes next.</p></div><div class="header-actions"><button class="primary" id="new-meeting">${icon('plus')} New meeting</button><a class="profile-link" href="/login" aria-label="Open coach sign-in preview">${icon('user')}</a></div></header>
     <main>
-      <div class="workspace-toolbar"><span class="workspace-date">${icon('note')} Your notebook, at a glance</span><label class="mode-control">Extraction <select id="mode"><option value="demo">Demo · prepared samples</option><option value="live">Live · Aivana</option></select></label></div>
+      <div class="workspace-toolbar"><span class="workspace-date">${icon('football')} Football · Your coaching notebook</span><label class="mode-control">Extraction <select id="mode"><option value="demo">Demo · prepared samples</option><option value="live">Live · Aivana</option></select></label></div>
       <div id="mode-note" class="notice"></div>
       <div id="message" role="status" aria-live="polite" hidden></div>
       <section id="desk" class="view">
@@ -71,7 +73,7 @@ document.querySelector('#app').innerHTML = `
               <div class="form-row meeting-meta"><label>Date<input id="date" type="date" required></label><label>Meeting type<select id="meeting-type"><option value="individual">Individual</option><option value="group">Group</option><option value="team">Full team</option></select></label></div>
               <label class="sample-control">Start with a sample<select id="sample">${demo.samples.map(s => `<option value="${s.id}">${escape(s.label)}</option>`).join('')}</select></label>
               <details class="attendee-picker"><summary id="attendee-summary">Meeting attendees</summary><fieldset><legend class="sr-only">Attendees</legend><div id="attendees" class="attendees"></div></fieldset></details>
-              <label class="note-label">The conversation<textarea id="note" rows="8" maxlength="12000" placeholder="What did you discuss? Add the player's name, feedback, next steps, and any deadlines…" required></textarea></label>
+              <label class="note-label">The conversation<textarea id="note" rows="8" maxlength="12000" placeholder="What did you discuss? Add player names, football skills, film assignments, and deadlines…" required></textarea></label>
               <details class="writing-help"><summary>Tips for a useful meeting note</summary><p>Synthetic notes only. Record what the coach said; avoid assumptions about character or attitude. For long team notes, extract short sections with a few assignments each. Keep the date, attendees, and attribution context; review and save each section separately. Shorten truncated extractions before retrying.</p></details>
               <div class="editor-footer"><span>${icon('note')} Original notes stay attached.</span><button class="primary" id="extract" type="submit">Extract sample records</button></div>
             </form>
@@ -84,7 +86,7 @@ document.querySelector('#app').innerHTML = `
           </aside>
         </div>
       </section>
-      <section id="players" class="view" hidden><div class="section-heading"><div><p class="eyebrow">THE PLAYER NOTEBOOK</p><h2>Player timelines</h2></div></div><div class="player-layout"><div class="panel roster" id="roster"></div><div class="panel"><div id="player-heading"></div><div id="timeline"></div><div class="prep-box"><h3>Prepare for the next conversation</h3><p>Build a brief from this player's approved records.</p><button id="prep" class="secondary">Build preparation brief</button><div id="prep-text" class="prep-content" aria-live="polite"></div></div></div></div></section>
+      <section id="players" class="view" hidden><div class="section-heading"><div><p class="eyebrow">THE FOOTBALL PLAYER NOTEBOOK</p><h2>Player timelines</h2></div></div><div class="player-layout"><div class="panel roster" id="roster"></div><div class="panel"><div id="player-heading"></div><div id="timeline"></div><div class="prep-box"><h3>Prepare for the next conversation</h3><p>Build a brief from this player's approved records.</p><button id="prep" class="secondary">Build preparation brief</button><div id="prep-text" class="prep-content" aria-live="polite"></div></div></div></div></section>
       <section id="tasks" class="view" hidden><div class="section-heading"><div><p class="eyebrow">A LITTLE FOLLOW-THROUGH</p><h2>Action board</h2></div><label>Show <select id="task-filter"><option value="open">Open actions</option><option value="overdue">Overdue</option><option value="done">Completed</option><option value="all">All actions</option></select></label></div><div id="task-list"></div></section>
       <footer><span>FALCON FOLLOW-UP <b> / </b> picInfiniti</span><span>Every conversation deserves a next step. · Synthetic data only</span></footer>
     </main>
@@ -139,7 +141,7 @@ function renderReview() {
 }
 function statusBadge(i) { return i.completed ? '<span class="badge completed">Complete</span>' : overdue(i) ? '<span class="badge overdue">Overdue</span>' : `<span class="badge ${i.kind}">${i.kind === 'action' ? 'Open action' : i.kind}</span>`; }
 function recordMarkup(i, m) {
-  return `<article class="record"><div class="record-top">${statusBadge(i)}<span>${escape(i.skill)}</span></div><h4>${escape(i.text)}</h4><p class="record-meta">${escape(name(i.player_id))} · ${escape(m.date)}${i.due_date ? ` · Due ${escape(i.due_date)}` : ''}</p><details><summary>Source meeting note</summary><blockquote>${escape(i.quote)}</blockquote><p>${escape(m.note)}</p></details>${i.kind === 'action' ? `<button class="secondary compact" data-meeting="${escape(m.id)}" data-item="${escape(i.id)}">${i.completed?'Reopen action':'Mark complete'}</button>` : ''}</article>`;
+  return `<article class="record"><div class="record-top">${statusBadge(i)}<span>${escape(i.skill)}</span>${m.id.startsWith('m-seed-') ? '<span class="badge">Earlier practice pack</span>' : ''}</div><h4>${escape(i.text)}</h4><p class="record-meta">${escape(name(i.player_id))} · ${escape(m.date)}${i.due_date ? ` · Due ${escape(i.due_date)}` : ''}</p><details><summary>Source meeting note</summary><blockquote>${escape(i.quote)}</blockquote><p>${escape(m.note)}</p></details>${i.kind === 'action' ? `<button class="secondary compact" data-meeting="${escape(m.id)}" data-item="${escape(i.id)}">${i.completed?'Reopen action':'Mark complete'}</button>` : ''}</article>`;
 }
 function render() {
   const all = items(), actions = all.filter(i => i.kind === 'action'), open = actions.filter(i => !i.completed);
@@ -150,10 +152,10 @@ function render() {
   $('#extract').textContent = mode === 'demo' ? 'Extract sample records' : 'Extract with Aivana';
   $('#extract').disabled = busy || !connected;
   $('#recent').innerHTML = [...meetings].sort((a,b) => b.date.localeCompare(a.date)).map(m => `<button class="meeting-row" data-open-player="${escape(m.attendees[0])}"><span class="meeting-date">${icon('note')}</span><span class="meeting-title"><strong>${escape(m.title)}</strong><small>${escape(m.date)} · ${m.items.length} records</small></span><span class="badge">${m.origin === 'demo' ? 'Demo fixture' : 'Reviewed'}</span></button>`).join('') || '<div class="panel empty">No meetings yet. Save your first reviewed extraction.</div>';
-  $('#roster').innerHTML = `<p class="eyebrow">FICTIONAL TEAM ROSTER</p>${demo.players.map(p => `<button data-player="${p.id}" class="player-row ${p.id === selectedPlayer ? 'selected':''}"><span class="avatar">${p.number}</span><span><strong>${escape(p.name)}</strong><small>${escape(p.position)}</small></span></button>`).join('')}`;
+  $('#roster').innerHTML = `<p class="eyebrow">FICTIONAL FOOTBALL ROSTER</p>${demo.players.map(p => `<button data-player="${p.id}" class="player-row ${p.id === selectedPlayer ? 'selected':''}"><span class="avatar">${p.number}</span><span><strong>${escape(p.name)}</strong><small>${escape(positionLabel(p))}</small></span></button>`).join('')}`;
   renderPlanning();
   const p = player(selectedPlayer);
-  $('#player-heading').innerHTML = `<div class="player-profile"><span class="avatar large">${p.number}</span><div><p class="eyebrow">${escape(p.position)}</p><h2>${escape(p.name)}</h2><p>Approved feedback and follow-up, in context.</p></div></div>`;
+  $('#player-heading').innerHTML = `<div class="player-profile"><span class="avatar large">${p.number}</span><div><p class="eyebrow">${escape(positionLabel(p))}</p><h2>${escape(p.name)}</h2><p>Approved feedback and follow-up, in context.</p></div></div>`;
   const history = all.filter(i => i.player_id === selectedPlayer).sort((a,b) => b.meeting.date.localeCompare(a.meeting.date));
   $('#timeline').innerHTML = history.map(i => recordMarkup(i,i.meeting)).join('') || '<div class="empty">No reviewed records yet. Save a meeting for this player to start their timeline.</div>';
   const filter = $('#task-filter').value;

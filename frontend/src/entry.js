@@ -13,19 +13,20 @@ if (route === '/workspace') {
       <section class="auth-story" aria-label="Falcon Follow-up">
         <a class="brand auth-brand" href="/login" aria-label="Falcon Follow-up home"><span class="brand-mark">F<span>·</span></span><span>FALCON<small>FOLLOW-UP</small></span></a>
         <div class="auth-story-content">
-          <p class="auth-kicker">THE COACH’S NOTEBOOK</p>
+          <p class="auth-kicker">THE FOOTBALL COACH’S NOTEBOOK</p>
           <h1>Every conversation.<br>A little more<br><em>follow-through.</em></h1>
-          <p class="auth-story-intro">Keep the notes, the next steps, and the bigger picture together. A calmer space for the coach behind the team.</p>
+          <p class="auth-story-intro">Keep the notes, the next steps, and the bigger picture together. From the film room to the next practice.</p>
           <div class="auth-notebook" aria-hidden="true">
             <div class="book-spine"><i></i><i></i><i></i><i></i></div>
-            <div class="book-topline"><span>FALCON FOLLOW-UP</span><span>COACH'S NOTES</span></div>
-            <h3>Small notes.<br>Lasting progress.</h3>
-            <div class="book-lines"><span class="book-tag">NEXT STEP</span><p>Review the defensive rotation clips.</p><span class="book-tag praise-tag">WORTH RECOGNIZING</span><p>Clear communication in the second half.</p></div>
+            <div class="book-topline"><span>FALCON FOLLOW-UP</span><span>FOOTBALL NOTES</span></div>
+            <h3>Every play.<br>Clear next steps.</h3>
+            <svg class="book-diagram" viewBox="0 0 140 82" fill="none"><rect x="2" y="2" width="136" height="78" rx="4"/><path class="yard-lines" d="M25 2v78M55 2v78M85 2v78M115 2v78M2 41h136"/><circle cx="32" cy="62" r="5"/><circle cx="65" cy="62" r="5"/><path class="route-line" d="M32 56V28h61m-7-6 7 6-7 6M65 56V42"/><path d="m99 48 8 8m0-8-8 8m-55-40 8 8m0-8-8 8"/></svg>
+            <div class="book-lines"><span class="book-tag">NEXT STEP</span><p>Review two defensive coverage clips.</p><span class="book-tag praise-tag">WORTH RECOGNIZING</span><p>Clear pre-snap communication.</p></div>
             <div class="book-bottom"><span>Keep the context.</span><span>✓ Follow up with purpose.</span></div>
           </div>
           <div class="auth-benefits"><span>Keep the context</span><span>Build a clear plan</span><span>Follow up with purpose</span></div>
         </div>
-        <div class="auth-story-footer"><span>BUILT FOR COACHES. CENTERED ON PLAYERS.</span><span>picInfiniti</span></div>
+        <div class="auth-story-footer"><span>BUILT FOR FOOTBALL. CENTERED ON PLAYERS.</span><span>picInfiniti</span></div>
       </section>
       <main class="auth-main">
         <div class="auth-topline"><span>${signup ? 'Already have an account?' : 'New to Falcon Follow-up?'}</span><a href="${signup ? '/login' : '/signup'}">${signup ? 'Sign in' : 'Create an account'}</a></div>

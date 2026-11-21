@@ -6,6 +6,8 @@
 
 ---
 
+**Current practice pack:** `data/synthetic/` is now football version 2: 25 fictional players with football positions/groups and nicknames, 14 scenarios, and 57 reference records. Regenerate app fixtures with `.venv/bin/python scripts/build_demo_data.py`, restart the backend, and refresh the frontend. Versioned football seeds are added once; existing saved notes and completion states remain unchanged as history. Login/signup and the workspace retain the BGSU notebook style with football positions, film-review copy, and play-diagram artwork. This is our original practice data, not the missing organizer pack. Earlier live AI evidence applies to the basketball version; football extraction has not yet been live-benchmarked.
+
 ## Table of contents
 
 1. [Overview](#1-overview)

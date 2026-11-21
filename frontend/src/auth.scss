@@ -126,3 +126,6 @@ $brown: #4f2c1d;
     .auth-preview { padding-block: 9px; }
   }
 }
+
+.book-diagram { position: absolute; top: 63px; right: 21px; width: 126px; height: 74px; stroke: #795638; stroke-width: 1.5; .yard-lines { stroke: #dfcfb7; stroke-width: 1; } .route-line { stroke: #d76524; stroke-width: 2; stroke-dasharray: 4 3; } }
+@media (max-width: 1100px) { .book-diagram { display: none; } }
