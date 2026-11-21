@@ -84,14 +84,17 @@ class CoachTests(unittest.TestCase):
                 store.complete(saved['id'], item['id'], 'true')
 
     def test_extraction_uses_schema_and_validates_finish(self):
-        payload = {'structured': {'items':self.meeting['items']}, 'finish_reason':'stop'}
+        payload = {'structured': {'records':[], 'warnings':[]}, 'finish_reason':'stop'}
         with patch('backend.aivana.open_request', return_value=io.StringIO(json.dumps(payload))) as request:
             result = aivana.extract(self.meeting, DEMO['players'])
-            self.assertEqual(result, self.meeting['items'])
+            self.assertEqual(result, payload['structured'])
             endpoint, body = request.call_args.args
             self.assertEqual(endpoint,'generate')
             self.assertEqual(body['response_format']['type'],'json_schema')
             self.assertLessEqual(body['max_tokens'], 2048)
+        with patch('backend.aivana.open_request', return_value=io.StringIO(json.dumps({**payload, 'finish_reason':'length'}))):
+            with self.assertRaises(aivana.AivanaError):
+                aivana.extract(self.meeting, DEMO['players'])
         with patch('backend.aivana.open_request', return_value=io.StringIO('{"structured":null}')):
             with self.assertRaises(aivana.AivanaError):
                 aivana.extract(self.meeting, DEMO['players'])

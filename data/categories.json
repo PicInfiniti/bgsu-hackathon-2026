@@ -1,0 +1,7 @@
+{
+  "topics": ["Football Skills", "Game Strategy & Field Positioning", "Training & Conditioning", "Health & Injury Follow-up", "Nutrition & Hydration", "Player Availability & Roster", "Schedule & Attendance", "Travel & Away Games", "Academic & Personal Development", "Insurance & Administration", "Team Communication", "Other"],
+  "skills": ["Passing", "Receiving", "Route Running", "Blocking", "Tackling", "Coverage & Positioning", "Decision-Making", "Ball Security", "Footwork & Agility", "Kicking & Punting", "Other", "Not Specified", "Not Applicable"],
+  "feedback_types": ["Praise", "Improvement", "Neutral/Observation"],
+  "confidences": ["high", "medium", "low"],
+  "match_methods": ["full_name", "first_or_last_name", "nickname", "jersey_number", "position_group", "team", "unmatched"]
+}

@@ -1,4 +1,4 @@
-"""HTTP smoke check with an isolated DB; --live makes two paid Aivana calls."""
+"""HTTP smoke check with an isolated DB; --live uses paid extraction and streaming (up to three calls with one validation correction)."""
 import argparse
 import copy
 import json
@@ -80,6 +80,8 @@ def main():
                 if not args.live:
                     request('/api/extract', {**meeting, 'mode': 'live'}, expected=503)
                 meeting['items'] = result['items']
+                meeting['extraction_id'] = result['extraction_id']
+                assert all(i['schema_version'] == 2 for i in meeting['items'])
                 meeting['approved'] = False
                 request('/api/meetings', meeting, expected=422)
                 assert request('/api/meetings') == seeded
@@ -100,9 +102,10 @@ def main():
                     request(prep_path, expected=503)
                     print('PASS: missing-key errors. No Aivana requests made.', flush=True)
                     return
-                print('Calling real Aivana structured extraction (one request)...', flush=True)
+                print('Calling real Aivana structured extraction (one request, at most one corrective request)...', flush=True)
                 live = request('/api/extract', {**meeting, 'mode': 'live'})
                 assert live['origin'] == 'aivana' and live['items']
+                assert all(i['player_id'] in meeting['attendees'] and i['quote'] in meeting['note'] for i in live['items']), 'Unmatched or unsupported evidence requires coach correction.'
                 assert len(request('/api/meetings')) == len(seeded) + 1, 'Extraction must not save records.'
                 print(f"PASS: real structured extraction; {len(live['items'])} server-validated items. Unsaved output for coach review:", flush=True)
                 print(json.dumps(live['items'], indent=2), flush=True)

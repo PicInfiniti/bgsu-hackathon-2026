@@ -6,8 +6,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 
 from . import aivana
-from .core import DEMO, PLAYERS, Store, demo_extract, validate_item, validate_meeting
+from .core import DEMO, PLAYERS, Store, demo_extract, validate_meeting
 from .config import load_environment
+from .extraction import normalize_records, enrich_demo, applies_to
+from .extraction_schema import CATEGORIES
 
 load_environment()
 app = FastAPI(title='Falcon Follow-up prototype')
@@ -21,6 +23,11 @@ def health():
     return {'ok': True, 'aivana_configured': bool(os.environ.get('AIVANA_API_KEY'))}
 
 
+@app.get('/api/meta/categories')
+def categories():
+    return {'schema_version': 2, **CATEGORIES}
+
+
 @app.get('/api/meetings')
 def meetings():
     return store.list()
@@ -32,9 +39,37 @@ def extract(body: dict):
         meeting = validate_meeting(body)
         if body.get('mode') not in ('demo', 'live'):
             raise ValueError('Choose demo or live mode.')
-        items = demo_extract(meeting) if body['mode'] == 'demo' else aivana.extract(meeting, [p for p in DEMO['players'] if p['id'] in meeting['attendees']])
-        validated = [validate_item(x, meeting) for x in items]
-        return {'items': validated, 'origin': 'demo' if body['mode'] == 'demo' else 'aivana'}
+        players = [p for p in DEMO['players'] if p['id'] in meeting['attendees']]
+        origin = 'demo' if body['mode'] == 'demo' else 'aivana'
+        warnings, raw_outputs = [], []
+        if origin == 'demo':
+            prepared = demo_extract(meeting)
+            items = enrich_demo(prepared, meeting, players)
+            raw_outputs.append(prepared)
+        else:
+            errors = None
+            for attempt in range(2):
+                try:
+                    payload = aivana.extract(meeting, players, errors=errors)
+                except aivana.AivanaError:
+                    if not attempt:
+                        raise
+                    warnings.append('The corrective extraction failed. Review the first drafts and correct or remove flagged records.')
+                    break
+                raw_outputs.append(payload)
+                try:
+                    items, warnings, errors = normalize_records(payload, meeting, players)
+                except ValueError as error:
+                    raise aivana.AivanaError(str(error)) from None
+                if not errors:
+                    break
+                if attempt:
+                    warnings.extend(errors)
+            if errors:
+                warnings = list(dict.fromkeys(warnings + errors))
+                warnings.append('Some records require correction. Unmatched players and invalid source quotes cannot be saved.')
+        run_id = store.capture_extraction(meeting, items, warnings, origin, raw_outputs)
+        return {'items': items, 'warnings': warnings, 'origin': origin, 'extraction_id': run_id, 'schema_version': 2}
     except ValueError as error:
         raise HTTPException(422, str(error)) from None
     except aivana.AivanaError as error:
@@ -44,6 +79,10 @@ def extract(body: dict):
 @app.post('/api/meetings', status_code=201)
 def save(body: dict):
     try:
+        if isinstance(body.get('items'), list) and any(not isinstance(item, dict) or item.get('schema_version') != 2 for item in body['items']):
+            raise ValueError('Use the current review form to save records with topic and confidence fields.')
+        if body.get('origin') == 'aivana' and not body.get('extraction_id'):
+            raise ValueError('Aivana records need their extraction draft ID before approval.')
         return store.save(body)
     except ValueError as error:
         raise HTTPException(422, str(error)) from None
@@ -72,18 +111,22 @@ def prep(player_id: str):
     if player_id not in PLAYERS:
         raise HTTPException(404, 'Player not found.')
     records = []
+    remaining = 10
     for meeting in store.list():
-        items = [x for x in meeting['items'] if x['player_id'] == player_id]
+        items = [{key: x.get(key) for key in ('kind', 'text', 'skill', 'topic', 'due_date', 'completed')} for x in meeting['items'] if applies_to(x, player_id) and not x.get('sensitive')]
         if items:
-            records.append({'date': meeting['date'], 'items': items})
+            records.append({'date': meeting['date'], 'items': items[:remaining]})
+            remaining -= len(items[:remaining])
+        if not remaining:
+            break
     if not records:
-        raise HTTPException(422, 'Save a reviewed meeting for this player first.')
+        raise HTTPException(422, 'No non-sensitive approved records are available for this player.')
     if not os.environ.get('AIVANA_API_KEY'):
         raise HTTPException(503, 'Set AIVANA_API_KEY in the backend environment first.')
 
     def events():
         try:
-            context = {'player': next(p for p in DEMO['players'] if p['id'] == player_id), 'records': records[:8]}
+            context = {'player': next(p for p in DEMO['players'] if p['id'] == player_id), 'records': records, 'context_window': 'Up to 10 latest non-sensitive approved records'}
             for event, payload in aivana.preparation_events(context):
                 yield f'event: {event}\ndata: {json.dumps(payload)}\n\n'
         except (aivana.AivanaError, OSError) as error:

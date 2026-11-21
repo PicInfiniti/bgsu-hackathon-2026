@@ -5,6 +5,7 @@ import sqlite3
 import uuid
 from datetime import date
 from pathlib import Path
+from .extraction_schema import CATEGORIES, SENSITIVE_TOPICS
 
 ROOT = Path(__file__).resolve().parents[1]
 DEMO = json.loads((ROOT / 'data/demo.json').read_text())
@@ -57,9 +58,16 @@ def validate_meeting(raw, require_items=False, historical=False):
 
 
 def validate_item(raw, meeting):
-    if not isinstance(raw, dict) or raw.get('player_id') not in meeting['attendees']:
+    if not isinstance(raw, dict):
+        raise ValueError('Record must be an object.')
+    shared = raw.get('schema_version') == 2 and raw.get('scope') == 'team' and raw.get('kind') != 'action' and raw.get('player_id') is None
+    if shared and meeting['meeting_type'] != 'team':
+        raise ValueError('Whole-team feedback requires a team meeting.')
+    if shared and (not isinstance(raw.get('player_ids'), list) or not all(isinstance(p, str) for p in raw['player_ids']) or set(raw['player_ids']) != set(meeting['attendees'])):
+        raise ValueError('Team feedback must apply to all meeting attendees.')
+    if not shared and raw.get('player_id') not in meeting['attendees']:
         raise ValueError('Each item must belong to a meeting attendee.')
-    if raw.get('kind') not in ('action', 'praise', 'improvement'):
+    if raw.get('kind') not in ('action', 'praise', 'improvement', 'observation'):
         raise ValueError('Unknown item kind.')
     item = {k: raw[k] for k in ('player_id', 'kind')}
     for key, limit in [('text', 1000), ('skill', 100), ('quote', 2000)]:
@@ -70,6 +78,25 @@ def validate_item(raw, meeting):
     item['due_date'] = valid_date(due) if due else None
     if item['kind'] != 'action' and item['due_date']:
         raise ValueError('Only action items can have a due date.')
+    if raw.get('schema_version') == 2:
+        for key, category in [('topic', 'topics'), ('skill', 'skills'), ('confidence', 'confidences'), ('match_method', 'match_methods')]:
+            if raw.get(key) not in CATEGORIES[category]:
+                raise ValueError(f'Choose a valid {key}.')
+            item[key] = raw[key]
+        if raw.get('scope') not in ('player', 'group', 'team'):
+            raise ValueError('Choose a valid target scope.')
+        if item['due_date'] and item['due_date'] < meeting['date']:
+            raise ValueError('Deadline cannot precede the meeting date.')
+        item.update(schema_version=2, scope=raw['scope'],
+                    sensitive=item['topic'] in SENSITIVE_TOPICS, source_valid=True)
+        for key, limit in [('mention', 160), ('deadline_text', 160), ('group_label', 100), ('group_record_id', 100)]:
+            value = raw.get(key)
+            if value is not None and (not isinstance(value, str) or len(value) > limit):
+                raise ValueError(f'Invalid {key}.')
+            item[key] = value
+        item['warnings'] = [str(w)[:500] for w in raw.get('warnings', [])][:20] if isinstance(raw.get('warnings'), list) else []
+        if shared:
+            item['player_ids'] = list(meeting['attendees'])
     item.update(id=str(uuid.uuid4()), completed=False)
     return item
 
@@ -86,6 +113,8 @@ class Store:
         self.path = str(path)
         with self.connect() as db:
             db.execute('CREATE TABLE IF NOT EXISTS meetings (id TEXT PRIMARY KEY, body TEXT NOT NULL)')
+            db.execute('CREATE TABLE IF NOT EXISTS extraction_runs (id TEXT PRIMARY KEY, body TEXT NOT NULL, saved_meeting_id TEXT)')
+            db.execute('CREATE TABLE IF NOT EXISTS record_edits (id TEXT PRIMARY KEY, meeting_id TEXT NOT NULL, extraction_id TEXT, draft_id TEXT, change_type TEXT NOT NULL, field_changes TEXT NOT NULL)')
 
     def connect(self):
         return sqlite3.connect(self.path)
@@ -99,8 +128,53 @@ class Store:
         meeting = validate_meeting(raw, require_items=True)
         meeting['id'] = str(uuid.uuid4())
         with self.connect() as db:
+            extraction_id = raw.get('extraction_id')
+            baseline = []
+            if extraction_id:
+                extraction_id = text(extraction_id, 'extraction id', 100)
+                row = db.execute('SELECT body, saved_meeting_id FROM extraction_runs WHERE id = ?', (extraction_id,)).fetchone()
+                if not row:
+                    raise ValueError('Extraction draft not found. Extract again before approval.')
+                if row[1]:
+                    raise ValueError('This extraction was already approved. Reload the notebook.')
+                run = json.loads(row[0])
+                if run['meeting'] != validate_meeting(raw):
+                    raise ValueError('Meeting changed after extraction. Extract again before approval.')
+                baseline = run['items']
+                meeting['origin'] = run['origin']
             db.execute('INSERT INTO meetings VALUES (?, ?)', (meeting['id'], json.dumps(meeting)))
+            fields = ('player_id', 'player_ids', 'kind', 'text', 'topic', 'skill', 'quote', 'due_date', 'deadline_text', 'confidence', 'scope')
+            originals = {i['id']: i for i in baseline}
+            seen = set()
+            for original, saved in zip(raw['items'], meeting['items']):
+                draft_id = original.get('id')
+                if draft_id is not None:
+                    draft_id = text(draft_id, 'draft id', 100)
+                if draft_id in seen:
+                    raise ValueError('Duplicate draft record IDs.')
+                if draft_id:
+                    seen.add(draft_id)
+                before = originals.get(draft_id)
+                changes = {key: {'before': before.get(key) if before else None, 'after': saved.get(key)}
+                           for key in fields if (before.get(key) if before else None) != saved.get(key)}
+                status = 'added' if before is None else 'edited' if changes else 'unchanged'
+                db.execute('INSERT INTO record_edits VALUES (?, ?, ?, ?, ?, ?)',
+                           (str(uuid.uuid4()), meeting['id'], extraction_id, draft_id, status, json.dumps(changes)))
+            for draft_id, before in originals.items():
+                if draft_id not in seen:
+                    changes = {key: {'before': before.get(key), 'after': None} for key in fields if key in before}
+                    db.execute('INSERT INTO record_edits VALUES (?, ?, ?, ?, ?, ?)',
+                               (str(uuid.uuid4()), meeting['id'], extraction_id, draft_id, 'deleted', json.dumps(changes)))
+            if extraction_id:
+                db.execute('UPDATE extraction_runs SET saved_meeting_id = ? WHERE id = ?', (meeting['id'], extraction_id))
         return meeting
+
+    def capture_extraction(self, meeting, items, warnings, origin, raw_output):
+        run_id = str(uuid.uuid4())
+        body = dict(meeting=meeting, items=items, warnings=warnings, origin=origin, raw_output=raw_output)
+        with self.connect() as db:
+            db.execute('INSERT INTO extraction_runs VALUES (?, ?, NULL)', (run_id, json.dumps(body)))
+        return run_id
 
     def import_reviewed(self, records):
         """Preserve approved browser history, IDs and statuses; SQLite wins conflicts."""
