@@ -75,7 +75,6 @@ document.querySelector('#app').innerHTML = `
       <button data-view="players">${icon('people')} Players</button>
       <button data-view="tasks">${icon('check')} Actions <b id="nav-count"></b></button>
       <button data-view="strategy">${icon('football')} Strategy</button>
-      <button data-view="assistant">${icon('chat')} AI Assistant</button>
     </nav>
     <div class="sidebar-note">From the film room<br>to the next practice.<span>Make the follow-up count.</span></div>
     <div class="sidebar-bottom"><span class="team-avatar">pi</span><div>picInfiniti<small>Football Meeting Tracker</small></div></div>
