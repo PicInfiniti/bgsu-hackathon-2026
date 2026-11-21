@@ -14,7 +14,11 @@
 
 **Current workspace:** Overview is a summary dashboard with Upcoming on the left and Recent conversations on the right inside one main panel; the calendar stays in its own right sidebar. **Meeting notes** is a separate sidebar view with the note editor and approval review side by side on wide screens. Selecting more than one attendee changes an Individual meeting to Group; selecting one restores Individual. Explicit Full team is retained while all players are selected. Clicking a calendar date shows that day’s saved meetings and due actions, including completed actions. Mode-change confirmations use a nonblocking top-right alert that disappears after three seconds; ordinary success notices use the same three-second alert and errors/review warnings remain visible.
 
-**Extraction upgrade:** typed football topics/skills, confidence and unmatched-player flags, deterministic Python deadlines, group fan-out, shared team feedback, manual additions, highlighted evidence, sensitive-topic filtering, and field-level approval audit logs are implemented. Old SQLite records remain readable. Full browser QA and validation on the missing organizer pack remain outstanding. See [verification and limitations](docs/qa-2026-11-21.md).
+**Extraction upgrade:** typed football topics/skills, confidence and unmatched-player flags, deterministic Python deadlines, group fan-out, shared team feedback, manual additions, highlighted evidence, sensitive-topic filtering, and field-level approval audit logs are implemented. Old SQLite records remain readable. The live individual browser flow passed extraction, edit/remove/manual-add, approval, save/reload, timeline/source, complete/reopen, and streamed preparation checks on a disposable database. Broader browser QA and validation on the missing organizer pack remain outstanding. See [verification and limitations](docs/qa-2026-11-21.md).
+
+**AI Assistant (implemented):** sidebar chat view with one selected player, skill/topic/meeting-date filters, action status/search filters, suggested prompts, and clickable dated sources leading to timeline records. Timeline and Action-board buttons carry context into the assistant. Live uses one bounded structured Aivana call; Demo lists saved excerpts. Sensitive records are excluded and questions are independent. One real HTTP answer passed on disposable data; new assistant browser/mobile QA is pending because browser access was unavailable.
+
+**Shared meeting records (implemented):** Group/team review combines identical source-backed records into one shared card listing the affected players. Expand to review warnings or edit each player's version; **Update shared cards** separates changed versions before approval. Individual assignments remain separate. The Action board combines matching shared assignments into expandable rows, shows completed/total players, and keeps each player's Complete/Reopen controls independent. Player/status/search filters still apply to individual actions; the group states how many members match. Every action and timeline record shows the meeting type/title. The backend derives `display_group` metadata for new extractions and saved history without rewriting stored records or statuses. Similar wording alone never causes a merge: meeting, content, exact quote, categories, deadline, and sensitivity must match. Visual/browser verification remains pending.
 
 ## Table of contents
 
@@ -73,18 +77,18 @@ The Football Coach Meeting Tracker lets a coach paste meeting notes (photo input
 - **Player timeline:** every approved record for a player, newest first.
 - **Action items list:** open and overdue items, computed in code from the deadline and today's date. Items can be marked done.
 
-### Level 2: Standard
+### Level 2: Standard (assistant and streamed brief implemented)
 
 - **Question box** ("What did I tell Jay about positioning?"). The backend first filters saved records by player, skill, topic, and date range, then sends only those entries to Aivana. The answer must cite meeting dates and record IDs.
 - **Streamed prep brief** for the next one-on-one. Summarizes past feedback, open action items, and suggests follow-up questions based only on documented feedback.
-- **Players needing attention**, computed in code: not met with in N days, overdue action items, or repeated "Improvement" feedback in the same skill.
+- **Planned: players needing attention**, computed in code: not met with in N days, overdue action items, or repeated "Improvement" feedback in the same skill.
 
-### Level 3: Advanced
+### Level 3: Advanced (planned stretch work)
 
 - **Handwritten notes** as photo input (Aivana image attachment), with the transcription shown for the coach to correct before extraction.
 - **Follow-up reminders exported as an `.ics` file** for open action items with deadlines.
 - **Team themes over time:** counts of praise and improvement by skill and topic per week, computed in code and charted; Aivana writes a short narrative from those counts only.
-- **Extraction accuracy test** against synthetic notes with known answers, plus a live "AI field accuracy" stat from coach edits.
+- **Extraction accuracy test** against synthetic notes with known answers, plus a separately labeled coach-edit rate; edits are not an accuracy measurement.
 - **Action-item timing:** average days open and days to completion per player and per skill, computed in code.
 
 ---
@@ -99,8 +103,8 @@ The Football Coach Meeting Tracker lets a coach paste meeting notes (photo input
 | Validation | Aivana JSON Schema + Python validators | Backend checks roster matches, evidence, categories, and dates; the provider schema checks structure. |
 | Date handling | Standard-library `datetime` | Resolves supported unambiguous phrases against the meeting date; vague/event-relative deadlines remain for coach review. |
 | Frontend | Vanilla JavaScript + Sass + Vite | Existing BGSU notebook UI; port 5174 proxies `/api` to FastAPI on 8001. No React/TypeScript. |
-| Charts | Chart.js | Simple team-theme and trend charts. |
-| Calendar export | `ics` Python package | Level 3 reminders. |
+| Charts (planned) | Not installed | Team-theme and trend charts remain stretch work. |
+| Calendar export (planned) | Not installed | Level 3 reminders remain stretch work. |
 | Tests | Python `unittest` + Node test runner | Offline regression checks; separate opt-in live verification. |
 
 ---
@@ -113,7 +117,7 @@ The Football Coach Meeting Tracker lets a coach paste meeting notes (photo input
 │  - Meeting form + notes      │
 │  - Review & approve screen   │
 │  - Timelines, action items   │
-│  - Prep brief (ask planned) │
+│  - Prep brief, AI Assistant │
 └──────────────┬───────────────┘
                │  JSON over HTTP (same origin)
 ┌──────────────▼───────────────┐
@@ -147,7 +151,7 @@ The Football Coach Meeting Tracker lets a coach paste meeting notes (photo input
 
 ## 5. Setup and running the app
 
-Use this repository root (`bgsu-hackathon-2026`), not the separate `coach-meeting` checkout. Python 3.10+ and Node 20.19+ or 22.12+ are needed. Both Demo and Live use the same local SQLite notebook and require FastAPI; only Live extraction/preparation need an Aivana key.
+Use this repository root (`bgsu-hackathon-2026`), not the separate `coach-meeting` checkout. Python 3.10+ and Node 20.19+ or 22.12+ are needed. Both Demo and Live use the same local SQLite notebook and require FastAPI; only Live extraction, preparation, and assistant answers need an Aivana key.
 
 ### Backend
 
@@ -200,7 +204,7 @@ HTTP smoke checks use a disposable SQLite file and cannot load the private `.env
 
 | Aivana feature | Where it is used | Level |
 |---|---|---|
-| **Structured JSON output** (`response_format` with JSON Schema) | Note extraction; question box answers are planned | 1, 2 |
+| **Structured JSON output** (`response_format` with JSON Schema) | Note extraction and source-cited assistant answers | 1, 2 |
 | **`system` instructions** | Extraction rules and guardrails | 1 |
 | **Streaming** (`/v1/generate:stream`) | One-on-one prep brief appears as it is written | 2 |
 | **Image input** (`attachments`, PNG/JPEG) | Planned photographed-note support | 3 |
@@ -473,7 +477,7 @@ Aivana checks the response's **shape and types**, not whether the facts are corr
 
 ### Relative deadlines (done in code)
 
-`deadline_text` such as "by Friday", "tomorrow", or "in 3 days" is resolved with the meeting date as the base date. Vague phrases such as "next week"/"sometime next week" stay null for coach review; the app does not invent a Monday deadline. The resolved date is shown next to the original phrase ("before Friday → Fri, Nov 20"). If the phrase cannot be resolved, the deadline stays empty and the review screen highlights it.
+`deadline_text` such as "by Friday", "tomorrow", or "in 3 days" is resolved with the meeting date as the base date. Vague phrases such as "next week"/"sometime next week" stay null for coach review; the app does not invent a Monday deadline. The resolved date is shown next to the original phrase ("before Friday → Fri, Nov 20"). If the phrase cannot be resolved, the deadline stays empty and the review screen highlights it. Explicit “this Friday” on a Friday means that day; bare same-day weekday phrases are flagged as ambiguous, and “next Friday” means the next occurrence.
 
 ### Validation loop
 
@@ -583,36 +587,28 @@ The browser calls the local FastAPI backend through Vite’s `/api` proxy; it ne
 | `POST` | `/api/meetings/import` | Idempotent migration of older reviewed Demo browser history. |
 | `PATCH` | `/api/meetings/{meeting_id}/items/{item_id}` | Complete/reopen an action with `{completed: true/false}`. |
 | `GET` | `/api/players/{player_id}/prep` | SSE brief from up to ten non-sensitive approved records. |
+| `POST` | `/api/assistant` | Single-player question with optional skill/topic/date/action/search filters; returns checked citations and supporting records. |
 
-Separate roster/timeline endpoints, `/api/ask`, `/api/attention`, transcription, exports, and insights are planned. The current frontend reads the shared roster fixture and approved meetings. There is no public hosting/authentication boundary; run locally with synthetic data.
+Separate roster/timeline endpoints, `/api/attention`, transcription, exports, and insights are planned. The current frontend reads the shared roster fixture and approved meetings. There is no public hosting/authentication boundary; run locally with synthetic data.
 
-### Planned question box answer schema
+### AI Assistant
+
+Open **AI Assistant** in the sidebar, **Ask about this player** on a timeline, or **Ask about these actions** on the Action board. The Action board passes its player, category (including legacy categories), status, and search filters; choose one player if the board showed everyone. Suggested prompts fill the question and action scope for the coach to submit.
+
+`POST /api/assistant` accepts `player_id`, `question` (1–800 characters), `mode`, and optional `filters`: `skill`, `topic`, `start`, `end`, `status`, `actions_only`, `search`, and inherited Action-board `category`. Dates filter meeting dates. Questions are independent; chat history and questions are not stored. Retrieval uses keyword overlap after filtering, ranks by overlap and recency, and supplies at most 12 records. This is bounded keyword retrieval, not semantic search; use explicit subject words or broaden the filters if relevant records are missed.
+
+Live makes one structured Aivana call with a 1200-token output cap. Each factual statement requires known source IDs; invalid citations or truncated output fail the request. The UI maps those IDs to stored meeting dates and exact timeline records. This validates citation membership, not factual entailment; coaches must check the supporting records. Suggestions are separately labeled discussion questions. Full notes and quotes are not sent to the assistant model. No matching context returns without an AI call. Demo lists saved excerpts and explicitly labels them as application output.
+
+Example provider answer:
 
 ```json
 {
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["answer", "citations", "insufficient_data"],
-  "properties": {
-    "answer": { "type": "string" },
-    "citations": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["record_id", "meeting_date"],
-        "properties": {
-          "record_id":    { "type": "integer" },
-          "meeting_date": { "type": "string" }
-        }
-      }
-    },
-    "insufficient_data": { "type": "boolean" }
-  }
+  "statements": [{"text": "The coach assigned coverage-clip review.", "source_ids": ["S1"]}],
+  "suggestions": ["What did you learn from the coverage clips?"]
 }
 ```
 
-The backend checks that every cited `record_id` was in the filtered set it sent. Unknown citations are removed and the answer is marked as needing review.
+The HTTP response also includes `sources` (source ID, meeting/record IDs, date, title, and approved record fields), `matched_count`, `context_count`, `limited`, `origin`, `player_id`, and `question`. Counts and date/status comparisons come from code. Sensitive records are excluded even when shown in another view. Group/team chat is not implemented; shared feedback may appear only within the selected player's history.
 
 ---
 
@@ -642,11 +638,11 @@ Raw structured extraction output and normalized drafts are logged separately fro
 
 - Send only the **attendees'** roster rows, not all 25 players, in a compact one-line format.
 - Set `max_tokens` on every call.
-- The question box sends only **filtered** records (by player, skill, topic, date), capped at about 30 entries.
+- The question box sends only **filtered** records (by player, skill, topic, date), capped at 12 entries, with a visible context-limit notice.
 - Prep briefs use only the player's last N records and open action items.
-- No PDFs. Photos are resized before upload. Text is extracted in the app wherever possible.
+- No PDFs are sent to Aivana. Photo input remains planned.
 - No AI calls inside render loops. Extraction runs retain drafts for approval, but a new deliberate extraction makes a new call.
-- Token use per call is shown in a small admin panel.
+- A token-usage admin panel remains planned.
 
 ---
 
@@ -672,7 +668,7 @@ Raw structured extraction output and normalized drafts are logged separately fro
 - Records with topic `Health & Injury Follow-up` or `Insurance & Administration` are tagged `sensitive`.
 - Sensitive records store only what the coach wrote, with no AI-added detail.
 - Sensitive record content is hidden from directory snapshots/radar, and from timelines/action lists until the coach selects the explicit show-sensitive toggle. Full source notes containing sensitive entries are withheld while that toggle is off. This is a local UI filter, not an access-control system.
-- Sensitive records are always excluded from preparation context. Question-box/theme policies are planned with those features.
+- Sensitive records are always excluded from preparation and AI Assistant context. Team themes remain planned.
 
 ---
 
@@ -719,13 +715,13 @@ The `record_edits` log captures coach changes. A future edit-rate display must n
 
 | Time | What to show |
 |---|---|
-| 0:00 to 0:30 | **Problem.** Coaches lose track of who was told what. Show the dashboard with open and overdue items. |
-| 0:30 to 1:45 | **Core flow.** Create a group meeting with two receivers. Paste the tricky note (nickname, jersey number, group task, ankle mention). Click Extract. |
-| 1:45 to 2:30 | **Review.** Point out source text next to each record, the confidence colors, "before Friday → Fri, Nov 20" resolved in code, the WR task fanned out to both players, and the sensitive tag on the ankle record. Fix one field, then approve. |
-| 2:30 to 3:15 | **Follow-up.** Open Jay's timeline and the overdue list. Show "players needing attention". |
-| 3:15 to 4:00 | **Level 2.** Ask "What did I tell Marcus about route running?" and show the answer with meeting-date citations. Start a streamed prep brief. |
-| 4:00 to 4:45 | **Level 3 and rigor.** Show the accuracy test results and the live "AI field accuracy" stat from edits. Optionally upload a handwritten note photo or export the `.ics` file. |
-| 4:45 to 5:00 | **Close.** Guardrails: code does the math, coach approves everything, no invented facts, synthetic data only. |
+| 0:00 to 0:30 | **Problem.** Show the dashboard: saved coaching conversations and open/overdue actions. |
+| 0:30 to 1:45 | **Core flow.** Load the individual Avery quarterback sample. Extract in Live, inspect player attribution and exact source quotations, and edit one field. |
+| 1:45 to 2:30 | **Approval.** Show that save requires approval, then approve and save. Open Avery's timeline and its original source note. |
+| 2:30 to 3:15 | **Follow-up.** Open the Action board, filter by player/status, complete an action, then reopen it. |
+| 3:15 to 4:15 | **Level 2 assistant.** Use Jordan's seeded records. Ask “What did I tell Jordan about coverage?” in Live. Open a date citation and its timeline record. Explain that only filtered approved records were sent. |
+| 4:15 to 4:45 | **Second Aivana feature.** Start Jordan's streamed preparation brief from his timeline. |
+| 4:45 to 5:00 | **Close.** Coach approval, exact evidence, code-computed dates/counts, synthetic data, and the organizer-pack validation limitation. |
 
 Backup plan: if the network or Aivana is down, show a saved extraction from a previous run (clearly labeled as recorded) and the manual entry path.
 
@@ -751,9 +747,9 @@ Backup plan: if the network or Aivana is down, show a saved extraction from a pr
 
 | Status | Item | Level |
 |---|---|---|
-| Implemented; full browser/organizer-data QA pending | Meeting form, structured extraction, source highlighting, manual/edit/remove/approve, shared SQLite, timelines, open/overdue actions | 1 |
+| Implemented; live individual browser flow passed; organizer-data QA pending | Meeting form, structured extraction, source highlighting, manual/edit/remove/approve, shared SQLite, timelines, open/overdue actions | 1 |
 | Implemented; live spot checks passed | Confidence/unmatched flags, attendee name/nickname/jersey matching, Python deadlines, group/team expansion, bounded correction, edit audit | 1 |
-| Planned | Question box with filtered records and citations | 2 |
+| Implemented; one real HTTP answer checked, browser QA pending | Single-player AI Assistant with filtered records and date/source links | 2 |
 | Implemented; live stream checked | Streamed one-on-one prep brief from approved non-sensitive context | 2 |
 | Planned | Players needing attention (computed in code) | 2 |
 | Stretch | Handwritten note photos | 3 |
@@ -771,8 +767,8 @@ Backup plan: if the network or Aivana is down, show a saved extraction from a pr
 | Criterion (points) | Where this project addresses it |
 |---|---|
 | Core functionality (30) | Section 2, Level 1: full note → extraction → review → save → timeline → action items flow on the data pack. |
-| Use of Aivana (20) | Sections 6 and 8: strict JSON Schema, streaming prep brief, image input, `max_tokens`, no calculations left to the model. |
-| Depth (15) | Level 2 question box, prep brief, attention list; Level 3 handwriting, `.ics`, themes, accuracy test. |
+| Use of Aivana (20) | Sections 6 and 8: strict JSON Schema for extraction/assistant, streaming prep brief, `max_tokens`, no calculations left to the model. |
+| Depth (15) | Implemented Level 2 single-player assistant and streamed prep brief. Attention list and Level 3 features remain planned. |
 | Reliability and data handling (15) | Sections 9 and 12: validation loop, roster checks, error handling for 401/402/429/502, coach approval, no invented facts. |
 | Usability (10) | Side-by-side review with highlighted source text, confidence colors, dropdowns for unmatched players. |
 | Demo and documentation (10) | Section 15 demo script; this README covers running the app, Aivana features, and known limits; key kept out of the repo. |
@@ -785,6 +781,7 @@ Backup plan: if the network or Aivana is down, show a saved extraction from a pr
 backend/
   main.py                 # FastAPI routes, bounded corrective extraction, prep SSE
   aivana.py               # Server-side HTTP/SSE adapter
+  assistant.py            # Filtered retrieval and citation validation
   config.py               # Explicit private backend/.env loading
   core.py                 # Approved SQLite meetings, draft runs, field edit audit
   extraction_schema.py    # Provider-compatible structured contract
