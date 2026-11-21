@@ -4,13 +4,13 @@ A football coaching notebook that turns meeting notes into source-backed, coach-
 
 Built by **picInfiniti — Siavash and Salma** for **Project A: Coach Meeting Tracker**, 2026 BGSU Hackathon. All application players and coaching records are fictional.
 
-**Implemented:** Level 1 core, all three Level 2 options, and three Level 3 options: calendar export, voice dictation and a known-answer development benchmark. The workspace also includes a football Strategy room. Implementation and verification are distinguished below; no general AI accuracy score is claimed.
+**Implemented:** Level 1 core, all three Level 2 options, and four Level 3 code paths: photo/handwriting transcription, calendar export, voice dictation and a known-answer development benchmark. The workspace also includes a notebook Home, local Schedule, Film room and football Strategy room. Implementation and verification are distinguished below; no general AI accuracy score is claimed.
 
-[Quick start](#quick-start) · [Coaching workflow](#coaching-workflow) · [Feature coverage](#feature-coverage) · [Verification](#verification) · [Accuracy test](#extraction-accuracy-test-known-answer-development-benchmark) · [Limitations](#limitations) · [Demo](#five-minute-demo) · [Technical reference](docs/technical-reference.md)
+[Quick start](#quick-start) · [Coaching workflow](#coaching-workflow) · [Feature coverage](#feature-coverage) · [Verification](#verification) · [Accuracy test](#extraction-accuracy-test-known-answer-development-benchmark) · [Limitations](#limitations) · [Demo](#three-minute-demo) · [Technical reference](docs/technical-reference.md)
 
 ## Quick start
 
-Run commands from this repository, `bgsu-hackathon-2026`. Requirements: Python 3.10+ and Node.js 20.19+ or 22.12+.
+Run commands from this repository, `bgsu-hackathon-2026`. Requirements: Python 3.10+ and Node.js 20.19+ or 22.12+ (see `frontend/package.json` for the exact supported ranges).
 
 ### 1. Start the backend
 
@@ -50,13 +50,14 @@ Demo makes no Aivana calls. Switching modes does not reset records or completion
 
 | Setting | Purpose |
 |---|---|
-| `AIVANA_API_KEY` | Backend-only key for Live extraction, assistant and preparation. |
+| `AIVANA_API_KEY` | Backend-only key for Live extraction, assistant, preparation, image transcription and note/film recaps. |
 | `COACH_DB_PATH` | SQLite location; defaults to ignored `backend/coach.sqlite3`. |
 | `COACH_ENV_FILE` | Optional explicit environment-file override, useful for isolated checks. |
 
 The backend loads `backend/.env`; exported variables take precedence. Restart after changing the key. Health: <http://127.0.0.1:8001/api/health>. API docs: <http://127.0.0.1:8001/docs>. Health reports key presence, not whether Aivana accepts it.
 
 - **Cannot connect:** confirm both servers are running on ports 8001 and 5174. Vite proxies `/api` to the backend.
+- **A feature returns 404:** check the running backend’s `/docs` for its routes and restart it from this checkout if it is stale. A successful health response alone does not prove newer routes are loaded.
 - **Live unavailable:** check backend configuration and the displayed error. Manual entry remains available.
 - **403 from Aivana:** this can mean a workspace limit as well as permissions. This workspace has a 2048-token extraction output cap.
 - **Incomplete extraction:** shorten the note and retry deliberately. Truncated output is rejected, not saved as a partial extraction.
@@ -64,7 +65,7 @@ The backend loads `backend/.env`; exported variables take precedence. Restart af
 
 ## Coaching workflow
 
-1. **Create a meeting.** Choose Individual, Group or Full team, a date and roster attendees. Type, paste or dictate the conversation.
+1. **Capture a note or create a meeting.** Home opens the notebook editor. Save a personal note, then use **Review actions** to enter the meeting approval flow; or use **New meeting** directly. Choose Individual, Group or Full team, a date and roster attendees. Type, paste, dictate or explicitly transcribe an image.
 2. **Extract and review.** Aivana proposes player actions, deadlines, praise/improvement and skill/topic categories. Inspect the supporting source text; edit, remove or add records. Unresolved players and invalid quotes block saving.
 3. **Approve and save.** Explicit coach approval saves records to SQLite. Conversations without extractable feedback/tasks can instead be reviewed and saved as original notes.
 4. **Follow up.** Open a player's compact timeline or Actions. Complete/reopen assignments, inspect source notes, and identify open or overdue work. Shared assignments retain independent player completion controls.
@@ -72,9 +73,11 @@ The backend loads `backend/.env`; exported variables take precedence. Restart af
 
 **Meetings** uses the calendar design adapted from `coach-dashboard-redesign`: compact Monday-first Month/Week views, Day and Year views, a year/month/day picker, and a deadline visibility toggle. Month remains the default; List, type-colored meeting chips, filters and the small calendar/day agenda stay available. Search/Filters sit on the left and type chips on the right; a selected date appears beside the saved-meeting count. Year dates open Day, and year month headings open Month. List uses compact meeting rows, the same collapsed Filters control, and a toolbar with view switches and sorting. Saved future dates are notebook entries; they do not send invitations or schedule timed appointments.
 
-**Home and Overview.** Home imports the redesign branch’s notebook page: notebooks/folders and recent notes on the left, its note editor in the center, and mini-calendar/Next up/Needs attention on the right. The editor has Type/Pen/Photo/Voice, formatting, versions/replay, recap, speaker labels and Playboard. Save note stores a notebook note; Review actions explicitly copies it into the existing attendee/extraction/coach-approval flow. Linked notes open their existing approved meeting on a second send. Home notes and drawings stay outside assistant and preparation context until meeting records are explicitly approved. The original Overview dashboard is preserved internally and hidden from the sidebar. The two editors retain separate drafts.
+**Home and Overview.** Home is the default page and uses a three-column notebook: notebooks/folders and recent notes on the left, its note editor in the center, and mini-calendar/Next up/Needs attention on the right. The editor has Type/Pen/Photo/Voice, formatting, versions/replay, recap, speaker labels and Playboard. Live image transcription and recaps require explicit coach actions; there is no automatic voice clean-up call. Save note stores a notebook note; Review actions explicitly copies it into the existing attendee/extraction/coach-approval flow. Linked notes open their existing approved meeting on a second send. Home notes and drawings stay outside assistant and preparation context until meeting records are explicitly approved. The original Overview dashboard is preserved internally and hidden from the sidebar. The two editors retain separate drafts.
 
-**Film room.** Imported from `coach-dashboard-redesign` with Films, Cut-ups & Teach list, Film packs and Playbook tabs. Add local video (up to 20 GB) or a supported YouTube/Vimeo/Hudl/Drive link. Uploaded playable formats and YouTube/Vimeo support embedded playback; restricted providers open externally with manual timestamp references. Add notes at a time, tag players, make clips, enter coach grades, assemble cut-ups/teaching lists and annotate frames with Playboard. Film observations and assigned breakdowns appear in Home’s existing panels.
+**Schedule.** Select a day in Home’s mini-calendar to open the local schedule. It combines saved meetings and eligible action deadlines with coach-created events and to-dos, including recurring events. Schedule entries are separate from approved meeting records; creating an event does not send invitations or create extracted player feedback.
+
+**Film room.** Includes Films, Cut-ups & Teach list, Film packs and Playbook tabs. Add local video (up to 20 GB) or a supported YouTube/Vimeo/Hudl/Drive link. Uploaded playable formats and YouTube/Vimeo support embedded playback; restricted providers open externally with manual timestamp references. Add notes at a time, tag players, make clips, enter coach grades, assemble cut-ups/teaching lists and annotate frames with Playboard. Film observations and assigned breakdowns appear in Home’s existing panels.
 
 **Create action** creates a draft in the existing meeting review screen. Coach approval is required; source film-note IDs/tags survive save, source/player changes block approval, and sensitive film tasks remain hidden/excluded by existing sensitive-record handling. Recap reads only the coach’s written film notes, never video/audio; Demo uses code and Live explicitly calls Aivana. Local `/pack/<token>` pages show only selected pack content and support expiry/revocation. No hosting, messages or publication are performed by this integration. Existing assistant behavior is retained; branch-only film assistant commands are not enabled. Restart FastAPI unless running with `--reload`.
 
@@ -83,7 +86,7 @@ Film verification: backend route/model checks and mocked DOM checks pass, includ
 
 **Header and help.** The header shows the current page, date, Demo/Live mode and an **Ask Aivana** button. Ask opens a side chat with Individual/Group/Team selection, cited answers and timeline links. The chat’s Voice to text button appends finalized speech to your question; stop and review it before pressing Send. Browser speech support and microphone permission are required. Questions are independent; the drawer does not change records. A first-visit welcome tour introduces the workspace; closing or finishing it is remembered in this browser. Use **Tour** to replay it. Notifications appear at the bottom right.
 
-**Players** provides a searchable position/group roster and compact history. Meeting rows show action counts with orange open, red overdue and green completed-only borders. **Overview → Players to check in with** computes recency in code, with meeting-type and 7/14/30/60/90-day controls. Future dates do not count as completed check-ins.
+**Players** provides a searchable position/group roster and compact history. Meeting rows show action counts with orange open, red overdue and green completed-only borders. The retained Overview dashboard computes players-to-check-in-with in code, with meeting-type and 7/14/30/60/90-day controls. Overview is hidden from the sidebar, so these controls are currently an internal dashboard feature. Future dates do not count as completed check-ins.
 
 ## Feature coverage
 
@@ -93,7 +96,7 @@ The [official brief](sources/2026_BGSU_Hackathon_Project_Briefs.pdf), page 2, al
 |---|---|
 | **1 — Core** | Meeting type/date/attendees; structured per-player extraction; source-backed review/edit/approval; persistent records; player timelines; open/overdue actions. |
 | **2 — Standard** | Backend-filtered Individual/Group/Team questions with dated source links; streamed player preparation; code-computed players-not-met-recently list. All three official options implemented. |
-| **3 — Advanced** | Selected follow-up `.ics` export, browser voice dictation and a repeatable known-answer development benchmark. Verification and evaluation limits are listed below. |
+| **3 — Advanced** | Explicit photo/handwriting-to-text input, selected follow-up `.ics` export, browser voice dictation and a repeatable known-answer development benchmark. Live image transcription and native device interactions still need verification. |
 
 ### Calendar export
 
@@ -103,7 +106,7 @@ The file is a snapshot. Later edits/completion do not sync, and repeated imports
 
 ### Photo and freehand notes
 
-Home uses the redesign’s **Type / Pen / Photo / Voice** notebook controls. Create meeting also retains the existing **Type / Freehand / Photo / Voice** capture controls. Freehand supports pen colors, eraser, undo/redo and touch/pointer drawing. Photo accepts up to four PNG/JPEG images under 8 MB each and resizes them in the browser. **Convert handwriting to text** and **Read photos** explicitly use Live Aivana; Demo makes no transcription calls. Check/edit the returned transcript, then choose **Add checked text to note** before the usual extraction and coach approval. Failed or stale responses never append text automatically.
+Home uses the redesign’s **Type / Pen / Photo / Voice** notebook controls. Create meeting also retains the existing **Type / Freehand / Photo / Voice** capture controls. Freehand supports pen colors, eraser, undo/redo and touch/pointer drawing. Create meeting accepts up to four PNG/JPEG images under 8 MB each and resizes them in the browser; Home supports up to five photo attachments, each up to 8 MiB. **Convert handwriting to text** and **Read photos** explicitly use Live Aivana; Demo makes no transcription calls. Check/edit the returned transcript, then choose **Add checked text to note** before the usual extraction and coach approval. Failed or stale responses never append text automatically.
 
 For Create meeting, the original photos and drawing are stored atomically with an approved meeting in the separate `meeting_media` table. Reopen the meeting to inspect them. Images remain in the current draft until approval; New meeting or loading a sample clears them. Source images do not enter assistant or preparation context. As with the source note, image previews are hidden when the meeting contains hidden sensitive records. Restart the backend after this upgrade if not using `--reload`. Real Aivana image transcription and pointer/device behavior still need a live browser check; mocked provider and DOM checks pass.
 
@@ -121,14 +124,15 @@ Plan a future game or review a past one on a football field with the BGSU Falcon
 
 Save/reopen/copy boards with game date, opponent and coach notes; present them or export PNG/SVG. Revision checks reject stale-window overwrites. These are coach-authored diagrams, not automatic game analysis. Strategy storage is separate, makes no AI calls, and never supplies board notes to meeting history, assistant or preparation. Logo provenance is in [assets documentation](frontend/public/assets/README.md).
 
-**Not implemented:** photographed handwriting input, team-theme/trend analytics, action-timing analytics, an independent held-out extraction evaluation, or multi-coach authentication. These are optional future work.
+**Not implemented:** team-theme/trend analytics, action-timing analytics, an independent held-out extraction evaluation, or multi-coach authentication. These are optional future work.
 
 ## Aivana and application logic
 
 ```text
 Browser (vanilla JavaScript + Sass + Vite, :5174)
     → FastAPI (:8001) → Aivana HTTPS API
-    → SQLite: approved meetings, extraction drafts, edit audit, strategy boards
+    → SQLite: approved meetings, drafts/audit, notebook, schedule, film, boards
+    → Local files: notebook images, film uploads and Playboard images
 ```
 
 The backend uses Python's standard-library HTTP client for Aivana and `sqlite3` for storage; no AI SDK or ORM is required.
@@ -136,9 +140,11 @@ The backend uses Python's standard-library HTTP client for Aivana and `sqlite3` 
 | Aivana capability | How it is used |
 |---|---|
 | Structured output / JSON Schema | Extraction contract and source-cited assistant statements. |
-| Streaming | Preparation appears incrementally through backend SSE. |
+| Streaming | Preparation appears incrementally through backend SSE, separately from structured extraction. |
+| Image input | Explicit photo/freehand transcription produces text for coach checking before extraction. Video and audio are not sent for automatic analysis. |
+| Structured recaps | Explicit Home and Film recaps use written coach notes; Film recap never watches the video. |
 | System instructions | Record what the coach said; avoid unsupported player judgments and facts. |
-| Bounded requests | Extraction: 2048 output tokens; assistant: 1200; preparation: 650; `effort: low`. |
+| Bounded requests | Extraction/image transcription: 2048 output tokens; assistant: 1200; preparation: 650; note/film recaps: 1500; `effort: low`. |
 
 Application code resolves supported relative deadlines, matches roster references, expands group assignments, validates quotes/categories, computes counts/overdue status/recency, filters context and sorts results. The model does not perform those calculations.
 
@@ -148,7 +154,7 @@ Extraction may make **one** content-correction call. HTTP failures and truncated
 
 ## Synthetic dataset and storage
 
-The working dataset is our **team-authored football pack**, selected for this project: **25 fictional players, 19 scenarios and 86 author-written reference records**, version 2, revision 4. It is not organizer-provided data. See [dataset guide](data/synthetic/README.md).
+The working dataset is our **team-authored football pack**, selected for this project: **25 fictional players, 19 scenarios and 86 author-written reference records**, version 2, revision 4. The project owner accepted this pack as the working dataset. It is not organizer-provided data, and the supplied Project A pack described in the brief is absent from `sources/`; validation against an organizer pack is therefore not claimed. See [dataset guide](data/synthetic/README.md) and [source inventory](sources/README.md).
 
 The frontend and backend share generated `data/demo.json`. To rebuild it from `data/synthetic/`:
 
@@ -156,7 +162,9 @@ The frontend and backend share generated `data/demo.json`. To rebuild it from `d
 .venv/bin/python scripts/build_demo_data.py
 ```
 
-Restart the backend and refresh the frontend afterward. Seven versioned, pre-reviewed meetings seed SQLite idempotently. Existing records and completion states are preserved; old notes may therefore retain earlier sport terminology. Older approved browser history is imported idempotently, with SQLite winning ID conflicts. New records are saved to SQLite, not browser storage. There is no offline database fallback.
+Restart the backend and refresh the frontend afterward. Seven versioned, pre-reviewed meetings seed SQLite idempotently. Existing records and completion states are preserved; old notes may therefore retain earlier sport terminology. Older approved browser history is imported idempotently, with SQLite winning ID conflicts. New approved meeting records are saved to SQLite. Home can retain a recoverable personal draft in browser storage; mode, tour and other UI preferences also use browser storage. There is no offline database fallback.
+
+Notebook attachments, film uploads and Playboard images live beside the database in `<database-stem>_files/` (by default `backend/coach_files/`). Preserve that directory together with the SQLite database when backing up a notebook; copying only the database does not preserve those files.
 
 For a separate rehearsal notebook, set `COACH_DB_PATH` to a new local SQLite path before starting the backend. Keep the normal database intact. Use a separate browser profile without legacy localStorage history if you want to avoid importing earlier notes into that rehearsal notebook.
 
@@ -181,11 +189,13 @@ The HTTP smoke script uses a disposable database. Its default run makes no AI ca
 
 | Evidence | Scope and remaining limits |
 |---|---|
-| Automated regression checks | Backend tests, frontend tests and production build passed at the latest feature checkpoints. Covers validation, storage, approval, assistant/preparation selection, calendar serialization, strategy and mocked recognition. |
+| Automated regression checks | See the current review result below. Coverage includes validation, storage, approval, assistant/preparation selection, calendar serialization, Home/Film routes, Strategy and mocked recognition. |
 | Live Aivana checks | Individual/group/team spot checks, an individual browser flow, an assistant HTTP response and streamed preparation are documented. These are selected cases, not a general accuracy benchmark. |
 | Existing workspace browser checks | Reported complete by the project owner; distinct from agent-run checks and from features added afterward. |
 | Newer interaction checks | DOM simulations cover calendar views, selected preparation, Strategy and mocked dictation. They do not prove native browser/device behavior. |
-| Remaining focused checks | Actual microphone/permission UI; `.ics` download and calendar-client import/alerts; Strategy pointer/touch/responsive layout and PNG download; newer calendar/selected-preparation browser interactions. |
+| Remaining focused checks | Actual microphone/permission UI and Live image transcription/recaps; `.ics` download and calendar-client import/alerts; Strategy pointer/touch/responsive layout and PNG download; newer Home/Film/calendar/selected-preparation browser interactions, native film playback/embeds/frame capture and large uploads. |
+
+**Documentation review, November 21, 2026:** all **121 backend tests**, **25 frontend test files** and the production build passed. The isolated no-AI HTTP smoke check also passed health, Demo extraction, approval/save/read, completion/reopening, note-only persistence and missing-key handling. The backend suite required execution outside the sandbox because FastAPI TestClient hung inside it. These checks used mocked AI and disposable test data; no new Live AI or native browser verification was performed.
 
 Detailed evidence: [November 21 QA](docs/qa-2026-11-21.md), [historical November 20 QA](docs/qa-2026-11-20.md). Older entries describe their historical state.
 
@@ -241,22 +251,20 @@ See the [benchmark method and options](docs/extraction-benchmark.md), [full resu
 - **Network/browser dependencies.** Live needs Aivana availability/balance; voice depends on the browser speech service. Demo still needs the local backend. Calendar alerts/import behavior depends on the receiving client.
 - **No real coaching validation or independent accuracy evaluation.** The development benchmark uses author-written labels on previously used examples. The app has not been tested with real coaching staff or real player records.
 
-## Five-minute demo
+## Three-minute demo
 
 Rehearse with a separate synthetic notebook and enough Aivana balance. Pick short known notes and keep optional features brief.
 
 | Time | Demonstration |
 |---|---|
-| 0:00–0:25 | Explain the coaching follow-up problem; show Overview and the football roster. |
-| 0:25–1:35 | Create an Individual meeting using Avery's quarterback sample; extract in Live, inspect exact evidence and edit one field. |
-| 1:35–2:15 | Explicitly approve/save; open the player timeline and original source. |
-| 2:15–2:50 | Filter Actions, complete/reopen an assignment and show its deadline. |
-| 2:50–3:35 | Ask the Live assistant about Jordan's coverage records; open a dated citation. |
-| 3:35–4:20 | Select preparation sources/target and show the Aivana stream. |
-| 4:20–4:45 | Show one verified Level 3 feature: selected `.ics` export or voice dictation. |
-| 4:45–5:00 | Close with coach approval, evidence, code-computed dates/counts and the synthetic dataset. |
+| 0:00–0:15 | Explain the coaching follow-up problem; show Home and identify the fictional football roster. |
+| 0:15–1:15 | Use New meeting and Avery’s short quarterback sample; extract in Live, inspect evidence, edit one field and explicitly approve/save. |
+| 1:15–1:45 | Open the player timeline/source, then show the action deadline and Complete/Reopen. |
+| 1:45–2:10 | Ask the Live assistant a short question about saved records and open a dated citation. |
+| 2:10–2:40 | Select preparation sources/target and show the Aivana stream. |
+| 2:40–3:00 | Explain coach approval, code-computed dates/counts, synthetic data and the benchmark’s limits. |
 
-Keep Strategy as an optional follow-up demonstration. If Aivana is unavailable, use clearly labeled Demo samples or a previously captured result, explain the limitation, and show manual review/entry; do not present fixture output as a Live response.
+The latest organizer email requests a precise presentation of about three minutes and recommends one presenter; the original brief allows 3–5 minutes. Rehearse provider latency and keep Film, Strategy, image input, voice and calendar export as optional follow-ups. If Aivana is unavailable, use clearly labeled Demo samples or a previously captured result, explain the limitation, and show manual review/entry; do not present fixture output as a Live response.
 
 ## Judging rubric and submission
 
@@ -266,23 +274,32 @@ The [official brief](sources/2026_BGSU_Hackathon_Project_Briefs.pdf), page 3, de
 |---|---:|---|
 | Core functionality | 30 | Note → structured extraction → review/approval → stored timeline → open/overdue actions. |
 | Aivana use | 20 | JSON Schema, filtered source-cited answers, streamed preparation and bounded context/output. |
-| Depth | 15 | All three Level 2 options; Level 3 calendar export, voice dictation and a known-answer benchmark, subject to verification/evaluation limits above. |
+| Depth | 15 | All three Level 2 options; Level 3 image-input path, calendar export, voice dictation and a known-answer benchmark, subject to verification/evaluation limits above. |
 | Reliability/data handling | 15 | Bad-input checks, bounded correction, visible API failures, quote/roster validation and approval audit. |
 | Usability | 10 | Source-backed review, searchable roster/actions, compact history and Month/Week/Day/Year/List calendars. |
 | Demo/documentation | 10 | Setup instructions, explicit limitations, verification evidence and a timed demo. |
 
-Submission requires a repository accessible to judges, a README, synthetic application data, no committed credentials, and a working 3–5 minute presentation. Official submission deadline: **November 21, 2026, 5 PM America/New_York**; presentations begin at **5:30 PM**. Local commits alone do not establish publication, judge access or submission.
+Organizer references are indexed in [sources/README.md](sources/README.md). The [latest email](sources/email-3.md) adds submission steps to the brief:
+
+| Deadline (November 21, 2026, America/New_York) | Required team action |
+|---|---|
+| **2 PM** | Send **one email per team** to all three judges together, CC every participating team member, and include the team name, participating member names and GitHub repository link. Give the judges appropriate GitHub access. Judge contacts are in the email. |
+| **At or before 5 PM** | Submit the project, stop all changes, and have one team member acknowledge in the event’s Microsoft Teams chat that no more changes will be made. |
+| **5–5:30 PM** | Prepare the presentation; make no project changes after the freeze. |
+| **5:30 PM** | Present the working app; aim for about three minutes with one presenter under the latest email guidance. |
+
+The latest email warns that duplicate/correction submission emails and a missing freeze acknowledgment incur point deductions. The repository must include the README and synthetic application data, with no credentials or real player information. Configured repository: [PicInfiniti/bgsu-hackathon-2026](https://github.com/PicInfiniti/bgsu-hackathon-2026). Its remote URL and local commits do not establish judge access or completed submission; this documentation review does not send email, post to Teams or publish code.
 
 ## Repository guide
 
 | Path | Contents |
 |---|---|
-| `backend/` | FastAPI routes, Aivana HTTP/SSE, extraction/approval logic, preparation, assistant and separate Strategy storage. |
-| `frontend/src/` | Vanilla JavaScript, Sass, calendar views, voice dictation, `.ics` export and Strategy UI. |
+| `backend/` | FastAPI routes, Aivana HTTP/SSE, extraction/approval, assistant/preparation, notebook/schedule, Film and Strategy storage. |
+| `frontend/src/` | Vanilla JavaScript, Sass, Home notebook, Film, calendars, capture/dictation, `.ics` export and Strategy UI. |
 | `data/synthetic/` | Fictional roster, meeting scenarios, reference answers and provenance. |
 | `data/demo.json` | Generated shared application fixture. |
 | `tests/`, `frontend/test/` | Backend and frontend regression suites. |
-| `scripts/` | Fixture generation and disposable HTTP verification. |
+| `scripts/` | Fixture generation, disposable HTTP verification and extraction benchmark/replay. |
 | `docs/` | QA evidence, voice details and [technical reference](docs/technical-reference.md). |
 | `sources/` | Organizer briefs, API guide and emails; not an application player roster. |
 
