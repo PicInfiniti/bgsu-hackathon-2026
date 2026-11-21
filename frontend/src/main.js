@@ -11,6 +11,9 @@ import { meetingTypeForAttendees } from './meeting-input.js';
 import { activityForDate } from './calendar-activity.js';
 import { upcomingActions } from './upcoming.js';
 import { filterActions } from './action-board.js';
+import { assistantAnswerMarkup } from './assistant-view.js';
+import { groupRecords, meetingTypeLabel } from './shared-groups.js';
+import { actionRows } from './action-board-view.js';
 
 const $ = (s) => document.querySelector(s);
 const escape = (s = '') => String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -21,6 +24,7 @@ let current = clone(demo.samples[0]);
 let playerDetailOpen = false, playerUnitFilter = 'all';
 let extractionId = null, extractionWarnings = [], highlightedDraft = 0;
 let statusTimer = null;
+let assistantResult = null, assistantPending = false, assistantRevision = 0, assistantActionCategory = '';
 const player = (id) => demo.players.find(p => p.id === id);
 const name = (id) => player(id)?.name ?? 'Unknown player';
 const positionLabel = (p) => p.position_label ? `${p.position} · ${p.position_label}` : p.position;
@@ -31,6 +35,7 @@ const items = () => meetings.flatMap(m => m.items.map(i => ({...i, meeting:m})))
 
 const icon = (name) => {
   const paths = {
+    chat: '<path d="M21 11a8 8 0 0 1-8 8H7l-4 3V11a9 9 0 0 1 18 0Z"/><path d="M7 10h10M7 14h6"/>',
     football: '<path d="M3 21C1 11 11 1 21 3c2 10-8 20-18 18Z"/><path d="m8 16 8-8M9 11l4 4M12 8l4 4"/>',
     home: '<path d="m3 10 9-7 9 7v10H3z"/><path d="M9 20v-7h6v7"/>',
     note: '<rect x="5" y="3" width="15" height="18" rx="2"/><path d="M9 8h7M9 12h7M9 16h4M3 7h4M3 12h4M3 17h4"/>',
@@ -53,6 +58,7 @@ document.querySelector('#app').innerHTML = `
       <button data-view="meetings">${icon('note')} Meeting notes</button>
       <button data-view="players">${icon('people')} Players</button>
       <button data-view="tasks">${icon('check')} Actions <b id="nav-count"></b></button>
+      <button data-view="assistant">${icon('chat')} AI Assistant</button>
     </nav>
     <div class="sidebar-note">From the film room<br>to the next practice.<span>Make the follow-up count.</span></div>
     <div class="sidebar-bottom"><span class="team-avatar">pi</span><div>picInfiniti<small>Football Meeting Tracker</small></div></div>
@@ -61,7 +67,7 @@ document.querySelector('#app').innerHTML = `
     <header class="topbar"><div><h1>Your football workspace</h1><p>A place for every conversation. A plan for what comes next.</p></div><div class="header-actions"><button class="primary" id="new-meeting">${icon('plus')} New meeting</button><a class="profile-link" href="/login" aria-label="Open coach sign-in preview">${icon('user')}</a></div></header>
     <div id="status-toast" class="status-toast" role="status" aria-live="polite" hidden><span id="status-toast-text"></span><button class="icon-button" id="close-status-toast" aria-label="Dismiss notification">×</button></div>
     <main>
-      <div class="workspace-toolbar"><span class="workspace-date">${icon('football')} Football · Your coaching notebook</span><label class="mode-control">Extraction <select id="mode"><option value="demo">Demo · prepared samples</option><option value="live">Live · Aivana</option></select></label></div>
+      <div class="workspace-toolbar"><span class="workspace-date">${icon('football')} Football · Your coaching notebook</span><label class="mode-control">Mode <select id="mode"><option value="demo">Demo · prepared samples</option><option value="live">Live · Aivana</option></select></label></div>
       <div id="message" role="status" aria-live="polite" hidden></div>
       <section id="desk" class="view">
         <div class="overview-lead"><div><p class="eyebrow">THE COACH'S DASHBOARD</p><h2>A clear view of your team.</h2><p>Conversations captured. Next steps ready.</p></div><button class="secondary" data-view="meetings">${icon('note')} Open meeting notebook</button></div>
@@ -105,7 +111,7 @@ document.querySelector('#app').innerHTML = `
       </section>
       <section id="tasks" class="view" hidden>
         <div class="section-heading action-heading"><div><p class="eyebrow">A LITTLE FOLLOW-THROUGH</p><h2>Action board</h2><p class="action-caption">Find a follow-up. Open its title for the source and details.</p></div><label>Status<select id="task-filter"><option value="open">Open actions</option><option value="overdue">Overdue</option><option value="done">Completed</option><option value="all">All actions</option></select></label></div>
-        <div class="panel action-board"><div class="action-filters">
+        <button class="secondary assistant-action-entry" id="ask-actions" type="button">${icon('chat')} Ask about these actions</button><div class="panel action-board"><div class="action-filters">
           <label>Search<input id="task-search" type="search" placeholder="Action, player, jersey, or category"></label>
           <label>Player<select id="task-player"><option value="">All players</option>${demo.players.map(p => `<option value="${escape(p.id)}">#${p.number} ${escape(p.name)}</option>`).join('')}</select></label>
           <label>Category<select id="task-category"><option value="">All categories</option></select></label>
@@ -113,6 +119,25 @@ document.querySelector('#app').innerHTML = `
         </div><div class="action-results-bar"><p id="task-results" role="status"></p><button id="reset-task-filters" class="rail-link" type="button">Reset filters</button></div>
         <div class="action-table-wrap"><table class="action-table"><thead><tr><th scope="col">Action / source</th><th scope="col">Player</th><th scope="col">Category</th><th scope="col">Deadline</th><th scope="col">Status</th><th scope="col">Update</th></tr></thead><tbody id="task-list"></tbody></table></div></div>
         <label class="sensitive-toggle"><input id="show-sensitive-actions" type="checkbox"> Show sensitive actions</label><p id="task-hidden-note" class="sensitive-notice" hidden></p>
+      </section>
+      <section id="assistant" class="view" hidden>
+        <div class="section-heading assistant-heading"><div><p class="eyebrow">BEFORE THE NEXT CONVERSATION</p><h2 id="assistant-title" tabindex="-1">AI Assistant</h2><p>Ask about a player. Bring their documented feedback into your next meeting.</p></div><span class="assistant-scope">${icon('chat')} Your approved notebook</span></div>
+        <div class="assistant-layout">
+          <aside class="panel assistant-context"><h3>Conversation context</h3><label>Player<select id="assistant-player"><option value="">Choose a player…</option>${demo.players.map(p => `<option value="${p.id}">#${p.number} ${escape(p.name)}</option>`).join('')}</select></label>
+            <label>Skill<select id="assistant-skill"><option value="">All skills</option>${optionList(categories.skills,'')}</select></label>
+            <label>Topic<select id="assistant-topic"><option value="">All topics</option>${optionList(categories.topics,'')}</select></label>
+            <div class="form-row"><label>From<input id="assistant-start" type="date"></label><label>Through<input id="assistant-end" type="date"></label></div>
+            <label>Action status<select id="assistant-status"><option value="all">All statuses</option><option value="open">Open actions</option><option value="overdue">Overdue actions</option><option value="done">Completed actions</option></select></label>
+            <label class="assistant-check"><input id="assistant-actions" type="checkbox"> Actions only</label>
+            <label>Record search<input id="assistant-search" type="search" maxlength="300" placeholder="Optional words from a record"></label>
+            <p id="assistant-inherited-category" class="assistant-privacy" hidden></p><button id="assistant-reset" class="rail-link" type="button">Reset filters</button><p class="assistant-privacy">One player at a time. Uses approved, non-sensitive records only. Group and team feedback is included when it applies to this player.</p>
+          </aside>
+          <div class="panel assistant-chat"><div class="assistant-chat-top"><span>${icon('chat')} A little context. A better conversation.</span><button id="assistant-clear" class="rail-link" type="button">Clear answer</button></div>
+            <div id="assistant-answer" class="assistant-answer" aria-live="polite" aria-busy="false"><div class="assistant-welcome"><span class="assistant-emblem">${icon('chat')}</span><h3>What would you like to revisit?</h3><p>Choose a player, then ask about past feedback, actions, or your next meeting. Answers link back to saved records.</p></div></div>
+            <div class="assistant-prompts"><button type="button" data-assistant-prompt="Prepare my next meeting.">Prepare my next meeting</button><button type="button" data-assistant-prompt="Summarize past feedback.">Summarize past feedback</button><button type="button" data-assistant-prompt="Which actions need follow-up?" data-assistant-actions>Review open actions</button></div>
+            <form id="assistant-form"><label for="assistant-question">Your question</label><div class="assistant-composer"><textarea id="assistant-question" rows="2" maxlength="800" required placeholder="What did I tell this player about footwork?"></textarea><button id="assistant-send" class="primary" type="submit">Ask assistant</button></div><p id="assistant-mode-note">Demo shows matching saved excerpts. Switch to Live for an Aivana answer.</p><p id="assistant-error" class="assistant-error" role="alert" hidden></p></form>
+          </div>
+        </div>
       </section>
       <footer><span>FALCON FOLLOW-UP <b> / </b> picInfiniti</span><span>Every conversation deserves a next step. · Synthetic data only</span></footer>
     </main>
@@ -164,7 +189,7 @@ function loadSample(id) {
   renderReview();
 }
 function invalidate() { draft = []; extractionId = null; extractionWarnings = []; renderReview(); }
-const optionList = (values, selected) => values.map(v => `<option value="${escape(v)}" ${v === selected ? 'selected' : ''}>${escape(v)}</option>`).join('');
+function optionList(values, selected) { return values.map(v => `<option value="${escape(v)}" ${v === selected ? 'selected' : ''}>${escape(v)}</option>`).join(''); }
 function renderReview() {
   const review = $('#review');
   const warnings = extractionWarnings.length ? `<div class="extraction-warnings" role="status"><strong>Extraction notes</strong><ul>${extractionWarnings.map(w => `<li>${escape(w)}</li>`).join('')}</ul></div>` : '';
@@ -174,11 +199,21 @@ function renderReview() {
   }
   const blocked = draft.some(i => reviewIssues(i, current).length);
   highlightedDraft = Math.min(highlightedDraft, draft.length-1);
-  review.innerHTML = `${warnings}<div class="review-summary"><strong>${draft.length} records to review</strong><span>${origin === 'demo' ? 'Prepared samples · not AI' : origin === 'manual' ? 'Manual records' : 'Aivana drafts · verify all fields'}</span></div><div class="review-source-preview"><strong>Original note · highlighted evidence</strong><div id="highlighted-source">${highlightSource(current.note, draft[highlightedDraft]?.quote)}</div></div><div class="draft-list">${draft.map((i,n) => {
+  const expanded = new Set([...review.querySelectorAll('[data-review-group][open]')].map(el => el.dataset.reviewGroup));
+  const cards = draft.map((i,n) => {
     const issues = reviewIssues(i,current);
     const shared = i.scope === 'team' && i.player_ids?.length && i.kind !== 'action';
-    return `<article class="draft-item confidence-${i.confidence || 'medium'}"><div class="draft-flags"><span class="confidence-badge ${i.confidence || 'medium'}">${escape(i.confidence || 'medium')} confidence</span>${!i.player_id && !shared ? '<span class="badge overdue">Unmatched player</span>' : ''}${i.sensitive ? '<span class="badge sensitive">Sensitive topic</span>' : ''}${i.group_record_id ? '<span class="badge">Shared instruction</span>' : ''}</div><div class="form-row"><label>Player<select data-index="${n}" data-field="player_id"><option value="" ${!i.player_id && !shared ? 'selected' : ''}>Choose attendee…</option>${current.meeting_type === 'team' && i.kind !== 'action' ? `<option value="__team__" ${shared ? 'selected' : ''}>Whole team feedback</option>` : ''}${current.attendees.map(id => `<option value="${id}" ${id === i.player_id ? 'selected' : ''}>${escape(name(id))}</option>`).join('')}</select></label><label>Record type<select data-index="${n}" data-field="kind">${optionList(['action','praise','improvement','observation'], i.kind)}</select></label></div><label>Meeting topic<select data-index="${n}" data-field="topic">${optionList(categories.topics,i.topic)}</select></label><label>Coach's record<textarea rows="2" data-index="${n}" data-field="text" maxlength="1000">${escape(i.text)}</textarea></label><div class="form-row"><label>Football skill<select data-index="${n}" data-field="skill">${optionList(categories.skills,i.skill)}</select></label><label>Due date <small>(actions only)</small><input type="date" data-index="${n}" data-field="due_date" value="${escape(i.due_date || '')}" ${i.kind !== 'action' ? 'disabled' : ''}></label></div>${i.deadline_text ? `<p class="deadline-evidence">Original deadline: “${escape(i.deadline_text)}” · ${i.due_date ? `Resolved: ${escape(i.due_date)}` : 'No definite date — coach review needed'}</p>` : ''}<label>Verbatim source quote<textarea rows="2" data-index="${n}" data-field="quote" maxlength="2000">${escape(i.quote)}</textarea></label><button class="text-button" data-highlight="${n}" type="button">Highlight in original note</button>${i.mention ? `<p class="match-evidence">Mention: ${escape(i.mention)} · ${escape(i.match_method || 'unmatched')}</p>` : ''}${i.warnings?.length ? `<details class="draft-extraction-notes"><summary>Extraction notes</summary><ul>${i.warnings.map(w => `<li>${escape(w)}</li>`).join('')}</ul></details>` : ''}<div class="record-issues" data-issues="${n}">${issues.map(issue => `<p>${escape(issue)}</p>`).join('')}</div><button class="text-button remove" data-remove="${n}" type="button">Remove record</button></article>`;
-  }).join('')}</div><button class="secondary full" data-add-record type="button">Add another record</button><div class="review-footer"><label class="approval"><input id="approved" type="checkbox" ${blocked ? 'disabled' : ''}>I reviewed the player, meaning, source, deadline, and warnings for every record.</label><button id="save" class="primary full" disabled>Approve & save meeting</button></div>`;
+    return `<article class="draft-item confidence-${i.confidence || 'medium'}"><p class="record-origin">${escape(meetingTypeLabel(current.meeting_type))} · ${escape(current.title)}</p><div class="draft-flags"><span class="confidence-badge ${i.confidence || 'medium'}">${escape(i.confidence || 'medium')} confidence</span>${!i.player_id && !shared ? '<span class="badge overdue">Unmatched player</span>' : ''}${i.sensitive ? '<span class="badge sensitive">Sensitive topic</span>' : ''}${i.group_record_id ? '<span class="badge">Shared instruction</span>' : ''}</div><div class="form-row"><label>Player<select data-index="${n}" data-field="player_id"><option value="" ${!i.player_id && !shared ? 'selected' : ''}>Choose attendee…</option>${current.meeting_type === 'team' && i.kind !== 'action' ? `<option value="__team__" ${shared ? 'selected' : ''}>Whole team feedback</option>` : ''}${current.attendees.map(id => `<option value="${id}" ${id === i.player_id ? 'selected' : ''}>${escape(name(id))}</option>`).join('')}</select></label><label>Record type<select data-index="${n}" data-field="kind">${optionList(['action','praise','improvement','observation'], i.kind)}</select></label></div><label>Meeting topic<select data-index="${n}" data-field="topic">${optionList(categories.topics,i.topic)}</select></label><label>Coach's record<textarea rows="2" data-index="${n}" data-field="text" maxlength="1000">${escape(i.text)}</textarea></label><div class="form-row"><label>Football skill<select data-index="${n}" data-field="skill">${optionList(categories.skills,i.skill)}</select></label><label>Due date <small>(actions only)</small><input type="date" data-index="${n}" data-field="due_date" value="${escape(i.due_date || '')}" ${i.kind !== 'action' ? 'disabled' : ''}></label></div>${i.deadline_text ? `<p class="deadline-evidence">Original deadline: “${escape(i.deadline_text)}” · ${i.due_date ? `Resolved: ${escape(i.due_date)}` : 'No definite date — coach review needed'}</p>` : ''}<label>Verbatim source quote<textarea rows="2" data-index="${n}" data-field="quote" maxlength="2000">${escape(i.quote)}</textarea></label><button class="text-button" data-highlight="${n}" type="button">Highlight in original note</button>${i.mention ? `<p class="match-evidence">Mention: ${escape(i.mention)} · ${escape(i.match_method || 'unmatched')}</p>` : ''}${i.warnings?.length ? `<details class="draft-extraction-notes"><summary>Extraction notes</summary><ul>${i.warnings.map(w => `<li>${escape(w)}</li>`).join('')}</ul></details>` : ''}<div class="record-issues" data-issues="${n}">${issues.map(issue => `<p>${escape(issue)}</p>`).join('')}</div><button class="text-button remove" data-remove="${n}" type="button">Remove record</button></article>`;
+  });
+  const groups = groupRecords(draft);
+  const reviewCards = groups.map(group => {
+    if (!group.shared) return group.indexes.map(n => cards[n]).join('');
+    const i = group.item, key = `${i.display_group.id}-${i.player_id}`;
+    const issues = group.members.some(item => reviewIssues(item,current).length);
+    const warnings = group.members.filter(item => item.confidence === 'low' || item.warnings?.length).length;
+    return `<article class="shared-review-card"><div class="shared-card-heading"><div><span class="record-origin">${escape(meetingTypeLabel(current.meeting_type))}</span><h3>Shared ${escape(i.kind)} · ${escape(group.label)}</h3></div><span class="badge">${group.members.length} players</span></div><div class="draft-flags">${warnings ? `<span class="badge overdue">${warnings} player record${warnings === 1 ? '' : 's'} need warning review</span>` : ''}${i.sensitive ? '<span class="badge sensitive">Sensitive topic</span>' : ''}</div><p class="shared-player-names">${group.members.map(item => escape(name(item.player_id))).join(' · ')}</p><p class="shared-record-text">${escape(i.text)}</p><p class="shared-record-meta">${escape(i.skill)}${i.topic ? ` · ${escape(i.topic)}` : ''}${i.due_date ? ` · Due ${escape(i.due_date)}` : ''}</p><blockquote>${escape(i.quote)}</blockquote><button class="text-button" type="button" data-highlight="${group.indexes[0]}">Highlight in original note</button><p class="shared-review-hint">One shared statement, ${group.members.length} player records. Expand to review confidence, warnings, or change an individual player's version.</p><details data-review-group="${escape(key)}" ${issues || warnings || expanded.has(key) ? 'open' : ''}><summary>Review / edit each player${issues ? ' · Corrections required' : ''}</summary>${group.indexes.map(n => cards[n]).join('')}<button class="secondary compact" type="button" data-regroup-review>Update shared cards</button></details></article>`;
+  }).join('');
+  review.innerHTML = `${warnings}<div class="review-summary"><strong>${groups.length} card${groups.length === 1 ? '' : 's'} · ${draft.length} player records to review</strong><span>${origin === 'demo' ? 'Prepared samples · not AI' : origin === 'manual' ? 'Manual records' : 'Aivana drafts · verify all fields'}</span></div><div class="review-source-preview"><strong>Original note · highlighted evidence</strong><div id="highlighted-source">${highlightSource(current.note, draft[highlightedDraft]?.quote)}</div></div><div class="draft-list">${reviewCards}</div><button class="secondary full" data-add-record type="button">Add another record</button><div class="review-footer"><label class="approval"><input id="approved" type="checkbox" ${blocked ? 'disabled' : ''}>I reviewed the player, meaning, source, deadline, and warnings for every record.</label><button id="save" class="primary full" disabled>Approve & save meeting</button></div>`;
 }
 function updateReviewReadiness() {
   draft.forEach((item,n) => { const el = $(`[data-issues="${n}"]`); if (el) el.innerHTML = reviewIssues(item,current).map(issue => `<p>${escape(issue)}</p>`).join(''); });
@@ -187,7 +222,7 @@ function updateReviewReadiness() {
 function statusBadge(i) { return i.completed ? '<span class="badge completed">Complete</span>' : overdue(i) ? '<span class="badge overdue">Overdue</span>' : `<span class="badge ${i.kind}">${i.kind === 'action' ? 'Open action' : i.kind}</span>`; }
 function recordMarkup(i, m, showSensitive = false) {
   const sourceNote = m.items.some(item => item.sensitive) && !showSensitive ? 'Full note contains sensitive content. Enable sensitive records to view it; the supporting excerpt is shown above.' : m.note;
-  return `<article class="record"><div class="record-top">${statusBadge(i)}<span>${escape(i.skill)}</span>${i.topic ? `<span class="record-topic">${escape(i.topic)}</span>` : ''}${i.sensitive ? '<span class="badge sensitive">Sensitive</span>' : ''}${m.id.startsWith('m-seed-') ? '<span class="badge">Earlier practice pack</span>' : ''}</div><h4>${escape(i.text)}</h4><p class="record-meta">${i.player_ids?.length ? 'Whole team' : escape(name(i.player_id))} · ${escape(m.date)}${i.due_date ? ` · Due ${escape(i.due_date)}` : ''}</p><details><summary>Source meeting note</summary><blockquote>${escape(i.quote)}</blockquote><p>${escape(sourceNote)}</p></details>${i.kind === 'action' ? `<button class="secondary compact" data-meeting="${escape(m.id)}" data-item="${escape(i.id)}">${i.completed?'Reopen action':'Mark complete'}</button>` : ''}</article>`;
+  return `<article class="record" id="record-${escape(m.id)}-${escape(i.id)}" tabindex="-1"><div class="record-top">${statusBadge(i)}<span>${escape(i.skill)}</span>${i.topic ? `<span class="record-topic">${escape(i.topic)}</span>` : ''}${i.sensitive ? '<span class="badge sensitive">Sensitive</span>' : ''}${m.id.startsWith('m-seed-') ? '<span class="badge">Earlier practice pack</span>' : ''}</div><h4>${escape(i.text)}</h4><p class="record-origin">${escape(meetingTypeLabel(m.meeting_type))} · ${escape(m.title)}</p><p class="record-meta">${i.player_ids?.length ? 'Whole team' : escape(name(i.player_id))} · ${escape(m.date)}${i.due_date ? ` · Due ${escape(i.due_date)}` : ''}</p><details><summary>Source meeting note</summary><blockquote>${escape(i.quote)}</blockquote><p>${escape(sourceNote)}</p></details>${i.kind === 'action' ? `<button class="secondary compact" data-meeting="${escape(m.id)}" data-item="${escape(i.id)}">${i.completed?'Reopen action':'Mark complete'}</button>` : ''}</article>`;
 }
 const initials = (p) => p.name.split(' ').map(part => part[0]).slice(0,2).join('');
 function renderPlayerDirectory() {
@@ -223,6 +258,8 @@ $('#player-unit-tabs').addEventListener('click', e => {
 });
 
 function render() {
+  $('#assistant-mode-note').textContent = mode === 'demo' ? 'Demo shows matching saved excerpts. Switch to Live for an Aivana answer.' : 'Live · Aivana answers from matching records. Questions are not saved or sent with later questions.';
+  $('#assistant-send').disabled = assistantPending || !connected;
   const all = items(), actions = all.filter(i => i.kind === 'action'), open = actions.filter(i => !i.completed);
   $('#meeting-count').textContent = meetings.length; $('#open-count').textContent = open.length; $('#overdue-count').textContent = open.filter(overdue).length;
   $('#players-count').textContent = new Set(meetings.flatMap(m => m.attendees)).size; $('#nav-count').textContent = open.length;
@@ -234,7 +271,7 @@ function render() {
   renderPlanning();
   renderOverview();
   const p = player(selectedPlayer);
-  $('#player-heading').innerHTML = `<div class="player-profile"><span class="avatar large">${p.number}</span><div><p class="eyebrow">${escape(positionLabel(p))}</p><h2>${escape(p.name)}</h2><p>Approved feedback and follow-up, in context.</p></div></div>`;
+  $('#player-heading').innerHTML = `<div class="player-profile"><span class="avatar large">${p.number}</span><div><p class="eyebrow">${escape(positionLabel(p))}</p><h2>${escape(p.name)}</h2><p>Approved feedback and follow-up, in context.</p><button class="secondary compact" type="button" data-ask-player="${p.id}">${icon('chat')} Ask about this player</button></div></div>`;
   const playerRecords = all.filter(i => appliesTo(i, selectedPlayer));
   const hiddenCount = playerRecords.filter(i => i.sensitive && !$('#show-sensitive').checked).length;
   const history = playerRecords.filter(i => !i.sensitive || $('#show-sensitive').checked).sort((a,b) => b.meeting.date.localeCompare(a.meeting.date));
@@ -253,13 +290,11 @@ function renderActionBoard(actions = items().filter(i => i.kind === 'action')) {
   const hiddenActions = filterActions(actions, demo.players, {...options, showSensitive:true}).filter(i => i.sensitive && !options.showSensitive).length;
   $('#task-hidden-note').hidden = !hiddenActions;
   $('#task-hidden-note').textContent = `${hiddenActions} sensitive action${hiddenActions === 1 ? '' : 's'} hidden in this view.`;
-  $('#task-results').textContent = `${filtered.length} action${filtered.length === 1 ? '' : 's'} shown · ${available.filter(i => !i.completed).length} open · ${available.filter(overdue).length} overdue`;
-  $('#task-list').innerHTML = filtered.map(i => {
-    const m = i.meeting;
-    const sourceNote = m.items.some(item => item.sensitive) && !options.showSensitive ? 'Full note contains sensitive content. Enable sensitive actions to view it.' : m.note;
-    const ids = i.player_ids?.length ? i.player_ids : [i.player_id];
-    return `<tr><td class="action-description"><details><summary>${escape(i.text)}</summary><div class="action-source"><strong>${escape(m.title)}</strong><p>Meeting: ${escape(m.date)}${m.id.startsWith('m-seed-') ? ' · Earlier practice pack' : ''}</p><blockquote>${escape(i.quote)}</blockquote><details><summary>Full meeting note</summary><p class="action-note">${escape(sourceNote)}</p></details></div></details>${i.sensitive ? '<span class="badge sensitive">Sensitive</span>' : ''}</td><td><div class="action-players">${ids.map(id => `<button class="action-player-link" data-player="${escape(id)}">${escape(name(id))}<small>#${escape(player(id)?.number ?? '')} · ${escape(player(id)?.position ?? '')}</small></button>`).join('')}</div></td><td><span class="action-category">${escape(i.skill || 'Uncategorized')}</span>${i.topic && i.topic !== i.skill ? `<small class="action-topic">${escape(i.topic)}</small>` : ''}</td><td class="action-deadline ${overdue(i) ? 'late' : ''}">${i.due_date ? `<time datetime="${escape(i.due_date)}">${escape(new Date(i.due_date + 'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}))}</time>${i.due_date === today() && !i.completed ? '<small>Today</small>' : ''}` : '<span class="undated">No deadline</span>'}</td><td>${statusBadge(i)}</td><td><button class="secondary compact" data-meeting="${escape(m.id)}" data-item="${escape(i.id)}" aria-label="${i.completed ? 'Reopen' : 'Complete'} action: ${escape(i.text)}" ${busy ? 'disabled' : ''}>${i.completed ? 'Reopen' : 'Complete'}</button></td></tr>`;
-  }).join('') || '<tr><td colspan="6" class="empty">No matching actions. Try another search or reset the filters.</td></tr>';
+  const expanded = new Set([...$('#task-list').querySelectorAll('[data-action-key]')].filter(row => row.querySelector('details')?.open).map(row => row.dataset.actionKey));
+  const {rows, count} = actionRows(filtered, available, demo.players, {today:today(), busy, showSensitive:options.showSensitive});
+  $('#task-results').textContent = `${count} assignment${count === 1 ? '' : 's'} shown · ${filtered.length} matching player action${filtered.length === 1 ? '' : 's'} · ${available.filter(i => !i.completed).length} open · ${available.filter(overdue).length} overdue`;
+  $('#task-list').innerHTML = rows;
+  $('#task-list').querySelectorAll('[data-action-key]').forEach(row => { if (expanded.has(row.dataset.actionKey)) row.querySelector('details').open = true; });
 }
 function switchView(next) {
   view = next;
@@ -369,10 +404,13 @@ $('#review').addEventListener('input', e => {
     if (field === 'kind' && i.kind === 'action' && i.player_ids) { i.player_id = null; delete i.player_ids; i.scope = 'player'; }
     if (['kind','player_id','topic'].includes(field)) renderReview();
     if (field === 'quote') $('#highlighted-source').innerHTML = highlightSource(current.note,i.quote);
+    const sharedCard = e.target.closest('.shared-review-card');
+    if (sharedCard) sharedCard.querySelector('.shared-review-hint').textContent = 'Individual edits below are the values that will be saved. Use Update shared cards to separate changed versions.';
     updateReviewReadiness();
   }
 });
 $('#review').addEventListener('click', async e => {
+  if (e.target.closest('[data-regroup-review]')) { renderReview(); return; }
   const add = e.target.closest('[data-add-record]');
   if (add && !busy) {
     try { capture(); validMeeting(current); } catch (error) { notify(error.message,true); return; }
@@ -391,7 +429,7 @@ $('#review').addEventListener('click', async e => {
     const body = {...clone(current), approved:true, origin, extraction_id:extractionId, items:clone(draft)};
     busy = true; e.target.disabled = true;
     const meeting = await api('/meetings',body);
-    meetings.unshift(meeting);
+    meetings.unshift(meeting); clearAssistant();
     draft = []; extractionId = null; extractionWarnings = []; renderReview(); cancelPrep(); render(); notify('Meeting approved and saved. Its records are now in player timelines and the action board.');
   } catch (error) { notify(error.message,true); if ($('#save')) $('#save').disabled = false; }
   finally { busy = false; $('#extract').disabled = !connected; renderActionBoard(); }
@@ -418,13 +456,15 @@ document.addEventListener('click', async e => {
   if (targetPlayer) openPlayerTimeline(targetPlayer.dataset.player || targetPlayer.dataset.openPlayer);
   const selectedRow = e.target.closest('[data-select-player]');
   if (selectedRow && !targetPlayer) { selectedPlayer = selectedRow.dataset.selectPlayer; cancelPrep(); render(); if (e.detail === 0) $(`.table-player[data-select-player="${selectedPlayer}"]`)?.focus({preventScroll:true}); }
+  const expandAction = e.target.closest('[data-expand-action]');
+  if (expandAction) { const details = expandAction.closest('tr').querySelector('details'); details.open = !details.open; if (details.open) details.querySelector('.shared-action-members')?.scrollIntoView({block:'nearest',behavior:'smooth'}); }
   const action = e.target.closest('[data-item]');
   if (action && !busy) {
     try {
       action.disabled = true; busy = true;
       const meeting = meetings.find(m => m.id === action.dataset.meeting), item = meeting.items.find(i => i.id === action.dataset.item);
       const updated = await api(`/meetings/${encodeURIComponent(meeting.id)}/items/${encodeURIComponent(item.id)}`,{completed:!item.completed},'PATCH');
-      meetings = meetings.map(m => m.id === updated.id ? updated : m);
+      meetings = meetings.map(m => m.id === updated.id ? updated : m); clearAssistant();
       cancelPrep(); render(); notify('Action status updated.');
     } catch (error) { action.disabled = false; notify(error.message,true); }
     finally { busy = false; $('#extract').disabled = !connected; renderActionBoard(); }
@@ -439,6 +479,7 @@ $('#show-sensitive-actions').addEventListener('change',render);
 $('#mode').addEventListener('change', e => {
   if (busy) { e.target.value = mode; return; }
   mode = e.target.value;
+  clearAssistant();
   const url = new URL(window.location.href); url.searchParams.set('mode', mode);
   window.history.replaceState(null, '', url);
   draft = []; extractionId = null; extractionWarnings = []; cancelPrep(); renderReview(); render();
@@ -458,6 +499,95 @@ $('#prep').addEventListener('click', () => {
   prepSource.addEventListener('delta', e => { try { content += JSON.parse(e.data).text || ''; $('#prep-text').innerHTML = formatBrief(content); } catch { notify('Unreadable preparation event.',true); prepSource?.close(); $('#prep').disabled = false; } });
   prepSource.addEventListener('done', e => { const data = JSON.parse(e.data); prepSource?.close(); prepSource = null; $('#prep').disabled = false; if (data.finish_reason === 'length') notify('The brief was cut short. Treat this as an incomplete draft.',true); });
   prepSource.addEventListener('error', e => { let message = 'Preparation stream failed. Check your backend, key, balance, and connection.'; try { message = JSON.parse(e.data).message || message; } catch {} notify(message,true); prepSource?.close(); prepSource = null; $('#prep').disabled = false; $('#prep-text').innerHTML = formatBrief(content || 'No brief was generated.'); });
+});
+function clearAssistant() {
+  assistantRevision++; assistantResult = null;
+  $('#assistant-answer').innerHTML = '<div class="assistant-welcome"><span class="assistant-emblem">' + icon('chat') + '</span><h3>What would you like to revisit?</h3><p>Choose a player, then ask about past feedback, actions, or your next meeting. Answers link back to saved records.</p></div>';
+  $('#assistant-error').hidden = true;
+}
+function resetAssistantFilters() {
+  assistantActionCategory = ''; $('#assistant-inherited-category').hidden = true;
+  for (const key of ['skill','topic','start','end','search']) $(`#assistant-${key}`).value = '';
+  $('#assistant-status').value = 'all'; $('#assistant-actions').checked = false;
+}
+function openAssistant(playerId, fromActions = false) {
+  if (assistantPending) { notify('Wait for the current assistant answer before changing its context.'); return; }
+  resetAssistantFilters(); clearAssistant();
+  $('#assistant-player').value = playerId || (fromActions ? '' : selectedPlayer);
+  if (fromActions) {
+    assistantActionCategory = $('#task-category').value;
+    $('#assistant-inherited-category').textContent = `Action-board category: ${assistantActionCategory}`;
+    $('#assistant-inherited-category').hidden = !assistantActionCategory;
+    $('#assistant-status').value = $('#task-filter').value;
+    $('#assistant-actions').checked = true; $('#assistant-search').value = $('#task-search').value;
+  }
+  $('#assistant-question').value = fromActions ? 'Which actions need follow-up?' : '';
+  switchView('assistant'); $('#assistant-title').focus({preventScroll:true});
+  $('#assistant-title').scrollIntoView({block:'start', behavior:'instant'});
+  if (fromActions && !playerId) notify('Choose one player to ask about their filtered actions.');
+  $('#assistant-question').focus({preventScroll:true});
+}
+document.addEventListener('click', e => {
+  const entry = e.target.closest('[data-ask-player]');
+  if (entry) openAssistant(entry.dataset.askPlayer);
+});
+$('#ask-actions').addEventListener('click', () => openAssistant($('#task-player').value, true));
+$('#assistant-reset').addEventListener('click', () => { resetAssistantFilters(); clearAssistant(); });
+$('#assistant-clear').addEventListener('click', clearAssistant);
+$('.assistant-context').addEventListener('input', clearAssistant);
+$('.assistant-prompts').addEventListener('click', e => {
+  const prompt = e.target.closest('[data-assistant-prompt]');
+  if (!prompt || assistantPending) return;
+  $('#assistant-question').value = prompt.dataset.assistantPrompt;
+  if (prompt.hasAttribute('data-assistant-actions')) { $('#assistant-actions').checked = true; $('#assistant-status').value = 'open'; }
+  else { $('#assistant-actions').checked = false; $('#assistant-status').value = 'all'; }
+  clearAssistant(); $('#assistant-question').focus();
+});
+$('#assistant-answer').addEventListener('click', e => {
+  const citation = e.target.closest('[data-assistant-source]');
+  if (citation) {
+    const source = document.getElementById(`assistant-source-${citation.dataset.assistantSource}`);
+    if (source) { source.closest('details').open = true; source.focus({preventScroll:true}); source.scrollIntoView({block:'nearest',behavior:'smooth'}); }
+  }
+  const recordLink = e.target.closest('[data-assistant-record]');
+  if (recordLink && assistantResult) {
+    const source = assistantResult.sources.find(s => s.source_id === recordLink.dataset.assistantRecord);
+    if (!source) return;
+    openPlayerTimeline(assistantResult.player_id);
+    const record = document.getElementById(`record-${source.meeting_id}-${source.record_id}`);
+    if (record) { record.querySelector('details').open = true; record.focus({preventScroll:true}); record.scrollIntoView({block:'center',behavior:'smooth'}); }
+    else notify('This record is no longer visible. Reload the notebook to check its latest state.',true);
+  }
+});
+$('#assistant-form').addEventListener('submit', async e => {
+  e.preventDefault(); if (assistantPending || !connected) return;
+  const question = $('#assistant-question').value.trim(); if (!question) return;
+  if (!$('#assistant-player').value) { $('#assistant-error').textContent = 'Choose one player for this question.'; $('#assistant-error').hidden = false; $('#assistant-player').focus(); return; }
+  const start = $('#assistant-start').value, end = $('#assistant-end').value;
+  if (start && end && start > end) { $('#assistant-error').textContent = 'From must be on or before Through.'; $('#assistant-error').hidden = false; return; }
+  const body = {player_id:$('#assistant-player').value, question, mode, filters: {
+    skill:$('#assistant-skill').value, topic:$('#assistant-topic').value, start, end,
+    status:$('#assistant-status').value, actions_only:$('#assistant-actions').checked, search:$('#assistant-search').value, category:assistantActionCategory,
+  }};
+  clearAssistant(); const revision = assistantRevision; assistantPending = true;
+  $('#assistant-answer').innerHTML = '<p class="assistant-loading" role="status">' + (mode === 'demo' ? 'Finding approved records…' : 'Finding relevant records and asking Aivana…') + '</p>';
+  $('#assistant-answer').setAttribute('aria-busy','true');
+  document.querySelectorAll('#assistant input, #assistant select, #assistant textarea, #assistant button').forEach(el => el.disabled = true);
+  $('#mode').disabled = true;
+  try {
+    const result = await api('/assistant', body);
+    if (revision !== assistantRevision) return;
+    assistantResult = result;
+    $('#assistant-answer').innerHTML = `<div class="assistant-question-bubble"><strong>${escape(name(body.player_id))}</strong><p>${escape(question)}</p></div>` + assistantAnswerMarkup(result);
+  } catch (error) {
+    if (revision !== assistantRevision) return;
+    $('#assistant-answer').innerHTML = '<p>No answer was generated. Your question is ready to retry.</p>';
+    $('#assistant-error').textContent = error.message; $('#assistant-error').hidden = false;
+  } finally {
+    assistantPending = false; $('#assistant-answer').setAttribute('aria-busy','false');
+    document.querySelectorAll('#assistant input, #assistant select, #assistant textarea, #assistant button').forEach(el => el.disabled = false);
+    $('#mode').disabled = busy; $('#assistant-send').disabled = !connected;
+  }
 });
 loadSample('individual'); $('#mode').value = mode; render(); switchView('desk');
 async function initializeNotebook() {
