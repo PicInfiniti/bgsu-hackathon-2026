@@ -109,3 +109,20 @@ $brown: #4f2c1d;
   .auth-divider { margin-block: 18px 12px; }
   .auth-demo-caption { margin-bottom: 12px; }
 }
+
+// Signup has two extra fields; give it a compact rhythm before the login
+// breakpoint is reached. Keep natural page scrolling for zoom and short screens.
+@media (min-width: 761px) and (max-height: 1100px) {
+  .auth-layout--signup {
+    .auth-form-icon { display: none; }
+    .auth-form-wrap { padding-bottom: 20px; }
+    .auth-tabs { margin-bottom: 18px; }
+    .auth-form-wrap h2 { margin-bottom: 10px; }
+    .auth-description { margin-bottom: 16px; }
+    #auth-form input { padding-block: 10px; margin-bottom: 13px; }
+    .auth-input-help { margin-bottom: 16px; }
+    .auth-divider { margin-block: 18px 12px; }
+    .auth-demo-caption { margin-bottom: 12px; }
+    .auth-preview { padding-block: 9px; }
+  }
+}

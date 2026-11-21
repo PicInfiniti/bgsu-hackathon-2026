@@ -8,7 +8,7 @@ if (route === '/workspace') {
   const signup = route === '/signup';
   document.title = `${signup ? 'Create your account' : 'Coach sign in'} | Falcon Follow-up`;
   document.querySelector('#app').innerHTML = `
-    <div class="auth-layout">
+    <div class="auth-layout ${signup ? 'auth-layout--signup' : ''}">
       <section class="auth-story" aria-label="Falcon Follow-up">
         <a class="brand auth-brand" href="/login" aria-label="Falcon Follow-up home"><span class="brand-mark">F<span>·</span></span><span>FALCON<small>FOLLOW-UP</small></span></a>
         <div class="auth-story-content">
