@@ -16,7 +16,7 @@ import { groupRecords, meetingTypeLabel, meetingReviewFrame, meetingDisplayTitle
 import { actionRows } from './action-board-view.js';
 import { noteOnlyReview } from './note-only.js';
 import { playerMeetingHistory } from './timeline-view.js';
-import { filterMeetings, meetingListMarkup, meetingDetailMarkup } from './meeting-library.js';
+import { filterMeetings, meetingListMarkup, meetingDetailMarkup, meetingCalendarSource } from './meeting-library.js';
 
 const $ = (s) => document.querySelector(s);
 const escape = (s = '') => String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -33,6 +33,7 @@ const player = (id) => demo.players.find(p => p.id === id);
 const name = (id) => player(id)?.name ?? 'Unknown player';
 const positionLabel = (p) => p.position_label ? `${p.position} · ${p.position_label}` : p.position;
 const today = () => new Date().toLocaleDateString('en-CA');
+let meetingCalendarMonth = today().slice(0,7), meetingCalendarDate = null;
 let playerCalendarMonth = today().slice(0,7), playerCalendarDate = today();
 const overdue = (x) => x.kind === 'action' && !x.completed && x.due_date && x.due_date < today();
 const items = () => meetings.flatMap(m => m.items.map(i => ({...i, meeting:m})));
@@ -94,9 +95,11 @@ document.querySelector('#app').innerHTML = `
       </section>
       <section id="meeting-library" class="view" hidden>
         <div id="meeting-library-list"><div class="section-heading library-heading"><div><p class="eyebrow">EVERY CONVERSATION, TOGETHER</p><h2 id="meetings-title" tabindex="-1">Meetings</h2><p>Individual check-ins, group conversations, and team meetings.</p></div><button class="secondary" type="button" data-new-meeting>${icon('plus')} Create meeting</button></div>
-          <div class="library-periods" role="group" aria-label="Meeting dates"><button type="button" data-meeting-period="all" aria-pressed="true">All meetings <span id="library-all-count"></span></button><button type="button" data-meeting-period="upcoming" aria-pressed="false">Today & future <span id="library-upcoming-count"></span></button><button type="button" data-meeting-period="past" aria-pressed="false">Past <span id="library-past-count"></span></button></div>
+          <div class="library-layout"><div class="library-main"><div class="library-periods" role="group" aria-label="Meeting dates"><button type="button" data-meeting-period="all" aria-pressed="true">All meetings <span id="library-all-count"></span></button><button type="button" data-meeting-period="upcoming" aria-pressed="false">Today & future <span id="library-upcoming-count"></span></button><button type="button" data-meeting-period="past" aria-pressed="false">Past <span id="library-past-count"></span></button></div>
           <input id="meeting-period" type="hidden" value="all"><div class="panel library-filters"><label class="library-search">Search meetings<input id="meeting-search" type="search" placeholder="Title, attendee, or words from a note…"></label><label>Meeting type<select id="meeting-type-filter"><option value="">All types</option><option value="individual">Individual</option><option value="group">Group</option><option value="team">Team</option></select></label><label>Attendee<select id="meeting-player-filter"><option value="">All players</option>${demo.players.map(p => `<option value="${p.id}">#${p.number} ${escape(p.name)}</option>`).join('')}</select></label><label>From<input id="meeting-start" type="date"></label><label>Through<input id="meeting-end" type="date"></label><label>Sort<select id="meeting-sort"><option value="recent">Newest date</option><option value="oldest">Oldest date</option><option value="title">Meeting title</option></select></label></div>
-          <div class="library-results"><p id="meeting-results" role="status"></p><button id="meeting-reset" class="rail-link" type="button">Reset filters</button></div><p class="library-date-note">Dates belong to saved meetings. Future dates appear here and on the calendar; no invitations or reminders are sent.</p><div id="meeting-list" class="library-meeting-list"></div>
+          <div class="library-selected-day" id="meeting-selected-day" hidden><span id="meeting-selected-date"></span><button class="rail-link" id="meeting-clear-date" type="button">Clear date</button></div><div class="library-results"><p id="meeting-results" role="status"></p><button id="meeting-reset" class="rail-link" type="button">Reset filters</button></div><p class="library-date-note">Dates belong to saved meetings. Future dates appear here and on the calendar; no invitations or reminders are sent.</p><div id="meeting-list" class="library-meeting-list"></div></div>
+          <aside class="library-calendar-rail"><section class="calendar-panel panel"><div class="calendar-heading"><h3 id="meeting-calendar-title"></h3><div><button class="icon-button" id="meeting-calendar-prev" aria-label="Previous meetings calendar month">${icon('chevron')}</button><button class="icon-button" id="meeting-calendar-next" aria-label="Next meetings calendar month">${icon('chevron')}</button></div></div><p class="calendar-caption">Meeting dates & action deadlines</p><div class="calendar-grid" id="meeting-calendar"></div><div class="calendar-key"><span class="meeting-individual">Individual</span><span class="meeting-group">Group</span><span class="meeting-team">Team</span><span class="action-due-key">Action due</span></div><div id="meeting-calendar-activities" class="calendar-activities" aria-live="polite"></div></section></aside>
+          </div>
         </div>
         <div id="meeting-library-detail" hidden><div class="library-detail-toolbar"><button id="meeting-back" class="secondary" type="button">← Back to meetings</button><label class="sensitive-toggle"><input id="meeting-show-sensitive" type="checkbox"> Show sensitive records</label></div><div id="meeting-detail"></div></div>
       </section>
@@ -318,13 +321,43 @@ function renderMeetingLibrary() {
   const start = $('#meeting-start').value, end = $('#meeting-end').value;
   const filtered = filterMeetings(meetings, demo.players, {search:$('#meeting-search').value, type:$('#meeting-type-filter').value, player:$('#meeting-player-filter').value, start, end, period:$('#meeting-period').value, sort:$('#meeting-sort').value, today:today()});
   $('#meeting-results').textContent = start && end && start > end ? 'From must be on or before Through.' : `${filtered.length} of ${meetings.length} saved meetings`;
-  $('#meeting-list').innerHTML = meetingListMarkup(filtered,demo.players,today());
+  renderMeetingCalendar(filtered);
+  const dated = meetingCalendarDate ? activityForDate(filtered,meetingCalendarDate).meetings : filtered;
+  if (!(start && end && start > end)) $('#meeting-results').textContent = `${dated.length} of ${meetings.length} saved meetings`;
+  $('#meeting-selected-day').hidden = !meetingCalendarDate;
+  $('#meeting-selected-date').textContent = meetingCalendarDate ? `Meeting date · ${new Date(`${meetingCalendarDate}T12:00:00`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}` : '';
+  $('#meeting-list').innerHTML = meetingListMarkup(dated,demo.players,today());
   document.querySelectorAll('[data-meeting-period]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.meetingPeriod === $('#meeting-period').value)));
   const meeting = meetings.find(m => m.id === selectedMeetingId);
   const expanded = [...$('#meeting-detail').querySelectorAll('details')].map(el => el.open);
   $('#meeting-detail').innerHTML = meeting ? meetingDetailMarkup(meeting,demo.players,meetingLibrarySensitive,(i,m,sensitive) => recordMarkup(i,m,sensitive,'meeting-detail-record')) : '';
   $('#meeting-detail').querySelectorAll('details').forEach((el,n) => el.open = expanded[n] || false);
 }
+function renderMeetingCalendar(filtered) {
+  const source = meetingCalendarSource(filtered);
+  const [year,month] = meetingCalendarMonth.split('-').map(Number);
+  $('#meeting-calendar-title').textContent = new Date(year,month-1,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  $('#meeting-calendar').innerHTML = calendarGrid(source,meetingCalendarMonth,today(),meetingCalendarDate,true);
+  if (!meetingCalendarDate) { $('#meeting-calendar-activities').innerHTML = '<p class="date-empty">Choose a date to see its meetings and action deadlines. Calendar matches your meeting filters.</p>'; return; }
+  const activity = activityForDate(source,meetingCalendarDate);
+  const label = new Date(`${meetingCalendarDate}T12:00:00`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  const rows = activity.meetings.map(m => `<button class="player-calendar-meeting" type="button" data-open-meeting="${escape(m.id)}"><strong>${escape(meetingDisplayTitle(m.title))}</strong><small>${escape(meetingTypeLabel(m.meeting_type))} · ${m.attendees.length} attendees</small></button>`).join('');
+  const actions = activity.actions.map(i => `<button class="player-calendar-meeting" type="button" data-open-meeting="${escape(i.meeting.id)}"><strong>${escape(i.text)}</strong><small>${i.completed ? 'Completed' : overdue(i) ? 'Overdue' : 'Open'} · ${escape(meetingDisplayTitle(i.meeting.title))}</small></button>`).join('');
+  $('#meeting-calendar-activities').innerHTML = `<h3>${label}</h3><h4>Meetings · ${activity.meetings.length}</h4>${rows || '<p class="date-empty">No meetings match on this date.</p>'}<h4>Actions due · ${activity.actions.length}</h4>${actions || '<p class="date-empty">No visible actions due on this date.</p>'}`;
+}
+for (const [id,offset] of [['meeting-calendar-prev',-1],['meeting-calendar-next',1]]) {
+  $(`#${id}`).addEventListener('click', () => {
+    const [year,month] = meetingCalendarMonth.split('-').map(Number), next = new Date(year,month-1+offset,1);
+    meetingCalendarMonth = `${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,'0')}`;
+    meetingCalendarDate = null; renderMeetingLibrary();
+  });
+}
+$('#meeting-calendar').addEventListener('click', e => {
+  const day = e.target.closest('[data-calendar-date]'); if (!day) return;
+  meetingCalendarDate = day.dataset.calendarDate; renderMeetingLibrary();
+  if (e.detail === 0) $('#meeting-calendar').querySelector(`[data-calendar-date="${meetingCalendarDate}"]`)?.focus({preventScroll:true});
+});
+$('#meeting-clear-date').addEventListener('click', () => { meetingCalendarDate = null; renderMeetingLibrary(); $('#meetings-title').focus({preventScroll:true}); });
 function openMeeting(id) {
   if (!meetings.some(m => m.id === id)) return;
   selectedMeetingId = id; meetingLibrarySensitive = false; $('#meeting-detail').innerHTML = '';
@@ -341,6 +374,7 @@ $('.library-periods').addEventListener('click', e => { const button = e.target.c
 $('#meeting-search').addEventListener('input', renderMeetingLibrary);
 for (const id of ['meeting-type-filter','meeting-player-filter','meeting-start','meeting-end','meeting-sort']) $(`#${id}`).addEventListener('change', renderMeetingLibrary);
 function resetMeetingFilters() {
+  meetingCalendarDate = null;
   for (const id of ['meeting-search','meeting-type-filter','meeting-player-filter','meeting-start','meeting-end']) $(`#${id}`).value = '';
   $('#meeting-sort').value = 'recent'; $('#meeting-period').value = 'all';
 }

@@ -1,5 +1,6 @@
+import { calendarGrid, activityForDate } from '../src/calendar-activity.js';
 import assert from 'node:assert/strict';
-import { filterMeetings, meetingListMarkup, meetingDetailMarkup } from '../src/meeting-library.js';
+import { filterMeetings, meetingListMarkup, meetingDetailMarkup, meetingCalendarSource } from '../src/meeting-library.js';
 
 const players = [{id:'p1',name:'Avery <Smith>',number:4,position:'QB'}, {id:'p2',name:'Jordan',number:8,position:'DB'}];
 const base = {id:'individual', title:'Footwork check-in', date:'2026-11-20', meeting_type:'individual', attendees:['p1'], note:'Practiced footwork.', items:[]};
@@ -51,3 +52,20 @@ const sharedDetail=meetingDetailMarkup(shared,players,false,render);
 assert.ok(sharedDetail.includes('2 player records'));
 assert.equal(rendered.length,2);
 assert.deepEqual(rendered.map(r=>r[0]),['task','task2']);
+
+const calendarInput = [group,{...team,items:[{...action,due_date:'2026-11-26'}]},
+  {...privateMeeting,items:[{...privateMeeting.items[0],due_date:'2026-11-27'}]}];
+const calendarBefore = structuredClone(calendarInput);
+const calendarSource = meetingCalendarSource(calendarInput);
+const calendar = calendarGrid(calendarSource,'2026-11','2026-11-21','2026-11-26',true);
+assert.ok(calendar.includes('1 group meeting'));
+assert.ok(calendar.includes('1 team meeting'));
+assert.ok(calendar.includes('2026-11-26, 1 group meeting, open action due'));
+assert.ok(!calendar.includes('2026-11-27, open action due'));
+assert.deepEqual(activityForDate(calendarSource,'2026-11-26').meetings.map(m=>m.id),['group']);
+assert.equal(activityForDate(calendarSource,'2026-11-26').actions.length,1);
+assert.equal(activityForDate(calendarSource,'2026-11-27').actions.length,0);
+const onlyGroups = meetingCalendarSource(filterMeetings(calendarInput,players,{type:'group'}));
+assert.equal(activityForDate(onlyGroups,'2026-11-26').actions.length,0);
+assert.deepEqual(activityForDate(calendarSource,'2026-11-25').meetings,[]);
+assert.deepEqual(calendarInput,calendarBefore);

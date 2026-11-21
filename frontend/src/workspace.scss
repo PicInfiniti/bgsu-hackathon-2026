@@ -445,3 +445,14 @@ $paper: #fcf8f1;
   .library-original-note { padding: 18px; }
   .editor-submit-actions { width: 100%; justify-content: stretch; button { flex: 1; } }
 } }
+
+.workspace-app {
+  .library-layout { display: grid; grid-template-columns: minmax(0,1fr) 310px; gap: 24px; align-items: start; }
+  .library-main { min-width: 0; .library-periods { margin-top: 0; } }
+  .library-calendar-rail { position: sticky; top: 18px; .calendar-panel { padding: 22px; } .calendar-activities { max-height: 430px; overflow-y: auto; >h3 { font-size: .95rem; color: #795436; margin: 0 0 14px; } } }
+  .library-selected-day { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 12px 15px; margin-top: 16px; border: 1px solid #dfc5a5; border-radius: 7px; background: #f7e8d4; color: #795436; font-size: .82rem; .rail-link { padding: 0; font-size: .78rem; } }
+}
+@media (max-width:1100px) { .workspace-app { .library-layout { grid-template-columns: minmax(0,1fr) 275px; gap: 18px; } .library-calendar-rail .calendar-panel { padding: 17px; } .library-main .library-filters { grid-template-columns: 1fr 1fr; .library-search { grid-column: 1/-1; } } .library-main .library-meeting { gap: 13px; flex-wrap: wrap; >button { margin-left: 97px; } } } }
+@media (max-width:900px) { .workspace-app { .library-layout { grid-template-columns: 1fr; } .library-calendar-rail { position: static; grid-row: 1; } } }
+@media (max-width:680px) { .workspace-app { .library-calendar-rail .calendar-activities { max-height: 320px; } .library-main .library-meeting >button { margin-left: 65px; } } }
+.workspace-app #meeting-calendar-prev .ui-icon { transform: rotate(180deg); }
