@@ -16,11 +16,13 @@ import { groupRecords, meetingTypeLabel, meetingReviewFrame, meetingDisplayTitle
 import { actionRows } from './action-board-view.js';
 import { noteOnlyReview } from './note-only.js';
 import { playerMeetingHistory } from './timeline-view.js';
+import { filterMeetings, meetingListMarkup, meetingDetailMarkup } from './meeting-library.js';
 
 const $ = (s) => document.querySelector(s);
 const escape = (s = '') => String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clone = (x) => structuredClone(x);
 let meetings = [];
+let selectedMeetingId = null, meetingLibrarySensitive = false;
 let mode = workspaceMode(window.location.search), view = 'desk', draft = [], origin = 'demo', selectedPlayer = 'p01', busy = false, connected = false, prepSource = null;
 let current = clone(demo.samples[0]);
 let playerDetailOpen = false, playerUnitFilter = 'all';
@@ -59,7 +61,7 @@ document.querySelector('#app').innerHTML = `
     <div class="workspace-label">THE FOOTBALL NOTEBOOK</div>
     <nav aria-label="Main navigation">
       <button data-view="desk" class="active">${icon('home')} Overview</button>
-      <button data-view="meetings">${icon('note')} Meeting notes</button>
+      <button data-view="meeting-library">${icon('note')} Meetings</button>
       <button data-view="players">${icon('people')} Players</button>
       <button data-view="tasks">${icon('check')} Actions <b id="nav-count"></b></button>
       <button data-view="assistant">${icon('chat')} AI Assistant</button>
@@ -75,7 +77,7 @@ document.querySelector('#app').innerHTML = `
       <div id="message" role="status" aria-live="polite" hidden></div>
       <section id="desk" class="view">
         <div class="overview-lead"><div><p class="eyebrow">THE COACH'S DASHBOARD</p><h2>A clear view of your team.</h2><p>Conversations captured. Next steps ready.</p></div><button class="secondary" data-view="meetings">${icon('note')} Open meeting notebook</button></div>
-            <section class="stats" aria-label="Workspace summary"><a href="#recent-heading" data-stat="meetings"><strong id="meeting-count">0</strong><span>Saved meetings</span><small>Reviewed conversations</small></a><a href="#tasks" data-stat="open"><strong id="open-count">0</strong><span>Open actions</span><small>Ready to follow up</small></a><a href="#tasks" data-stat="overdue" class="urgent"><strong id="overdue-count">0</strong><span>Needs follow-up</span><small id="clock-note"></small></a><a href="#players" data-stat="players"><strong id="players-count">0</strong><span>Players reached</span><small>Of ${demo.players.length} fictional players</small></a></section>
+            <section class="stats" aria-label="Workspace summary"><a href="#meeting-library" data-stat="meetings"><strong id="meeting-count">0</strong><span>Saved meetings</span><small>Reviewed conversations</small></a><a href="#tasks" data-stat="open"><strong id="open-count">0</strong><span>Open actions</span><small>Ready to follow up</small></a><a href="#tasks" data-stat="overdue" class="urgent"><strong id="overdue-count">0</strong><span>Needs follow-up</span><small id="clock-note"></small></a><a href="#players" data-stat="players"><strong id="players-count">0</strong><span>Players reached</span><small>Of ${demo.players.length} fictional players</small></a></section>
         <div class="overview-grid"><div class="overview-main">
           <div class="panel overview-conversation-hub">
             <section class="upcoming-panel"><div class="section-heading"><h2>Upcoming</h2>${icon('calendar')}</div><p class="upcoming-caption">Open actions due today or later</p><div id="upcoming-list"></div><button class="rail-link" data-stat="open">View all open actions</button></section>
@@ -90,15 +92,23 @@ document.querySelector('#app').innerHTML = `
             <section class="followup-panel panel"><div class="section-heading"><h2>Needs follow-up</h2>${icon('check')}</div><div id="radar-list"></div><button class="rail-link" data-stat="overdue">Review overdue actions</button></section>
         </aside></div>
       </section>
-      <section id="meetings" class="view" hidden><div class="section-heading meeting-page-heading"><div><p class="eyebrow">CAPTURE & CLARIFY</p><h2>Meeting notes</h2><p>Keep the conversation on the left. Check every next step on the right.</p></div></div><div class="meeting-workspace"><div class="meeting-notebook"><div class="meeting-sheet-heading">${icon('note')} The conversation</div><div class="notebook-caption">${icon('people')} Original notes stay attached to every approved record.</div>
+      <section id="meeting-library" class="view" hidden>
+        <div id="meeting-library-list"><div class="section-heading library-heading"><div><p class="eyebrow">EVERY CONVERSATION, TOGETHER</p><h2 id="meetings-title" tabindex="-1">Meetings</h2><p>Individual check-ins, group conversations, and team meetings.</p></div><button class="secondary" type="button" data-new-meeting>${icon('plus')} Create meeting</button></div>
+          <div class="library-periods" role="group" aria-label="Meeting dates"><button type="button" data-meeting-period="all" aria-pressed="true">All meetings <span id="library-all-count"></span></button><button type="button" data-meeting-period="upcoming" aria-pressed="false">Today & future <span id="library-upcoming-count"></span></button><button type="button" data-meeting-period="past" aria-pressed="false">Past <span id="library-past-count"></span></button></div>
+          <input id="meeting-period" type="hidden" value="all"><div class="panel library-filters"><label class="library-search">Search meetings<input id="meeting-search" type="search" placeholder="Title, attendee, or words from a note…"></label><label>Meeting type<select id="meeting-type-filter"><option value="">All types</option><option value="individual">Individual</option><option value="group">Group</option><option value="team">Team</option></select></label><label>Attendee<select id="meeting-player-filter"><option value="">All players</option>${demo.players.map(p => `<option value="${p.id}">#${p.number} ${escape(p.name)}</option>`).join('')}</select></label><label>From<input id="meeting-start" type="date"></label><label>Through<input id="meeting-end" type="date"></label><label>Sort<select id="meeting-sort"><option value="recent">Newest date</option><option value="oldest">Oldest date</option><option value="title">Meeting title</option></select></label></div>
+          <div class="library-results"><p id="meeting-results" role="status"></p><button id="meeting-reset" class="rail-link" type="button">Reset filters</button></div><p class="library-date-note">Dates belong to saved meetings. Future dates appear here and on the calendar; no invitations or reminders are sent.</p><div id="meeting-list" class="library-meeting-list"></div>
+        </div>
+        <div id="meeting-library-detail" hidden><div class="library-detail-toolbar"><button id="meeting-back" class="secondary" type="button">← Back to meetings</button><label class="sensitive-toggle"><input id="meeting-show-sensitive" type="checkbox"> Show sensitive records</label></div><div id="meeting-detail"></div></div>
+      </section>
+      <section id="meetings" class="view" hidden><div class="section-heading meeting-page-heading"><div><p class="eyebrow">CAPTURE & CLARIFY</p><h2>Create meeting</h2><p>Choose a date and attendees. Save the agenda or notes, and optionally extract feedback and tasks.</p></div><button class="secondary" data-view="meeting-library" type="button">← All meetings</button></div><div class="meeting-workspace"><div class="meeting-notebook"><div class="meeting-sheet-heading">${icon('note')} The conversation</div><div class="notebook-caption">${icon('people')} Original notes stay attached to every approved record.</div>
             <form id="meeting-form" class="panel note-panel">
               <label class="title-label"><span>Meeting title</span><input id="title" maxlength="160" placeholder="Give this conversation a title" required></label>
               <div class="form-row meeting-meta"><label>Date<input id="date" type="date" required></label><label>Meeting type<select id="meeting-type"><option value="individual">Individual</option><option value="group">Group</option><option value="team">Team</option></select></label></div>
               <label class="sample-control">Start with a sample<select id="sample">${demo.samples.map(s => `<option value="${s.id}">${escape(meetingDisplayTitle(s.label))}</option>`).join('')}</select></label>
               <details class="attendee-picker"><summary id="attendee-summary">Meeting attendees</summary><fieldset><legend class="sr-only">Attendees</legend><div id="attendees" class="attendees"></div></fieldset></details>
-              <label class="note-label">The conversation<textarea id="note" rows="8" maxlength="12000" placeholder="What did you discuss? Add player names, football skills, film assignments, and deadlines…" required></textarea></label>
+              <label class="note-label">The conversation<textarea id="note" rows="8" maxlength="12000" placeholder="What will you discuss, or what did you discuss? Add an agenda or meeting notes. Include specific feedback and deadlines if you want to extract records…" required></textarea></label>
               <details class="writing-help"><summary>Tips for a useful meeting note</summary><p>Synthetic notes only. Record what the coach said; avoid assumptions about character or attitude. For long team notes, extract short sections with a few assignments each. Keep the date, attendees, and attribution context; review and save each section separately. Shorten truncated extractions before retrying.</p></details>
-              <div class="editor-footer"><span>${icon('note')} Original notes stay attached.</span><button class="primary" id="extract" type="submit">Extract sample records</button></div>
+              <div class="editor-footer"><span>${icon('note')} Save your meeting with or without extracted records.</span><div class="editor-submit-actions"><button class="secondary" id="extract" type="button">Extract sample records</button><button class="primary" id="review-meeting" type="submit">Review meeting</button></div></div>
             </form>
         </div>
             <section id="review-panel" class="panel review-panel"><div class="panel-heading">${icon('check')}<div><h3>A second look, before you save.</h3><p>Check the player, the meaning, and the next step.</p></div></div><div id="review"></div></section>
@@ -235,9 +245,9 @@ function updateReviewReadiness() {
   if ($('#approved')) { $('#approved').checked = false; $('#approved').disabled = draft.some(i => reviewIssues(i,current).length); $('#save').disabled = true; }
 }
 function statusBadge(i) { return i.completed ? '<span class="badge completed">Complete</span>' : overdue(i) ? '<span class="badge overdue">Overdue</span>' : `<span class="badge ${i.kind}">${i.kind === 'action' ? 'Open action' : i.kind}</span>`; }
-function recordMarkup(i, m, showSensitive = false) {
+function recordMarkup(i, m, showSensitive = false, idPrefix = 'record') {
   const sourceNote = m.items.some(item => item.sensitive) && !showSensitive ? 'Full note contains sensitive content. Enable sensitive records to view it; the supporting excerpt is shown above.' : m.note;
-  return `<article class="record" id="record-${escape(m.id)}-${escape(i.id)}" tabindex="-1"><div class="record-top">${statusBadge(i)}<span>${escape(i.skill)}</span>${i.topic ? `<span class="record-topic">${escape(i.topic)}</span>` : ''}${i.sensitive ? '<span class="badge sensitive">Sensitive</span>' : ''}${m.id.startsWith('m-seed-') ? '<span class="badge">Earlier practice pack</span>' : ''}</div><h4>${escape(i.text)}</h4><p class="record-origin">${escape(meetingTypeLabel(m.meeting_type))} · ${escape(meetingDisplayTitle(m.title))}</p><p class="record-meta">${i.player_ids?.length ? 'Whole team' : escape(name(i.player_id))} · ${escape(m.date)}${i.due_date ? ` · Due ${escape(i.due_date)}` : ''}</p><details><summary>Source meeting note</summary><blockquote>${escape(i.quote)}</blockquote><p>${escape(sourceNote)}</p></details>${i.kind === 'action' ? `<button class="secondary compact" data-meeting="${escape(m.id)}" data-item="${escape(i.id)}">${i.completed?'Reopen action':'Mark complete'}</button>` : ''}</article>`;
+  return `<article class="record" id="${idPrefix}-${escape(m.id)}-${escape(i.id)}" tabindex="-1"><div class="record-top">${statusBadge(i)}<span>${escape(i.skill)}</span>${i.topic ? `<span class="record-topic">${escape(i.topic)}</span>` : ''}${i.sensitive ? '<span class="badge sensitive">Sensitive</span>' : ''}${m.id.startsWith('m-seed-') ? '<span class="badge">Earlier practice pack</span>' : ''}</div><h4>${escape(i.text)}</h4><p class="record-origin">${escape(meetingTypeLabel(m.meeting_type))} · ${escape(meetingDisplayTitle(m.title))}</p><p class="record-meta">${i.player_ids?.length ? 'Whole team' : escape(name(i.player_id))} · ${escape(m.date)}${i.due_date ? ` · Due ${escape(i.due_date)}` : ''}</p><details><summary>Source meeting note</summary><blockquote>${escape(i.quote)}</blockquote><p>${escape(sourceNote)}</p></details>${i.kind === 'action' ? `<button class="secondary compact" data-meeting="${escape(m.id)}" data-item="${escape(i.id)}">${i.completed?'Reopen action':'Mark complete'}</button>` : ''}</article>`;
 }
 const initials = (p) => p.name.split(' ').map(part => part[0]).slice(0,2).join('');
 function renderPlayerDirectory() {
@@ -282,7 +292,9 @@ function render() {
   $('#clock-note').textContent = `As of ${today()}`;
   $('#extract').textContent = mode === 'demo' ? 'Extract sample records' : 'Extract with Aivana';
   $('#extract').disabled = busy || !connected;
-  $('#recent').innerHTML = [...meetings].sort((a,b) => b.date.localeCompare(a.date)).slice(0,5).map(m => `<button class="meeting-row" data-open-player="${escape(m.attendees[0])}"><span class="meeting-date">${icon('note')}</span><span class="meeting-title"><strong>${escape(meetingDisplayTitle(m.title))}</strong><small>${escape(m.date)} · ${m.note_only ? 'Original note' : `${m.items.length} records`}</small></span><span class="badge">${m.origin === 'demo' ? 'Demo fixture' : 'Reviewed'}</span></button>`).join('') || '<div class="panel empty">No meetings yet. Save your first reviewed extraction.</div>';
+  $('#review-meeting').disabled = busy || !connected;
+  $('#recent').innerHTML = [...meetings].sort((a,b) => b.date.localeCompare(a.date)).slice(0,5).map(m => `<button class="meeting-row" data-open-meeting="${escape(m.id)}"><span class="meeting-date">${icon('note')}</span><span class="meeting-title"><strong>${escape(meetingDisplayTitle(m.title))}</strong><small>${escape(m.date)} · ${m.note_only ? 'Original note' : `${m.items.length} records`}</small></span><span class="badge">${m.origin === 'demo' ? 'Demo fixture' : 'Reviewed'}</span></button>`).join('') || '<div class="panel empty">No meetings yet. Save your first reviewed extraction.</div>';
+  renderMeetingLibrary();
   renderPlayerDirectory();
   renderPlanning();
   renderOverview();
@@ -296,6 +308,43 @@ function render() {
   renderActionBoard(actions);
 
 }
+function renderMeetingLibrary() {
+  $('#meeting-library-list').hidden = Boolean(selectedMeetingId);
+  $('#meeting-library-detail').hidden = !selectedMeetingId;
+  $('#meeting-show-sensitive').checked = meetingLibrarySensitive;
+  $('#library-all-count').textContent = meetings.length;
+  $('#library-upcoming-count').textContent = meetings.filter(m => m.date >= today()).length;
+  $('#library-past-count').textContent = meetings.filter(m => m.date < today()).length;
+  const start = $('#meeting-start').value, end = $('#meeting-end').value;
+  const filtered = filterMeetings(meetings, demo.players, {search:$('#meeting-search').value, type:$('#meeting-type-filter').value, player:$('#meeting-player-filter').value, start, end, period:$('#meeting-period').value, sort:$('#meeting-sort').value, today:today()});
+  $('#meeting-results').textContent = start && end && start > end ? 'From must be on or before Through.' : `${filtered.length} of ${meetings.length} saved meetings`;
+  $('#meeting-list').innerHTML = meetingListMarkup(filtered,demo.players,today());
+  document.querySelectorAll('[data-meeting-period]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.meetingPeriod === $('#meeting-period').value)));
+  const meeting = meetings.find(m => m.id === selectedMeetingId);
+  const expanded = [...$('#meeting-detail').querySelectorAll('details')].map(el => el.open);
+  $('#meeting-detail').innerHTML = meeting ? meetingDetailMarkup(meeting,demo.players,meetingLibrarySensitive,(i,m,sensitive) => recordMarkup(i,m,sensitive,'meeting-detail-record')) : '';
+  $('#meeting-detail').querySelectorAll('details').forEach((el,n) => el.open = expanded[n] || false);
+}
+function openMeeting(id) {
+  if (!meetings.some(m => m.id === id)) return;
+  selectedMeetingId = id; meetingLibrarySensitive = false; $('#meeting-detail').innerHTML = '';
+  renderMeetingLibrary(); switchView('meeting-library');
+  $('#meeting-detail-title').focus({preventScroll:true}); $('#meeting-detail-title').scrollIntoView({block:'start'});
+}
+$('#meeting-back').addEventListener('click', () => {
+  const id = selectedMeetingId; selectedMeetingId = null; meetingLibrarySensitive = false; renderMeetingLibrary();
+  const button = [...$('#meeting-list').querySelectorAll('[data-open-meeting]')].find(el => el.dataset.openMeeting === id);
+  (button || $('#meetings-title')).focus();
+});
+$('#meeting-show-sensitive').addEventListener('change', e => { meetingLibrarySensitive = e.target.checked; renderMeetingLibrary(); });
+$('.library-periods').addEventListener('click', e => { const button = e.target.closest('[data-meeting-period]'); if (button) { $('#meeting-period').value = button.dataset.meetingPeriod; renderMeetingLibrary(); } });
+$('#meeting-search').addEventListener('input', renderMeetingLibrary);
+for (const id of ['meeting-type-filter','meeting-player-filter','meeting-start','meeting-end','meeting-sort']) $(`#${id}`).addEventListener('change', renderMeetingLibrary);
+function resetMeetingFilters() {
+  for (const id of ['meeting-search','meeting-type-filter','meeting-player-filter','meeting-start','meeting-end']) $(`#${id}`).value = '';
+  $('#meeting-sort').value = 'recent'; $('#meeting-period').value = 'all';
+}
+$('#meeting-reset').addEventListener('click', () => { resetMeetingFilters(); renderMeetingLibrary(); });
 function renderActionBoard(actions = items().filter(i => i.kind === 'action')) {
   renderActionCalendar();
   const categorySelect = $('#task-category'), selectedCategory = categorySelect.value;
@@ -327,7 +376,7 @@ function renderActionBoard(actions = items().filter(i => i.kind === 'action')) {
 function switchView(next) {
   view = next;
   document.querySelectorAll('.view').forEach(el => el.hidden = el.id !== view);
-  document.querySelectorAll('[data-view]').forEach(el => { el.classList.toggle('active', el.dataset.view === view); if (el.dataset.view === view) el.setAttribute('aria-current','page'); else el.removeAttribute('aria-current'); });
+  document.querySelectorAll('[data-view]').forEach(el => { const active = el.dataset.view === view || el.closest('nav') && view === 'meetings' && el.dataset.view === 'meeting-library'; el.classList.toggle('active', Boolean(active)); if (active) el.setAttribute('aria-current','page'); else el.removeAttribute('aria-current'); });
 }
 function cancelPrep() { prepSource?.close(); prepSource = null; $('#prep').disabled = false; $('#prep-text').textContent = ''; }
 
@@ -339,7 +388,7 @@ function renderOverview() {
   const reached = demo.players.filter(p => individual.has(p.id)).length;
   const remaining = demo.players.length - reached;
   $('#overview-checkins').innerHTML = `<div class="checkin-summary"><strong>${reached}<span> / ${demo.players.length}</span></strong><p>players have a saved one-on-one conversation.</p></div><progress max="${demo.players.length}" value="${reached}" aria-label="Players with a saved individual meeting">${reached} of ${demo.players.length}</progress><p class="checkin-remaining">${remaining} player${remaining === 1 ? '' : 's'} without a saved individual check-in. Group and team meetings are counted separately.</p>`;
-  $('#overview-meeting-types').innerHTML = [['individual','One-on-one'],['group','Group'],['team','Team']].map(([type,label]) => `<button data-view="meetings"><span>${icon(type === 'individual' ? 'user' : 'people')}${label}</span><strong>${meetings.filter(m => m.meeting_type === type).length}</strong></button>`).join('');
+  $('#overview-meeting-types').innerHTML = [['individual','One-on-one'],['group','Group'],['team','Team']].map(([type,label]) => `<button data-library-type="${type}"><span>${icon(type === 'individual' ? 'user' : 'people')}${label}</span><strong>${meetings.filter(m => m.meeting_type === type).length}</strong></button>`).join('');
 }
 function renderPlayerCalendar() {
   const source = calendarMeetings(playerCalendarMeetings(meetings,selectedPlayer),$('#player-calendar-type').value);
@@ -404,6 +453,14 @@ function newMeeting() {
   notify('New meeting ready. Choose attendees and add your synthetic notes. Use live mode to extract custom notes.');
 }
 $('#new-meeting').addEventListener('click', newMeeting);
+$('#meeting-form').addEventListener('submit', e => {
+  e.preventDefault();
+  if (busy || !connected) return;
+  try { capture(); validMeeting(current); } catch (error) { notify(error.message,true); return; }
+  if (!draft.length) { if (!extractionId) origin = 'manual'; reviewingNoteOnly = true; }
+  renderReview(); $('#review').scrollIntoView({block:'start', behavior:'smooth'});
+  const heading = $('#review h3'); if (heading) { heading.tabIndex = -1; heading.focus({preventScroll:true}); }
+});
 for (const [id, offset] of [['calendar-prev', -1], ['calendar-next', 1]]) {
   $(`#${id}`).addEventListener('click', () => {
     const [year, month] = calendarMonth.split('-').map(Number);
@@ -436,10 +493,10 @@ $('#meeting-type').addEventListener('change', () => {
   if ($('#meeting-type').value === 'team') document.querySelectorAll('[name="attendee"]').forEach(x => x.checked = true);
   capture(); invalidate();
 });
-$('#meeting-form').addEventListener('submit', async e => {
+$('#extract').addEventListener('click', async e => {
   e.preventDefault(); if (busy) return;
   try {
-    const meeting = capture(); validMeeting(meeting); busy = true; $('#extract').disabled = true; $('#extract').textContent = 'Extracting…'; notify('');
+    const meeting = capture(); validMeeting(meeting); busy = true; $('#extract').disabled = true; $('#review-meeting').disabled = true; $('#extract').textContent = 'Extracting…'; notify('');
     $('#meeting-form').querySelectorAll('input,select,textarea').forEach(el => el.disabled = true); $('#sample').disabled = true; $('#mode').disabled = true;
     const result = await api('/extract', {...meeting,mode});
     reviewingNoteOnly = false;
@@ -492,9 +549,9 @@ $('#review').addEventListener('click', async e => {
     busy = true; e.target.disabled = true;
     const meeting = await api('/meetings',body);
     meetings.unshift(meeting); clearAssistant();
-    reviewingNoteOnly = false; draft = []; extractionId = null; extractionWarnings = []; renderReview(); cancelPrep(); render(); notify(meeting.note_only ? 'Meeting note saved. The original conversation is now in each attendee’s timeline.' : 'Meeting approved and saved. Its records are now in player timelines and the action board.');
+    reviewingNoteOnly = false; draft = []; extractionId = null; extractionWarnings = []; renderReview(); cancelPrep(); render(); openMeeting(meeting.id); notify(meeting.note_only ? 'Meeting note saved. The original conversation is now in each attendee’s timeline.' : 'Meeting approved and saved. Its records are now in player timelines and the action board.');
   } catch (error) { notify(error.message,true); if ($('#save')) $('#save').disabled = false; }
-  finally { busy = false; $('#extract').disabled = !connected; renderActionBoard(); }
+  finally { busy = false; $('#extract').disabled = !connected; $('#review-meeting').disabled = !connected; renderActionBoard(); }
 });
 document.addEventListener('click', async e => {
   const summary = e.target.closest('[data-stat]');
@@ -503,7 +560,7 @@ document.addEventListener('click', async e => {
     const destination = summary.dataset.stat;
     let target;
     if (destination === 'meetings') {
-      switchView('desk'); target = $('#recent-heading');
+      selectedMeetingId = null; meetingLibrarySensitive = false; resetMeetingFilters(); renderMeetingLibrary(); switchView('meeting-library'); target = $('#meetings-title');
     } else if (destination === 'players') {
       playerDetailOpen = false; render(); switchView('players'); target = $('#players-title');
     } else {
@@ -513,7 +570,11 @@ document.addEventListener('click', async e => {
     target.focus({preventScroll: true});
     target.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start'});
   }
-  const tab = e.target.closest('[data-view]'); if (tab) { if (tab.dataset.view === 'players') { playerDetailOpen = false; cancelPrep(); render(); } switchView(tab.dataset.view); }
+  if (e.target.closest('[data-new-meeting]')) newMeeting();
+  const meetingTypeLink = e.target.closest('[data-library-type]');
+  if (meetingTypeLink) { selectedMeetingId = null; meetingLibrarySensitive = false; resetMeetingFilters(); $('#meeting-type-filter').value = meetingTypeLink.dataset.libraryType; renderMeetingLibrary(); switchView('meeting-library'); $('#meetings-title').focus(); }
+  const meetingLink = e.target.closest('[data-open-meeting]'); if (meetingLink) openMeeting(meetingLink.dataset.openMeeting);
+  const tab = e.target.closest('[data-view]'); if (tab) { if (tab.dataset.view === 'meeting-library') { selectedMeetingId = null; meetingLibrarySensitive = false; renderMeetingLibrary(); } if (tab.dataset.view === 'players') { playerDetailOpen = false; cancelPrep(); render(); } switchView(tab.dataset.view); }
   const targetPlayer = e.target.closest('[data-player],[data-open-player]');
   if (targetPlayer) openPlayerTimeline(targetPlayer.dataset.player || targetPlayer.dataset.openPlayer);
   const selectedRow = e.target.closest('[data-select-player]');
@@ -527,7 +588,7 @@ document.addEventListener('click', async e => {
       meetings = meetings.map(m => m.id === updated.id ? updated : m); clearAssistant();
       cancelPrep(); render(); notify('Action status updated.');
     } catch (error) { action.disabled = false; notify(error.message,true); }
-    finally { busy = false; $('#extract').disabled = !connected; renderActionBoard(); }
+    finally { busy = false; $('#extract').disabled = !connected; $('#review-meeting').disabled = !connected; renderActionBoard(); }
   }
 });
 document.addEventListener('click', e => {

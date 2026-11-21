@@ -66,11 +66,15 @@ class NoteOnlyTests(unittest.TestCase):
             with patch.dict(os.environ,{'COACH_DB_PATH':str(Path(directory)/'bootstrap.sqlite3'),'COACH_ENV_FILE':str(Path(directory)/'absent.env')}):
                 from backend import main
             with patch.object(main,'store',Store(Path(directory)/'api.sqlite3')), TestClient(main.app) as client:
-                body=self.meeting()
+                body={**self.meeting(),'date':'2026-11-26','note':'Talk about their performance.'}
                 with patch('backend.aivana.extract') as ai:
                     self.assertEqual(client.post('/api/meetings',json={**body,'approved':False}).status_code,422)
                     saved=client.post('/api/meetings',json=body)
                     self.assertEqual(saved.status_code,201)
+                    self.assertEqual(saved.json()['date'],'2026-11-26')
+                    self.assertEqual(saved.json()['attendees'],body['attendees'])
+                    self.assertEqual(saved.json()['note'],'Talk about their performance.')
+                    self.assertEqual(saved.json()['items'],[])
                     ai.assert_not_called()
                 with patch('backend.aivana.extract',return_value={'records':[],'warnings':[]}) as ai:
                     extraction=client.post('/api/extract',json={**body,'mode':'live'}).json()
