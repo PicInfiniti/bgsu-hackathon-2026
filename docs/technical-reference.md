@@ -239,7 +239,7 @@ The review screen sorts and colors records: `unmatched` and `low` first (red), t
 
 ### Edit tracking
 
-Drafts and raw structured output are kept separately in `extraction_runs`; they never appear in approved history or prep context. Approval uses the extraction ID and verifies the meeting did not change, then saves records and `record_edits` atomically. The edit log records added/deleted/edited/unchanged drafts with field-level before/after values. Duplicate approval is rejected. A coach-edit rate is not a factual accuracy score; the Level 3 benchmark/stat remains planned.
+Drafts and raw structured output are kept separately in `extraction_runs`; they never appear in approved history or prep context. Approval uses the extraction ID and verifies the meeting did not change, then saves records and `record_edits` atomically. The edit log records added/deleted/edited/unchanged drafts with field-level before/after values. Duplicate approval is rejected. A coach-edit rate is not a factual accuracy score; a separate known-answer development benchmark is described in [the benchmark guide](extraction-benchmark.md).
 
 ---
 

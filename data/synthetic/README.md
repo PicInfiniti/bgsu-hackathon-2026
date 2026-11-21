@@ -37,3 +37,7 @@ The roster covers QB, RB, WR, TE, OL, DL, LB, DB, and special teams. Notes cover
 Revision 3 adds a three-player offensive-line shared drill, a 25-player shared walkthrough review, and group/team encouragement-only notes. The Action board presents assignments under meeting-type headers. Encouragement-only examples create no action rows; find those conversations in timelines, Recent conversations, or the calendar. Existing roster IDs and original seed contents are preserved. All additions are original fictional practice examples, not organizer data.
 
 Revision 4 adds `sensitive-followup`, a fictional individual trainer-confirmation task for Avery due November 24. It seeds as `m-football-v2-sensitive-followup`, keeps its Health & Injury Follow-up topic in Demo extraction, is hidden by default, and is excluded from AI context. Enable Show sensitive actions to reveal it. Existing records and completion states remain unchanged.
+
+## Recorded development benchmark
+
+A repeatable Live known-answer run now covers all 19 cases. See the [benchmark method](../../docs/extraction-benchmark.md), [recorded results](../../docs/benchmarks/football-v2-r4-2026-11-21.md) and [discrepancy review](../../docs/benchmarks/football-v2-r4-review.md). This does not make these author-written development labels independent. Earlier spot-check descriptions above remain historical evidence.

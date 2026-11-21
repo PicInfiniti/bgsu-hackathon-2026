@@ -4,7 +4,7 @@ A football coaching notebook that turns meeting notes into source-backed, coach-
 
 Built by **picInfiniti — Siavash and Salma** for **Project A: Coach Meeting Tracker**, 2026 BGSU Hackathon. All application players and coaching records are fictional.
 
-**Implemented:** Level 1 core, all three Level 2 options, and two Level 3 options: calendar export and voice dictation. The workspace also includes a football Strategy room. Implementation and verification are distinguished below; no general AI accuracy score is claimed.
+**Implemented:** Level 1 core, all three Level 2 options, and three Level 3 options: calendar export, voice dictation and a known-answer development benchmark. The workspace also includes a football Strategy room. Implementation and verification are distinguished below; no general AI accuracy score is claimed.
 
 [Quick start](#quick-start) · [Coaching workflow](#coaching-workflow) · [Feature coverage](#feature-coverage) · [Verification](#verification) · [Limitations](#limitations) · [Demo](#five-minute-demo) · [Technical reference](docs/technical-reference.md)
 
@@ -82,7 +82,7 @@ The [official brief](sources/2026_BGSU_Hackathon_Project_Briefs.pdf), page 2, al
 |---|---|
 | **1 — Core** | Meeting type/date/attendees; structured per-player extraction; source-backed review/edit/approval; persistent records; player timelines; open/overdue actions. |
 | **2 — Standard** | Backend-filtered Individual/Group/Team questions with dated source links; streamed player preparation; code-computed players-not-met-recently list. All three official options implemented. |
-| **3 — Advanced** | Selected follow-up `.ics` export and browser voice dictation. Real browser/client verification limits are listed below. |
+| **3 — Advanced** | Selected follow-up `.ics` export, browser voice dictation and a repeatable known-answer development benchmark. Verification and evaluation limits are listed below. |
 
 ### Calendar export
 
@@ -102,7 +102,7 @@ Plan a future game or review a past one on a football field with the BGSU Falcon
 
 Save/reopen/copy boards with game date, opponent and coach notes; present them or export PNG/SVG. Revision checks reject stale-window overwrites. These are coach-authored diagrams, not automatic game analysis. Strategy storage is separate, makes no AI calls, and never supplies board notes to meeting history, assistant or preparation. Logo provenance is in [assets documentation](frontend/public/assets/README.md).
 
-**Not implemented:** photographed handwriting input, team-theme/trend analytics, action-timing analytics, an independently scored extraction benchmark, or multi-coach authentication. These are optional future work.
+**Not implemented:** photographed handwriting input, team-theme/trend analytics, action-timing analytics, an independent held-out extraction evaluation, or multi-coach authentication. These are optional future work.
 
 ## Aivana and application logic
 
@@ -170,7 +170,7 @@ The HTTP smoke script uses a disposable database. Its default run makes no AI ca
 
 Detailed evidence: [November 21 QA](docs/qa-2026-11-21.md), [historical November 20 QA](docs/qa-2026-11-20.md). Older entries describe their historical state.
 
-An extraction benchmark against independently reviewed expected answers remains planned. Reference answers and code tests are useful inputs, but neither establishes Live AI accuracy. Coach-edit logs are also **not** an accuracy score.
+A [repeatable extraction development benchmark](docs/extraction-benchmark.md) now runs Live Aivana against the 19 team-authored scenarios and supports offline replay. It reports evidence/player/kind precision and recall, exact field agreement, failed calls and a discrepancy review queue. The [recorded run](docs/benchmarks/football-v2-r4-2026-11-21.md) is one pass over known development cases, not an independent held-out evaluation. Task meaning and extra records require review. Coach-edit logs are **not** an accuracy score.
 
 ## Limitations
 
@@ -180,7 +180,7 @@ An extraction benchmark against independently reviewed expected answers remains 
 - **Local, single-user prototype.** Demo login and sensitive-record toggles are not authentication or access control. No production hosting or multi-coach permissions are provided.
 - **Sensitive content stays restricted in the UI and AI context.** It is hidden by default and excluded from assistant/preparation/calendar export. Stored notes still exist locally; use synthetic data only.
 - **Network/browser dependencies.** Live needs Aivana availability/balance; voice depends on the browser speech service. Demo still needs the local backend. Calendar alerts/import behavior depends on the receiving client.
-- **No real coaching validation or scored AI benchmark.** The app has not been tested with real coaching staff or real player records.
+- **No real coaching validation or independent accuracy evaluation.** The development benchmark uses author-written labels on previously used examples. The app has not been tested with real coaching staff or real player records.
 
 ## Five-minute demo
 
@@ -207,7 +207,7 @@ The [official brief](sources/2026_BGSU_Hackathon_Project_Briefs.pdf), page 3, de
 |---|---:|---|
 | Core functionality | 30 | Note → structured extraction → review/approval → stored timeline → open/overdue actions. |
 | Aivana use | 20 | JSON Schema, filtered source-cited answers, streamed preparation and bounded context/output. |
-| Depth | 15 | All three Level 2 options; Level 3 calendar export and voice dictation, subject to verification limits above. |
+| Depth | 15 | All three Level 2 options; Level 3 calendar export, voice dictation and a known-answer benchmark, subject to verification/evaluation limits above. |
 | Reliability/data handling | 15 | Bad-input checks, bounded correction, visible API failures, quote/roster validation and approval audit. |
 | Usability | 10 | Source-backed review, searchable roster/actions, compact history and Month/Week/List calendars. |
 | Demo/documentation | 10 | Setup instructions, explicit limitations, verification evidence and a timed demo. |

@@ -16,7 +16,7 @@
     "Skill labels and faithful paraphrases can vary; compare meaning as well as exact fields.",
     "The all-player broadcast is an output-budget stress case.",
     "No real accounts, contact details, medical records, or credentials.",
-    "Version 1 basketball live spot checks do not establish football extraction accuracy. No live football benchmark has been run.",
+    "Version 1 basketball live spot checks do not establish football extraction accuracy. A one-pass football development benchmark is recorded in docs/benchmarks/football-v2-r4-2026-11-21.json; it is not an independent evaluation.",
     "Revision 3 adds original shared group/team assignments and note-only encouragement examples; these are not organizer data or measured AI accuracy results.",
     "Revision 4 includes one fictional sensitive administrative follow-up to demonstrate hiding/revealing records; it contains no real medical records or advice."
   ],
