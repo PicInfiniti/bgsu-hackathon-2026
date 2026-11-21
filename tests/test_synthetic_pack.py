@@ -13,6 +13,30 @@ def read(name):
 
 
 class SyntheticPackTests(unittest.TestCase):
+    def test_football_roster_reference_skills_and_readable_notes(self):
+        roster = read('roster.json')
+        self.assertEqual(read('manifest.json')['sport'], 'Football')
+        self.assertEqual([p['id'] for p in roster], [f'p{i:02}' for i in range(1, 26)])
+        self.assertEqual([p['name'] for p in roster[:8]], [
+            'Avery Brooks', 'Jordan Ellis', 'Morgan Reed', 'Casey Lane',
+            'Riley Quinn', 'Taylor Hayes', 'Drew Parker', 'Skyler Vale'])
+        self.assertEqual({p['position_group'] for p in roster},
+                         {'QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'DB', 'ST'})
+        self.assertEqual(len({p['nickname'] for p in roster}), len(roster))
+        self.assertTrue(all(p['position_label'] and p['position'] for p in roster))
+        football_skills = {'Passing', 'Receiving', 'Route Running', 'Blocking',
+                           'Tackling', 'Coverage & Positioning', 'Decision-Making',
+                           'Ball Security', 'Footwork & Agility', 'Kicking & Punting',
+                           'Other', 'Not Specified', 'Not Applicable'}
+        for case in read('expected.json').values():
+            self.assertTrue(all(item['skill'] in football_skills for item in case['items']))
+        readable = (PACK / 'notes.md').read_text()
+        for meeting in read('meetings.json'):
+            self.assertIn(meeting['note'], readable)
+            self.assertNotRegex(meeting['note'].lower(),
+                                r'dribbl|rebound|free throws?|box.out|outlet pass|court|inbound|baseline trap')
+        self.assertTrue(all(m['id'].startswith('m-football-v2-') for m in DEMO['meetings']))
+
     def test_manifest_roster_and_generated_fixture_match(self):
         manifest, roster, meetings, expected = (read(name) for name in (
             'manifest.json', 'roster.json', 'meetings.json', 'expected.json'))

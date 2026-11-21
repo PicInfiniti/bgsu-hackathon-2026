@@ -7,6 +7,23 @@ from backend.core import DEMO, Store
 
 
 class SharedStoreTests(unittest.TestCase):
+    def test_football_seed_keeps_earlier_saved_practice_history_unchanged(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = Store(Path(directory) / 'shared.sqlite3')
+            note = 'Jordan Ellis: Review the defensive rotation clips by 2026-11-22.'
+            earlier = {**copy.deepcopy(DEMO['meetings'][0]), 'id': 'm-seed-0',
+                       'title': 'Earlier practice meeting', 'note': note,
+                       'items': [{'id': 'i-seed-0-0', 'player_id': 'p02', 'kind': 'action',
+                                  'text': 'Review the defensive rotation clips.', 'skill': 'Positioning',
+                                  'quote': note, 'due_date': '2026-11-22', 'completed': True}]}
+            store.import_reviewed([earlier])
+            self.assertEqual(store.seed_pack(), len(DEMO['meetings']))
+            self.assertEqual(store.seed_pack(), 0)
+            historical = next(m for m in Store(store.path).list() if m['id'] == earlier['id'])
+            self.assertEqual(historical['note'], note)
+            self.assertEqual(historical['items'], earlier['items'])
+            self.assertEqual(len(store.list()), len(DEMO['meetings']) + 1)
+
     def test_pack_seed_is_idempotent_and_preserves_existing_actions(self):
         with tempfile.TemporaryDirectory() as directory:
             store = Store(Path(directory) / 'shared.sqlite3')

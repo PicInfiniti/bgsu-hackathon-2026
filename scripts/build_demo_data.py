@@ -24,15 +24,18 @@ def build():
         sample['items'] = copy.deepcopy(expected[note['id']]['items'])
         samples.append(sample)
     meetings = []
+    seed_namespace = f"{manifest['sport'].lower()}-v{manifest['version']}"
     for index, sample_id in enumerate(('group', 'team')):
         sample = next(s for s in samples if s['id'] == sample_id)
         meeting = {key: copy.deepcopy(sample[key]) for key in ('title', 'date', 'meeting_type', 'attendees', 'note', 'items')}
-        meeting.update(id=f'm-seed-{index}', approved=True, origin='demo')
+        meeting.update(id=f'm-{seed_namespace}-{index}', approved=True, origin='demo')
         for item_index, item in enumerate(meeting['items']):
-            item.update(id=f'i-seed-{index}-{item_index}', completed=False)
+            item.update(id=f'i-{seed_namespace}-{index}-{item_index}', completed=False)
         meetings.append(meeting)
     return {
         'provenance': manifest['provenance'],
+        'sport': manifest['sport'],
+        'pack_version': manifest['version'],
         'reference_date': manifest['reference_date'],
         'players': roster,
         'samples': samples,

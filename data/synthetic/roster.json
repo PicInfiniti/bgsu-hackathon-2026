@@ -3,150 +3,225 @@
     "id": "p01",
     "name": "Avery Brooks",
     "number": 4,
-    "position": "Guard"
+    "position": "QB",
+    "position_label": "Quarterback",
+    "position_group": "QB",
+    "nickname": "AB"
   },
   {
     "id": "p02",
     "name": "Jordan Ellis",
     "number": 12,
-    "position": "Forward"
+    "position": "CB",
+    "position_label": "Cornerback",
+    "position_group": "DB",
+    "nickname": "JE"
   },
   {
     "id": "p03",
     "name": "Morgan Reed",
     "number": 23,
-    "position": "Guard"
+    "position": "WR",
+    "position_label": "Wide receiver",
+    "position_group": "WR",
+    "nickname": "Mo"
   },
   {
     "id": "p04",
     "name": "Casey Lane",
     "number": 8,
-    "position": "Center"
+    "position": "S",
+    "position_label": "Safety",
+    "position_group": "DB",
+    "nickname": "CL"
   },
   {
     "id": "p05",
     "name": "Riley Quinn",
     "number": 15,
-    "position": "Forward"
+    "position": "QB",
+    "position_label": "Quarterback",
+    "position_group": "QB",
+    "nickname": "RQ"
   },
   {
     "id": "p06",
     "name": "Taylor Hayes",
     "number": 3,
-    "position": "Guard"
+    "position": "WR",
+    "position_label": "Wide receiver",
+    "position_group": "WR",
+    "nickname": "TH"
   },
   {
     "id": "p07",
     "name": "Drew Parker",
     "number": 21,
-    "position": "Forward"
+    "position": "RB",
+    "position_label": "Running back",
+    "position_group": "RB",
+    "nickname": "DP"
   },
   {
     "id": "p08",
     "name": "Skyler Vale",
-    "number": 32,
-    "position": "Center"
+    "number": 82,
+    "position": "TE",
+    "position_label": "Tight end",
+    "position_group": "TE",
+    "nickname": "Sky"
   },
   {
     "id": "p09",
     "name": "Emery Finch",
     "number": 1,
-    "position": "Guard"
+    "position": "WR",
+    "position_label": "Wide receiver",
+    "position_group": "WR",
+    "nickname": "EF"
   },
   {
     "id": "p10",
     "name": "Rowan Hart",
-    "number": 2,
-    "position": "Forward"
+    "number": 52,
+    "position": "LB",
+    "position_label": "Linebacker",
+    "position_group": "LB",
+    "nickname": "RH"
   },
   {
     "id": "p11",
     "name": "Sage Mercer",
     "number": 5,
-    "position": "Guard"
+    "position": "RB",
+    "position_label": "Running back",
+    "position_group": "RB",
+    "nickname": "Sage"
   },
   {
     "id": "p12",
     "name": "Blair Wren",
-    "number": 6,
-    "position": "Center"
+    "number": 76,
+    "position": "LT",
+    "position_label": "Left tackle",
+    "position_group": "OL",
+    "nickname": "BW"
   },
   {
     "id": "p13",
     "name": "Reese Alder",
-    "number": 7,
-    "position": "Forward"
+    "number": 65,
+    "position": "LG",
+    "position_label": "Left guard",
+    "position_group": "OL",
+    "nickname": "RA"
   },
   {
     "id": "p14",
     "name": "Quinn Marlow",
-    "number": 9,
-    "position": "Guard"
+    "number": 60,
+    "position": "C",
+    "position_label": "Center",
+    "position_group": "OL",
+    "nickname": "QM"
   },
   {
     "id": "p15",
     "name": "Alex Linden",
     "number": 10,
-    "position": "Forward"
+    "position": "WR",
+    "position_label": "Wide receiver",
+    "position_group": "WR",
+    "nickname": "AL"
   },
   {
     "id": "p16",
     "name": "Dakota Penn",
-    "number": 11,
-    "position": "Center"
+    "number": 91,
+    "position": "DE",
+    "position_label": "Defensive end",
+    "position_group": "DL",
+    "nickname": "Dak"
   },
   {
     "id": "p17",
     "name": "Jamie Cove",
     "number": 13,
-    "position": "Guard"
+    "position": "K",
+    "position_label": "Kicker",
+    "position_group": "ST",
+    "nickname": "JC"
   },
   {
     "id": "p18",
     "name": "Cameron Ash",
     "number": 14,
-    "position": "Forward"
+    "position": "CB",
+    "position_label": "Cornerback",
+    "position_group": "DB",
+    "nickname": "Cam"
   },
   {
     "id": "p19",
     "name": "Robin Frost",
     "number": 16,
-    "position": "Guard"
+    "position": "QB",
+    "position_label": "Quarterback",
+    "position_group": "QB",
+    "nickname": "RF"
   },
   {
     "id": "p20",
     "name": "Ellis Rowan",
-    "number": 17,
-    "position": "Center"
+    "number": 90,
+    "position": "DT",
+    "position_label": "Defensive tackle",
+    "position_group": "DL",
+    "nickname": "ER"
   },
   {
     "id": "p21",
     "name": "Finley Moss",
     "number": 18,
-    "position": "Forward"
+    "position": "WR",
+    "position_label": "Wide receiver",
+    "position_group": "WR",
+    "nickname": "Finn"
   },
   {
     "id": "p22",
     "name": "Peyton Lake",
     "number": 19,
-    "position": "Guard"
+    "position": "CB",
+    "position_label": "Cornerback",
+    "position_group": "DB",
+    "nickname": "PL"
   },
   {
     "id": "p23",
     "name": "Remy Birch",
-    "number": 20,
-    "position": "Forward"
+    "number": 68,
+    "position": "RG",
+    "position_label": "Right guard",
+    "position_group": "OL",
+    "nickname": "Remy"
   },
   {
     "id": "p24",
     "name": "Arden West",
     "number": 22,
-    "position": "Center"
+    "position": "RB",
+    "position_label": "Running back",
+    "position_group": "RB",
+    "nickname": "AW"
   },
   {
     "id": "p25",
     "name": "Charlie Wynn",
     "number": 24,
-    "position": "Guard"
+    "position": "P",
+    "position_label": "Punter",
+    "position_group": "ST",
+    "nickname": "CW"
   }
 ]

@@ -1,8 +1,8 @@
 {
-  "version": 1,
-  "provenance": "Original fictional Project A practice data created by picInfiniti. Not supplied or endorsed by the organizers. Names and events are invented; any resemblance is coincidental.",
+  "version": 2,
+  "provenance": "Original fictional football Project A practice data created by picInfiniti. Not supplied or endorsed by the organizers. Names and events are invented; any resemblance is coincidental.",
   "reference_date": "2026-11-20",
-  "sport": "Basketball",
+  "sport": "Football",
   "player_count": 25,
   "meeting_count": 14,
   "expected_record_count": 57,
@@ -15,6 +15,7 @@
     "Author-written reference answers, not an independent or measured AI benchmark.",
     "Skill labels and faithful paraphrases can vary; compare meaning as well as exact fields.",
     "The all-player broadcast is an output-budget stress case.",
-    "No real accounts, contact details, medical records, or credentials."
+    "No real accounts, contact details, medical records, or credentials.",
+    "Version 1 basketball live spot checks do not establish football extraction accuracy. No live football benchmark has been run."
   ]
 }
