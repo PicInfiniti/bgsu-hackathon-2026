@@ -1,4 +1,4 @@
-// Play whiteboard: SVG football field, objects stored in field coordinates (yards).
+// Playboard: SVG football field for play diagrams; objects stored in field coordinates (yards).
 import { HistoryStack } from './history-stack.js';
 
 export const TEMPLATES = { play: { w: 53.33, h: 30, label: 'Play diagram' }, field: { w: 120, h: 53.33, label: 'Full field' }, frame: { w: 100, h: 56.25, label: 'Film frame' }, blank: { w: 100, h: 56.25, label: 'Blank' } };
@@ -130,7 +130,7 @@ async function toDataUrl(src) {
 }
 
 /**
- * Opens the whiteboard as a full-screen panel.
+ * Opens the Playboard as a full-screen panel.
  * ctx: {api, notify, players, onSaved}
  * opts: {id, template, background, film_id, t_seconds, meeting_id, note_id, player_ids, title}
  */
@@ -141,11 +141,11 @@ export function openWhiteboard(ctx, opts = {}) {
   let selected = new Set(), view = null, drag = null, dirty = false, saveTimer = null, saving = false, penSeen = false, status = 'Not saved';
   const history = new HistoryStack('[]');
   const panel = document.createElement('div');
-  panel.className = 'wb-overlay'; panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Play whiteboard');
+  panel.className = 'wb-overlay'; panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Playboard');
   panel.innerHTML = `<div class="wb-shell">
-    <header class="wb-head"><strong>✎ Play whiteboard</strong><span class="wb-status" data-status aria-live="polite">Not saved</span><span class="wb-gap"></span>
+    <header class="wb-head"><strong>✎ Playboard</strong><span class="wb-status" data-status aria-live="polite">Not saved</span><span class="wb-gap"></span>
       <label>Board <select data-template>${Object.entries(TEMPLATES).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('')}</select></label>
-      <button type="button" class="secondary compact" data-export>PNG</button><button type="button" class="primary compact" data-save>Save</button><button type="button" class="icon-button" data-close aria-label="Close whiteboard">✕</button></header>
+      <button type="button" class="secondary compact" data-export>PNG</button><button type="button" class="primary compact" data-save>Save</button><button type="button" class="icon-button" data-close aria-label="Close Playboard">✕</button></header>
     <div class="wb-tools" role="toolbar" aria-label="Drawing tools">
       ${[['select', '⬚', 'Select / move (V)'], ['pen', '✎', 'Pen (P)'], ['arrow', '➚', 'Arrow (A)'], ['line', '╱', 'Line / block (L)'], ['marker', '◯', 'Player (M)'], ['text', 'T', 'Text (T)'], ['highlight', '▢', 'Highlight (H)'], ['eraser', '⌫', 'Eraser (E)'], ['pan', '✋', 'Move board (Space)']].map(([k, icon, tip]) => `<button type="button" data-tool="${k}" title="${tip}" aria-label="${tip}">${icon}</button>`).join('')}
       <span class="wb-sep"></span>${COLORS.map(c => `<button type="button" class="wb-swatch" data-color="${c}" style="--c:${c}" aria-label="Color ${c}" title="${c}"></button>`).join('')}
@@ -173,6 +173,7 @@ export function openWhiteboard(ctx, opts = {}) {
         <p class="wb-help">Pen draws, a finger moves the board when a pen is used. Coordinates are saved in yards, so drawings stay in place on any screen.</p>
       </aside></div></div>`;
   document.body.append(panel);
+  document.dispatchEvent(new CustomEvent('playboard-opened'));
   document.body.classList.add('wb-open');
   const $ = (s) => panel.querySelector(s);
   const board = $('[data-board]');
@@ -333,6 +334,11 @@ export function openWhiteboard(ctx, opts = {}) {
   }
   async function save(auto) {
     if (saving) { scheduleSave(); return; }
+    if (!objects.some(o => !['scrimmage', 'first_down'].includes(o.type))) {
+      setStatus('Not saved');
+      if (!auto) notify('Add a player or a route before saving.', true);
+      return;
+    }
     saving = true; setStatus('Saving…');
     try {
       const body = payload();
@@ -340,8 +346,9 @@ export function openWhiteboard(ctx, opts = {}) {
       if (!diagram && template === 'frame' && background?.startsWith('data:')) body.background = background;
       if (diagram) body.base_updated_at = diagram.updated_at;
       diagram = diagram ? await api(`/diagrams/${diagram.id}`, body, 'PUT') : await api('/diagrams', body);
-      dirty = false; setStatus('Saved'); ctx.onSaved?.(diagram); loadThumbs();
-      if (!auto) notify('Drawing saved.');
+      dirty = false; setStatus('Saved to Playboard'); ctx.onSaved?.(diagram); loadThumbs();
+      notify('');
+      if (!auto) notify('Saved to Playboard.');
     } catch (error) { setStatus('Save failed – retry'); if (!auto) notify(error.message, true); }
     finally { saving = false; }
   }
@@ -368,7 +375,7 @@ export function openWhiteboard(ctx, opts = {}) {
   function onUnload(e) { if (dirty) { e.preventDefault(); e.returnValue = ''; } }
   window.addEventListener('beforeunload', onUnload);
   function close() {
-    if (dirty && !confirm('This drawing has unsaved changes. Close anyway?')) return;
+    if (dirty && !confirm('This play diagram has unsaved changes. Close anyway?')) return;
     clearTimeout(saveTimer); document.removeEventListener('keydown', keys); document.removeEventListener('keyup', keys); window.removeEventListener('beforeunload', onUnload);
     panel.remove(); document.body.classList.remove('wb-open'); ctx.onClose?.();
   }

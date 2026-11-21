@@ -1,4 +1,4 @@
-// Film room, Play whiteboard, player film card and the Film pack page.
+// Film room, Playboard, player film card and the Film pack page.
 $orange: #fd5000;
 $orange-dark: #bd3b00;
 $brown: #4f2c1d;
@@ -75,7 +75,7 @@ $red: #c8321f;
   @media (max-width: 1100px) { .film-ws-grid, .cutup-layout, .player-film-grid { grid-template-columns: 1fr; } .cutup-filters { grid-template-columns: repeat(2, 1fr); } }
 }
 
-// Whiteboard overlay (on <body>)
+// Playboard overlay (on <body>)
 body.wb-open { overflow: hidden; }
 .wb-overlay { position: fixed; inset: 0; z-index: 150; background: #2b211bcc; display: grid; place-items: stretch; padding: 12px; font-family: inherit; color: $ink; }
 .wb-shell { background: #fffdf9; border-radius: 14px; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }

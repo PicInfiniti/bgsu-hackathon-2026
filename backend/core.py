@@ -45,7 +45,8 @@ def validate_meeting(raw, require_items=False, historical=False):
         raise ValueError('Individual meetings require exactly one attendee.')
     if result['meeting_type'] == 'group' and len(attendees) < 2:
         raise ValueError('Group meetings require at least two attendees.')
-    if result['meeting_type'] == 'team' and not historical and set(attendees) != PLAYERS:
+    active = {p['id'] for p in DEMO['players'] if p.get('active', True)}
+    if result['meeting_type'] == 'team' and not historical and not active <= set(attendees):
         raise ValueError('Team meetings require the full demo roster.')
     result['attendees'] = attendees
     if require_items:

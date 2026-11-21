@@ -15,6 +15,7 @@ from .grouping import annotate_shared_records
 from .notebook_routes import create_notebook, register
 from .film import FilmRoom
 from . import film_routes
+from . import roster as roster_mod
 
 load_environment()
 app = FastAPI(title='Falcon Follow-up prototype')
@@ -22,6 +23,17 @@ db_path = Path(os.environ.get('COACH_DB_PATH', Path(__file__).with_name('coach.s
 store = Store(db_path)
 store.seed_pack()
 notebook = create_notebook(db_path)
+
+
+def _sync_film_sets(players):
+    film_routes.ROSTER.clear()
+    film_routes.ROSTER.update(p['id'] for p in players)
+    film_routes.ROOMS.clear()
+    film_routes.ROOMS.update(p['position_group'] for p in players)
+
+
+roster_mod.on_change(_sync_film_sets)
+roster = roster_mod.Roster(db_path)
 film_room = FilmRoom(db_path, Path(os.environ.get('COACH_FILM_DIR', Path(__file__).resolve().parents[1] / 'data' / 'film')))
 register(app, store, notebook, extra_notifications=lambda now: film_routes.film_notifications(film_room, now), film_room=film_room)
 film_routes.register(app, store, notebook, film_room)
@@ -114,6 +126,40 @@ def complete(meeting_id: str, item_id: str, body: dict):
         raise HTTPException(404, 'Action item not found.') from None
     except ValueError as error:
         raise HTTPException(422, str(error)) from None
+
+
+@app.get('/api/players')
+def players_list():
+    return roster.list()
+
+
+@app.post('/api/players', status_code=201)
+def player_create(body: dict):
+    try:
+        player, warnings = roster.create(body)
+        return {'player': player, 'warnings': warnings}
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from None
+
+
+@app.patch('/api/players/{player_id}')
+def player_update(player_id: str, body: dict):
+    try:
+        player, warnings = roster.update(player_id, body)
+        return {'player': player, 'warnings': warnings}
+    except KeyError:
+        raise HTTPException(404, 'Player not found.') from None
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from None
+
+
+@app.post('/api/players/{player_id}/next-season')
+def player_next_season(player_id: str):
+    try:
+        player, warnings = roster.next_season(player_id)
+        return {'player': player, 'warnings': warnings}
+    except KeyError:
+        raise HTTPException(404, 'Player not found.') from None
 
 
 @app.get('/api/players/{player_id}/prep')

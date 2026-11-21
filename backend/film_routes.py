@@ -233,7 +233,7 @@ def register(app: FastAPI, store, notebook, film: FilmRoom):
             meeting_note = f"{note['text']}\n\n(Film: {note['film_title']} at {mmss(note['t_seconds'])})"
             attendees = note['player_ids']
             meeting = {'title': f"Film: {note['film_title']}"[:160], 'date': today, 'note': meeting_note,
-                       'meeting_type': 'team' if set(attendees) == ROSTER else 'group' if len(attendees) > 1 else 'individual', 'attendees': attendees}
+                       'meeting_type': 'team' if {x['id'] for x in PLAYERS if x.get('active', True)} <= set(attendees) else 'group' if len(attendees) > 1 else 'individual', 'attendees': attendees}
             items = [{'schema_version': 2, 'player_id': p, 'scope': 'player', 'kind': 'action', 'text': task, 'topic': None, 'skill': None,
                       'tags': note['tags'][:3], 'quote': note['text'], 'due_date': due, 'deadline_text': None, 'confidence': 'high',
                       'mention': next(x['name'] for x in PLAYERS if x['id'] == p), 'match_method': 'full_name', 'sensitive': False,

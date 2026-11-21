@@ -2,6 +2,7 @@ import './styles.scss';
 import './workspace.scss';
 import './coach.scss';
 import './film.scss';
+import './profile.scss';
 import demo from '../../data/demo.json';
 import { workspaceMode } from './access.js';
 import { loadSharedNotebook } from './shared-notebook.js';
@@ -27,8 +28,19 @@ import { openWhiteboard } from './whiteboard.js';
 import { renderPlayerFilm } from './player-film.js';
 import { createQuickNote } from './quick-note.js';
 import { createProfileMenu } from './profile-menu.js';
+import { roster, isActive, applyRoster } from './roster-store.js';
+import { SMART_VIEWS, notebookRows, viewCounts, DELETE_FOLDER_TEXT } from './notebook-views.js';
+import { openPlayerForm } from './player-form.js';
+import { STANDARD_TAGS, TABS, headerMarkup, playerFacts, factsMarkup, overviewParts, standardsMarkup, goalsMarkup, playerRecords } from './player-page.js';
+import { renderSettings } from './settings-page.js';
+import { renderHelp } from './help-page.js';
+import { startTour, shouldStart, tourActive } from './tour.js';
 
 const $ = (s) => document.querySelector(s);
+// demo.players holds the ACTIVE roster (every picker uses it); allPlayers also has inactive players, for names and history.
+let allPlayers = roster.all.length ? roster.all : [...demo.players];
+applyRoster(demo.players, allPlayers);
+let showInactive = false, playerTab = 'overview', playerDev = null, playerGame = null;
 const escape = (s = '') => String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clone = (x) => structuredClone(x);
 let meetings = [];
@@ -38,7 +50,7 @@ let playerDetailOpen = false, playerUnitFilter = 'all';
 let extractionId = null, extractionWarnings = [], highlightedDraft = 0;
 let statusTimer = null;
 let assistantResult = null, assistantPending = false, assistantRevision = 0, assistantActionCategory = '';
-const player = (id) => demo.players.find(p => p.id === id);
+const player = (id) => allPlayers.find(p => p.id === id);
 const name = (id) => player(id)?.name ?? 'Unknown player';
 const positionLabel = (p) => p.position_label ? `${p.position} · ${p.position_label}` : p.position;
 const today = () => new Date().toLocaleDateString('en-CA');
@@ -75,7 +87,7 @@ document.querySelector('#app').innerHTML = `
       <button data-view="tasks">${icon('check')} Homework <b id="nav-count" title="Late homework"></b></button>
     </nav>
     <div class="sidebar-note">From the film room<br>to the next practice.<span>Make the follow-up count.</span></div>
-    <div class="sidebar-bottom"><span class="team-avatar">pi</span><div>picInfiniti<small>Football Meeting Tracker</small></div></div>
+    <div class="sidebar-bottom"><span class="team-avatar">pi</span><div id="sidebar-team">picInfiniti<small>Football Meeting Tracker</small></div></div>
   </aside>
   <div class="shell">
     <header class="topbar"><div><h1 id="page-title">Home</h1><p id="page-date"></p></div><div class="header-actions"><label class="mode-control">Mode <select id="mode"><option value="demo">Demo · no AI calls</option><option value="live">Live · Aivana</option></select></label><button class="secondary new-note-button" id="new-note" type="button">${icon('plus')} New note</button><button class="ask-button" id="open-ask" data-open-ask type="button" aria-label="Ask Aivana">✦ Ask Aivana</button><button class="bell-button" id="bell" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Notifications"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span class="bell-count" hidden></span></button><button type="button" class="profile-link profile-button" id="profile-button" aria-haspopup="menu" aria-label="Profile">${icon('user')}</button></div></header>
@@ -85,7 +97,7 @@ document.querySelector('#app').innerHTML = `
       <section id="desk" class="view">
         <div class="home-grid">
           <div class="home-col home-left">
-            <section class="panel notebooks-card"><div class="section-heading"><h2>Coach's notebook</h2></div><div id="notebook-list" class="notebook-list"></div></section>
+            <section class="panel notebooks-card"><div class="section-heading"><h2>Coach's notebook</h2></div><label class="notes-search"><span class="sr-only">Search all notes</span><input id="notes-search" type="search" placeholder="Search all notes" autocomplete="off"></label><div id="notebook-list" class="notebook-list"></div><div id="folder-list" class="folder-list"></div></section>
             <section class="panel recent-card"><div class="section-heading"><h2 id="recent-heading">Recent notes</h2><span id="recent-count" class="muted"></span></div><div id="recent" class="recent-list"></div></section>
           </div>
           <div class="home-col home-center" id="note-editor-root"></div>
@@ -113,13 +125,26 @@ document.querySelector('#app').innerHTML = `
         </div></section>
       <section id="players" class="view" hidden>
         <div id="player-directory">
-          <div class="section-heading directory-heading"><div><p class="eyebrow">THE FOOTBALL ROSTER</p><h2 id="players-title" tabindex="-1">Players</h2><p>${demo.players.length} players · Synthetic football roster</p></div></div>
+          <div class="section-heading directory-heading"><div><p class="eyebrow">THE FOOTBALL ROSTER</p><h2 id="players-title" tabindex="-1">Players</h2><p id="players-count">${demo.players.length} players · Synthetic football roster</p></div><div class="directory-actions"><label class="check-line"><input type="checkbox" id="show-inactive"> Show inactive</label><button class="primary" type="button" id="add-player">${icon('plus')} Add player</button></div></div>
           <div class="player-filters"><label class="player-search">${icon('people')}<span class="sr-only">Search players or jersey numbers</span><input id="player-search" type="search" placeholder="Search players or jersey numbers" autocomplete="off"></label><label><span class="sr-only">Position group</span><select id="player-group"><option value="all">All position groups</option>${[...new Set(demo.players.map(p => p.position_group))].sort().map(g => `<option value="${escape(g)}">${escape(g)}</option>`).join('')}</select></label><label><span class="sr-only">Position</span><select id="player-position"><option value="all">All positions</option>${[...new Map(demo.players.map(p => [p.position, p.position_label || p.position]))].sort((a,b) => a[1].localeCompare(b[1])).map(([code,label]) => `<option value="${escape(code)}">${escape(code)} · ${escape(label)}</option>`).join('')}</select></label></div>
           <div class="directory-layout"><div class="roster-table-area"><div class="unit-tabs" aria-label="Filter roster by team unit" id="player-unit-tabs"></div><div class="roster-table-wrap"><table class="roster-table"><caption class="sr-only">Football players, meetings attended, and open homework. Select a player for a snapshot or open their timeline.</caption><thead><tr><th scope="col">Player</th><th scope="col">#</th><th scope="col">Position</th><th scope="col">Unit</th><th scope="col">Meetings</th><th scope="col">Homework</th><th scope="col"><span class="sr-only">Details</span></th></tr></thead><tbody id="roster"></tbody></table></div><p id="player-results" class="directory-results" role="status"></p></div>
             <aside class="player-summary-rail"><section class="player-snapshot panel"><h3>Player snapshot</h3><div id="player-snapshot"></div></section><section class="unit-summary panel"><h3>Team units</h3><dl id="player-unit-summary"></dl></section></aside>
           </div>
         </div>
-        <div id="player-detail" hidden><button class="secondary back-to-roster" id="back-to-roster">Back to players</button><div class="panel player-detail-panel"><div id="player-heading"></div><div id="player-film"></div><label class="sensitive-toggle"><input id="show-sensitive" type="checkbox"> Show sensitive notes</label><div id="timeline"></div><div class="prep-box"><h3>Prepare for the next conversation</h3><p>Build a brief from this player's checked notes.</p><button id="prep" class="secondary">Build preparation brief</button><div id="prep-text" class="prep-content" aria-live="polite"></div></div></div></div>
+        <div id="player-detail" hidden><button class="secondary back-to-roster" id="back-to-roster">Back to players</button><div class="player-detail-panel">
+          <div id="player-heading" class="panel"></div>
+          <div id="player-facts" class="pp-facts"></div>
+          <div class="pp-tabs" role="tablist" aria-label="Player sections">${TABS.map(([k, l]) => `<button type="button" role="tab" data-pp-tab="${k}" aria-selected="${k === 'overview'}">${l}</button>`).join('')}</div>
+          <div class="pp-panel" data-pp-panel="overview"><div class="pp-overview">
+            <section class="panel pp-card"><h3>Next meeting prep</h3><div id="pp-prep"></div><div class="prep-box"><button id="prep" class="secondary compact" type="button">Build preparation brief</button><div id="prep-text" class="prep-content" aria-live="polite"></div></div></section>
+            <section class="panel pp-card"><h3>Strengths &amp; work-ons</h3><div id="pp-strengths"></div></section>
+            <section class="panel pp-card"><h3>Recent activity</h3><div id="pp-recent"></div><button class="text-button" type="button" data-pp-tab="timeline">Full timeline →</button></section>
+          </div></div>
+          <div class="pp-panel" data-pp-panel="timeline" hidden><label class="sensitive-toggle"><input id="show-sensitive" type="checkbox"> Show sensitive notes</label><div id="timeline"></div></div>
+          <div class="pp-panel" data-pp-panel="assignments" hidden><div id="pp-assignments"></div></div>
+          <div class="pp-panel" data-pp-panel="film" hidden><div id="player-film"></div></div>
+          <div class="pp-panel" data-pp-panel="development" hidden><div class="pp-dev"><div id="pp-dev-top"></div><div id="player-skills"></div></div></div>
+        </div></div>
       </section>
       <section id="tasks" class="view" hidden>
         <div class="section-heading action-heading"><div><p class="eyebrow">PLAYER ASSIGNMENTS · WHAT YOU TOLD A PLAYER TO DO</p><h2>Homework board</h2><p class="action-caption">Find homework. Open its title to see where it came from.</p></div><label>Status<select id="task-filter"><option value="open">Open homework</option><option value="overdue">Late</option><option value="done">Done</option><option value="all">All homework</option></select></label></div>
@@ -132,6 +157,8 @@ document.querySelector('#app').innerHTML = `
         <div class="action-table-wrap"><table class="action-table"><thead><tr><th scope="col">Homework / source</th><th scope="col">Player</th><th scope="col">Category</th><th scope="col">Deadline</th><th scope="col">Status</th><th scope="col">Update</th></tr></thead><tbody id="task-list"></tbody></table></div></div>
         <label class="sensitive-toggle"><input id="show-sensitive-actions" type="checkbox"> Show sensitive homework</label><p id="task-hidden-note" class="sensitive-notice" hidden></p>
       </section>
+      <section id="settings" class="view" hidden><div id="settings-root"></div></section>
+      <section id="help" class="view" hidden><div id="help-root"></div></section>
       <section id="assistant" class="view" hidden>
         <div class="section-heading assistant-heading"><div><p class="eyebrow">BEFORE THE NEXT 1-ON-1</p><h2 id="assistant-title" tabindex="-1">Ask Aivana about a player</h2><p>Ask about a player. Bring their documented feedback into your next meeting.</p></div><span class="assistant-scope">${icon('chat')} Your approved notebook</span></div>
         <div class="assistant-layout">
@@ -217,7 +244,7 @@ function renderReview() {
   const cards = draft.map((i,n) => {
     const issues = reviewIssues(i,current);
     const shared = i.scope === 'team' && i.player_ids?.length && i.kind !== 'action';
-    return `<article class="draft-item confidence-${i.confidence || 'medium'}"><p class="record-origin">${escape(meetingTypeLabel(current.meeting_type))} · ${escape(current.title)}</p><div class="draft-flags"><span class="confidence-badge ${i.confidence || 'medium'}">${escape(i.confidence || 'medium')} confidence</span>${!i.player_id && !shared ? '<span class="badge overdue">Unmatched player</span>' : ''}${i.sensitive ? '<span class="badge sensitive">Sensitive topic</span>' : ''}${i.group_record_id ? '<span class="badge">Shared instruction</span>' : ''}</div><div class="form-row"><label>Player<select data-index="${n}" data-field="player_id"><option value="" ${!i.player_id && !shared ? 'selected' : ''}>Choose attendee…</option>${current.meeting_type === 'team' && i.kind !== 'action' ? `<option value="__team__" ${shared ? 'selected' : ''}>Whole team feedback</option>` : ''}${current.attendees.map(id => `<option value="${id}" ${id === i.player_id ? 'selected' : ''}>${escape(name(id))}</option>`).join('')}</select></label><label>Type<select data-index="${n}" data-field="kind">${optionList(['action','praise','improvement','observation'], i.kind)}</select></label></div><label>Topic <small>(any words)</small><input data-index="${n}" data-field="topic" list="topic-ideas" maxlength="100" value="${escape(i.topic || '')}"></label><label>Coach's note<textarea rows="2" data-index="${n}" data-field="text" maxlength="1000">${escape(i.text)}</textarea></label><div class="form-row"><label>Skill <small>(any words)</small><input data-index="${n}" data-field="skill" list="skill-ideas" maxlength="100" value="${escape(i.skill || '')}"></label><label>Due date <small>(homework only)</small><input type="date" data-index="${n}" data-field="due_date" value="${escape(i.due_date || '')}" ${i.kind !== 'action' ? 'disabled' : ''}></label></div>${i.deadline_text ? `<p class="deadline-evidence">Original deadline: “${escape(i.deadline_text)}” · ${i.due_date ? `Resolved: ${escape(i.due_date)}` : 'No definite date — coach review needed'}</p>` : ''}<label>Tags <small>(any words, comma between, up to 3)</small><input data-index="${n}" data-field="tags" maxlength="130" value="${escape((i.tags || []).join(', '))}" placeholder="route running, red zone"></label>${i.details ? `<p class="deadline-evidence">Key details: ${escape(i.details)}</p>` : ''}<label>Verbatim source quote<textarea rows="2" data-index="${n}" data-field="quote" maxlength="2000">${escape(i.quote)}</textarea></label><button class="text-button" data-highlight="${n}" type="button">Highlight in original note</button>${i.mention ? `<p class="match-evidence">Mention: ${escape(i.mention)} · ${escape(i.match_method || 'unmatched')}</p>` : ''}${i.warnings?.length ? `<details class="draft-extraction-notes"><summary>Notes from Find homework</summary><ul>${i.warnings.map(w => `<li>${escape(w)}</li>`).join('')}</ul></details>` : ''}<div class="record-issues" data-issues="${n}">${issues.map(issue => `<p>${escape(issue)}</p>`).join('')}</div><button class="text-button remove" data-remove="${n}" type="button">Remove</button></article>`;
+    return `<article class="draft-item confidence-${i.confidence || 'medium'}"><p class="record-origin">${escape(meetingTypeLabel(current.meeting_type))} · ${escape(current.title)}</p><div class="draft-flags"><span class="confidence-badge ${i.confidence || 'medium'}">${escape(i.confidence || 'medium')} confidence</span>${!i.player_id && !shared ? '<span class="badge overdue">Unmatched player</span>' : ''}${i.sensitive ? '<span class="badge sensitive">Sensitive topic</span>' : ''}${i.group_record_id ? '<span class="badge">Shared instruction</span>' : ''}</div><div class="form-row"><label>Player<select data-index="${n}" data-field="player_id"><option value="" ${!i.player_id && !shared ? 'selected' : ''}>Choose attendee…</option>${current.meeting_type === 'team' && i.kind !== 'action' ? `<option value="__team__" ${shared ? 'selected' : ''}>Whole team feedback</option>` : ''}${current.attendees.map(id => `<option value="${id}" ${id === i.player_id ? 'selected' : ''}>${escape(name(id))}</option>`).join('')}</select></label><label>Type<select data-index="${n}" data-field="kind">${optionList(['action','praise','improvement','observation'], i.kind)}</select></label></div><label>Topic <small>(any words)</small><input data-index="${n}" data-field="topic" list="topic-ideas" maxlength="100" value="${escape(i.topic || '')}"></label><label>Coach's note<textarea rows="2" data-index="${n}" data-field="text" maxlength="1000">${escape(i.text)}</textarea></label><div class="form-row"><label>Skill <small>(any words)</small><input data-index="${n}" data-field="skill" list="skill-ideas" maxlength="100" value="${escape(i.skill || '')}"></label><label>Due date <small>(homework only)</small><input type="date" data-index="${n}" data-field="due_date" value="${escape(i.due_date || '')}" ${i.kind !== 'action' ? 'disabled' : ''}></label></div>${i.deadline_text ? `<p class="deadline-evidence">Original deadline: “${escape(i.deadline_text)}” · ${i.due_date ? `Resolved: ${escape(i.due_date)}` : 'No definite date — coach review needed'}</p>` : ''}<label>Tags <small>(any words, comma between, up to 3)</small><input data-index="${n}" data-field="tags" maxlength="130" value="${escape((i.tags || []).join(', '))}" placeholder="route running, red zone"></label>${i.kind === 'praise' || i.kind === 'improvement' ? `<div class="std-chips"><span>Program standard <small>(optional, your call)</small></span>${STANDARD_TAGS.map(([tag, label]) => `<button type="button" class="chip-button ${(i.tags || []).includes(tag) ? 'on' : ''}" data-std-tag="${tag}" data-index="${n}" aria-pressed="${(i.tags || []).includes(tag)}">${label}</button>`).join('')}</div>` : ''}${i.details ? `<p class="deadline-evidence">Key details: ${escape(i.details)}</p>` : ''}<label>Verbatim source quote<textarea rows="2" data-index="${n}" data-field="quote" maxlength="2000">${escape(i.quote)}</textarea></label><button class="text-button" data-highlight="${n}" type="button">Highlight in original note</button>${i.mention ? `<p class="match-evidence">Mention: ${escape(i.mention)} · ${escape(i.match_method || 'unmatched')}</p>` : ''}${i.warnings?.length ? `<details class="draft-extraction-notes"><summary>Notes from Find homework</summary><ul>${i.warnings.map(w => `<li>${escape(w)}</li>`).join('')}</ul></details>` : ''}<div class="record-issues" data-issues="${n}">${issues.map(issue => `<p>${escape(issue)}</p>`).join('')}</div><button class="text-button remove" data-remove="${n}" type="button">Remove</button></article>`;
   });
   const groups = groupRecords(draft);
   const sectioned = groups.map(group => {
@@ -249,12 +276,14 @@ function recordMarkup(i, m, showSensitive = false) {
 }
 const initials = (p) => p.name.split(' ').map(part => part[0]).slice(0,2).join('');
 function renderPlayerDirectory() {
-  const summaries = summarizePlayers(demo.players, meetings, today());
+  const summaries = summarizePlayers(showInactive ? allPlayers : demo.players, meetings, today());
+  const inactiveCount = allPlayers.filter(p => !isActive(p)).length;
+  $('#players-count').textContent = `${demo.players.length} active players${inactiveCount ? ` · ${inactiveCount} inactive` : ''} · Synthetic football roster`;
   const visible = filterPlayers(summaries, {search: $('#player-search').value, unit: playerUnitFilter, group: $('#player-group').value, position: $('#player-position').value});
   if (!playerDetailOpen && visible.length && !visible.some(p => p.id === selectedPlayer)) selectedPlayer = visible[0].id;
   const count = (unit) => unit === 'all' ? summaries.length : summaries.filter(p => p.unit === unit).length;
   $('#player-unit-tabs').innerHTML = ['all','Offense','Defense','Special Teams'].map(unit => `<button type="button" data-player-unit="${unit}" aria-pressed="${unit === playerUnitFilter}">${unit === 'all' ? 'All' : unit}<span>${count(unit)}</span></button>`).join('');
-  $('#roster').innerHTML = visible.map(p => `<tr data-select-player="${p.id}" class="${p.id === selectedPlayer ? 'selected' : ''}"><th scope="row"><button class="table-player" data-select-player="${p.id}" aria-pressed="${p.id === selectedPlayer}"><span class="initial-avatar">${escape(initials(p))}</span><span>${escape(p.name)}</span></button></th><td>${p.number}</td><td><abbr title="${escape(p.position_label || p.position)}">${escape(p.position)}</abbr></td><td><span class="unit-badge ${p.unit === 'Offense' ? 'offense' : p.unit === 'Defense' ? 'defense' : 'special'}">${escape(p.unit)}</span></td><td>${p.meetingCount} <span class="cell-detail">meeting${p.meetingCount === 1 ? '' : 's'}</span></td><td><span class="action-count ${p.openCount ? 'has-actions' : ''}">${p.openCount} open</span> ${statusChip(playerStatuses[p.id])}</td><td><button class="row-details" data-player="${p.id}" aria-label="View ${escape(p.name)}'s timeline">View</button></td></tr>`).join('') || '<tr><td colspan="7" class="empty">No matching players. Try another name, jersey number, or filter.</td></tr>';
+  $('#roster').innerHTML = visible.map(p => `<tr data-select-player="${p.id}" class="${p.id === selectedPlayer ? 'selected' : ''}"><th scope="row"><button class="table-player" data-select-player="${p.id}" aria-pressed="${p.id === selectedPlayer}"><span class="initial-avatar">${p.photo ? `<img src="${p.photo}" alt="">` : escape(initials(p))}</span><span>${escape(p.name)}${isActive(p) ? '' : ' <small class="inactive-tag">Inactive</small>'}</span></button></th><td>${p.number}</td><td><abbr title="${escape(p.position_label || p.position)}">${escape(p.position)}</abbr></td><td><span class="unit-badge ${p.unit === 'Offense' ? 'offense' : p.unit === 'Defense' ? 'defense' : 'special'}">${escape(p.unit)}</span></td><td>${p.meetingCount} <span class="cell-detail">meeting${p.meetingCount === 1 ? '' : 's'}</span></td><td><span class="action-count ${p.openCount ? 'has-actions' : ''}">${p.openCount} open</span> ${statusChip(playerStatuses[p.id])}</td><td><button class="row-details" data-player="${p.id}" aria-label="View ${escape(p.name)}'s timeline">View</button></td></tr>`).join('') || '<tr><td colspan="7" class="empty">No matching players. Try another name, jersey number, or filter.</td></tr>';
   $('#player-results').textContent = `Showing ${visible.length} of ${summaries.length} players. Select a row for a snapshot; View opens the full timeline.`;
   const selected = visible.length ? summaries.find(p => p.id === selectedPlayer) : null;
   $('#player-snapshot').innerHTML = selected ? `<div class="snapshot-profile"><span class="initial-avatar large">${escape(initials(selected))}</span><div><h4>${escape(selected.name)}</h4><p>#${selected.number} · ${escape(selected.position_label || selected.position)}</p></div></div><dl class="snapshot-stats"><div><dt>Meetings attended</dt><dd>${selected.meetingCount}</dd></div><div><dt>Open homework</dt><dd>${selected.openCount}</dd></div><div><dt>Late</dt><dd class="${selected.overdueCount ? 'overdue-number' : ''}">${selected.overdueCount}</dd></div></dl><div class="snapshot-followup"><h4>Latest checked note</h4>${selected.latest ? `<p><time>${escape(selected.latest.meeting.date)}</time> · ${escape(selected.latest.text)}</p>` : '<p>No checked note to preview yet. Open the timeline to see more.</p>'}</div><button class="snapshot-link" data-player="${selected.id}">View timeline</button>` : '<p class="empty">No player matches these filters.</p>';
@@ -262,10 +291,41 @@ function renderPlayerDirectory() {
   $('#player-directory').hidden = playerDetailOpen;
   $('#player-detail').hidden = !playerDetailOpen;
 }
+function setPlayerTab(tab) {
+  playerTab = tab;
+  document.querySelectorAll('[data-pp-tab][role="tab"]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.ppTab === tab)));
+  document.querySelectorAll('[data-pp-panel]').forEach(el => el.hidden = el.dataset.ppPanel !== tab);
+}
+async function loadPlayerExtras(id) {
+  const filmCtx = {api, notify, players: allPlayers, openFilm: (fid, t) => { switchView('film'); filmRoom.openFilm(fid, t); }};
+  renderPlayerFilm($('#player-film'), filmCtx, id, 'film');
+  renderPlayerFilm($('#player-skills'), filmCtx, id, 'skills');
+  playerDev = null; playerGame = null;
+  try {
+    const [dev, game] = await Promise.all([api(`/players/${id}/development`, undefined, 'GET'), api(`/next-game?player_id=${id}`, undefined, 'GET')]);
+    if (id === selectedPlayer) { playerDev = dev; playerGame = game; renderPlayerPage(); }
+  } catch { /* the page still shows the saved records */ }
+}
+function renderPlayerPage() {
+  const p = player(selectedPlayer);
+  if (!p) return;
+  const records = playerRecords(meetings, p.id, false);
+  const facts = playerFacts({records, today: today(), game: playerGame});
+  $('#player-heading').innerHTML = headerMarkup(p, {status: statusChip(playerStatuses[p.id]), gamesPlayed: playerDev?.games_played});
+  $('#player-facts').innerHTML = factsMarkup(facts);
+  const parts = overviewParts({records, facts, game: playerGame});
+  $('#pp-prep').innerHTML = parts.prep; $('#pp-strengths').innerHTML = parts.strengths; $('#pp-recent').innerHTML = parts.recent;
+  const assignments = playerRecords(meetings, p.id, $('#show-sensitive').checked).filter(i => i.kind === 'action');
+  $('#pp-assignments').innerHTML = assignments.map(i => recordMarkup(i, i.meeting, $('#show-sensitive').checked)).join('') || '<div class="empty">No assignments yet. Find homework in a meeting note to add one.</div>';
+  const gp = playerDev?.games_played;
+  $('#pp-dev-top').innerHTML = (gp ? `<section class="panel pp-card"><h3>Games played</h3><p class="pp-big">${gp.played} of ${gp.of}</p><p class="muted">Official games with a saved "Who played?" list. Scrimmages are not counted.</p></section>` : '') + standardsMarkup(playerDev?.standards) + goalsMarkup(records);
+  setPlayerTab(playerTab);
+}
 function openPlayerTimeline(id) {
+  if (id !== selectedPlayer) playerTab = 'overview';
   if (id !== selectedPlayer) $('#show-sensitive').checked = false;
   selectedPlayer = id; playerDetailOpen = true; cancelPrep(); render(); switchView('players');
-  renderPlayerFilm($('#player-film'), {api, notify, players: demo.players, openFilm: (fid, t) => { switchView('film'); filmRoom.openFilm(fid, t); }}, id);
+  loadPlayerExtras(id);
   $('#player-heading').tabIndex = -1; $('#player-heading').focus({preventScroll:true});
   $('#player-heading').scrollIntoView({block:'start', behavior:'instant'});
 }
@@ -274,6 +334,22 @@ $('#back-to-roster').addEventListener('click', () => {
   $('#players-title').scrollIntoView({block:'start', behavior:'instant'});
 });
 $('#player-search').addEventListener('input', renderPlayerDirectory);
+$('#show-inactive').addEventListener('change', e => { showInactive = e.target.checked; renderPlayerDirectory(); });
+function rosterChanged(saved) {
+  allPlayers = allPlayers.some(p => p.id === saved.id) ? allPlayers.map(p => p.id === saved.id ? saved : p) : [...allPlayers, saved];
+  applyRoster(demo.players, allPlayers);
+  const pickers = (sel, first) => { const el = $(sel); const v = el.value; el.innerHTML = first + demo.players.map(p => `<option value="${escape(p.id)}">#${p.number} ${escape(p.name)}</option>`).join(''); el.value = v; };
+  pickers('#task-player', '<option value="">All players</option>'); pickers('#assistant-player', '<option value="">Choose a player…</option>');
+  loadSample('individual'); render();
+}
+const playerFormCtx = {api, notify, getAll: () => allPlayers, onSaved: (saved) => rosterChanged(saved)};
+$('#add-player').addEventListener('click', () => openPlayerForm(playerFormCtx));
+document.addEventListener('click', e => {
+  const tab = e.target.closest('[data-pp-tab]'); if (tab) setPlayerTab(tab.dataset.ppTab);
+  const edit = e.target.closest('[data-edit-player]'); if (edit) openPlayerForm(playerFormCtx, player(edit.dataset.editPlayer));
+  if (e.target.closest('[data-pp-quick-note]')) document.querySelector('.quick-note-fab')?.click();
+  const rec = e.target.closest('[data-pp-record]'); if (rec) { e.preventDefault(); setPlayerTab('timeline'); document.getElementById(rec.dataset.ppRecord)?.scrollIntoView({block: 'center'}); }
+});
 $('#player-group').addEventListener('change', renderPlayerDirectory);
 $('#player-position').addEventListener('change', renderPlayerDirectory);
 $('#player-unit-tabs').addEventListener('click', e => {
@@ -291,8 +367,7 @@ function render() {
   $('#extract').disabled = busy || !connected;
   renderPlayerDirectory();
   renderHome();
-  const p = player(selectedPlayer);
-  $('#player-heading').innerHTML = `<div class="player-profile"><span class="avatar large">${p.number}</span><div><p class="eyebrow">${escape(positionLabel(p))}</p><h2>${escape(p.name)}</h2><p>Checked feedback and homework, in context. ${statusChip(playerStatuses[p.id])}</p><button class="secondary compact" type="button" data-ask-player="${p.id}">${icon('chat')} Ask Aivana about this player</button></div></div>`;
+  if (playerDetailOpen) renderPlayerPage();
   const playerRecords = all.filter(i => appliesTo(i, selectedPlayer));
   const hiddenCount = playerRecords.filter(i => i.sensitive && !$('#show-sensitive').checked).length;
   const history = playerRecords.filter(i => !i.sensitive || $('#show-sensitive').checked).sort((a,b) => b.meeting.date.localeCompare(a.meeting.date));
@@ -317,10 +392,11 @@ function renderActionBoard(actions = items().filter(i => i.kind === 'action')) {
   $('#task-list').innerHTML = rows;
   $('#task-list').querySelectorAll('[data-action-key]').forEach(row => { if (expanded.has(row.dataset.actionKey)) row.querySelector('details').open = true; });
 }
-const PAGE_TITLES = {desk:'Home', schedule:'Schedule', meetings:"Coach's notebook", film:'Film room', players:'Players', tasks:'Homework', assistant:'Ask Aivana about a player'};
+const PAGE_TITLES = {desk:'Home', schedule:'Schedule', meetings:"Coach's notebook", film:'Film room', players:'Players', tasks:'Homework', assistant:'Ask Aivana about a player', settings:'Settings', help:'Help & Q&A'};
 function switchView(next) {
   view = next;
   $('#page-title').textContent = PAGE_TITLES[next] || 'Home';
+  $('#message').hidden = true; // a validation message belongs to the page it came from
   document.title = `${PAGE_TITLES[next] || 'Home'} | Falcon Follow-up`;
   askPanel?.refreshChips();
   document.querySelectorAll('.view').forEach(el => el.hidden = el.id !== view);
@@ -369,6 +445,13 @@ $('#meeting-form').addEventListener('submit', async e => {
     renderReview(); notify(draft.length ? 'Check every item before saving.' : 'No homework found. Change the note and try again.');
   } catch (error) { notify(error.message, true); }
   finally { busy = false; $('#meeting-form').querySelectorAll('input,select,textarea').forEach(el => el.disabled = false); $('#sample').disabled = false; $('#mode').disabled = false; $('#extract').disabled = false; render(); }
+});
+$('#review').addEventListener('click', e => {
+  // The coach tags a line with a program standard; it is saved only when the review is approved.
+  const chip = e.target.closest('[data-std-tag]'); if (!chip) return;
+  const i = draft[Number(chip.dataset.index)], tag = chip.dataset.stdTag, tags = i.tags || [];
+  i.tags = tags.includes(tag) ? tags.filter(t => t !== tag) : [...tags, tag].slice(-3);
+  renderReview();
 });
 $('#review').addEventListener('input', e => {
   if (e.target.id === 'approved') { $('#save').disabled = !e.target.checked; return; }
@@ -570,7 +653,7 @@ $('#assistant-form').addEventListener('submit', async e => {
   }
 });
 // ---------------- Home, Schedule, Ask Aivana, bell ----------------
-let notes = [], notebookFilter = 'all', playerStatuses = {}, settings = {game_day:'saturday', day_labels:{}, notification_kinds:{}}, upcomingEvents = [], watchReviewCount = 0;
+let notes = [], notebookFilter = 'all', folderFilter = null, folders = [], archivedFolders = [], filmNotes = [], playerStatuses = {}, settings = {game_day:'saturday', day_labels:{}, notification_kinds:{}}, upcomingEvents = [], watchReviewCount = 0;
 let pendingNoteLink = null, nextGame = null, repeatFlags = [], filmTodo = [];
 var askPanel = null;
 const notebookOf = (n) => NOTEBOOK_LABELS[n] || n;
@@ -580,15 +663,21 @@ function setDateLine() {
 }
 function renderHome() {
   if (!$('#notebook-list')) return;
-  const counts = {personal:0, player_meetings:0, team_strategy:0};
-  notes.forEach(n => counts[n.notebook]++);
-  const cards = [['all', 'All notes', 'Everything in one place', notes.length + meetings.length], ...Object.keys(NOTEBOOK_LABELS).map(k => [k, `${NOTEBOOK_LABELS[k]}${k === 'personal' ? ' <small class="private-tag">private</small>' : ''}`, NOTEBOOK_HINTS[k], counts[k] + (k === 'player_meetings' ? meetings.length : 0)])];
-  $('#notebook-list').innerHTML = cards.map(([k, label, hint, count]) => `<button type="button" class="notebook-card ${notebookFilter === k ? 'active' : ''}" data-notebook="${k}" aria-pressed="${notebookFilter === k}">${icon(k === 'player_meetings' ? 'people' : k === 'team_strategy' ? 'football' : 'note')}<span><strong>${label}</strong><small>${hint}</small></span><b>${count}</b></button>`).join('');
-  const rows = [
-    ...notes.filter(n => notebookFilter === 'all' || n.notebook === notebookFilter).map(n => ({date:n.note_date, stamp:n.updated_at, html:`<button type="button" class="meeting-row" data-open-note="${n.id}"><span class="meeting-date">${icon('note')}</span><span class="meeting-title"><strong>${escape(n.title)}</strong><small>${escape(shortDate(n.note_date))} · ${escape(notebookOf(n.notebook))}${n.input_method !== 'type' ? ` · ${escape(n.input_method)}` : ''}${n.summary ? ' · Recap' : ''}</small></span></button>`})),
-    ...(notebookFilter === 'all' || notebookFilter === 'player_meetings' ? meetings.map(m => ({date:m.date, stamp:m.date, html:`<button type="button" class="meeting-row" data-open-player="${escape(m.attendees[0])}"><span class="meeting-date">${icon('people')}</span><span class="meeting-title"><strong>${escape(m.title)}</strong><small>${escape(shortDate(m.date))} · ${escape(meetingTypeLabel(m.meeting_type))} · ${m.items.filter(i => i.kind === 'action').length} homework</small></span><span class="badge reviewed">✓ Checked</span></button>`})) : []),
-  ].sort((a, b) => b.date.localeCompare(a.date) || String(b.stamp).localeCompare(String(a.stamp)));
-  $('#recent').innerHTML = rows.slice(0, 7).map(r => r.html).join('') || '<p class="radar-empty">No notes yet. Write one in the middle and press Save note.</p>';
+  const counts = viewCounts({notes, meetings, filmNotes});
+  $('#notebook-list').innerHTML = SMART_VIEWS.map(v => `<button type="button" class="notebook-card ${notebookFilter === v.key ? 'active' : ''}" data-notebook="${v.key}" aria-pressed="${notebookFilter === v.key}">${icon(v.key === 'player_meetings' ? 'people' : v.key === 'team_strategy' ? 'football' : v.key === 'film' ? 'check' : 'note')}<span><strong>${v.label}${v.key === 'personal' ? ' <small class="private-tag">private</small>' : ''}</strong><small>${v.hint}</small></span><b>${counts[v.key]}</b></button>`).join('');
+  const noFolder = notes.filter(n => n.folder_id == null).length;
+  $('#folder-list').innerHTML = `<div class="folder-head"><h3>Folders</h3><button type="button" class="text-button" data-new-folder>+ New folder</button></div>
+    ${folders.map(f => `<div class="folder-row ${String(folderFilter) === String(f.id) ? 'active' : ''}"><button type="button" class="folder-pick" data-folder="${f.id}" aria-pressed="${String(folderFilter) === String(f.id)}">📁 ${escape(f.name)} <b>${f.note_count}</b></button><details class="folder-menu"><summary aria-label="Folder actions for ${escape(f.name)}">⋯</summary><div><button type="button" data-folder-rename="${f.id}">Rename</button><button type="button" data-folder-archive="${f.id}">Archive</button><button type="button" class="danger" data-folder-delete="${f.id}">Delete…</button></div></details></div>`).join('')}
+    <div class="folder-row ${folderFilter === 'none' ? 'active' : ''}"><button type="button" class="folder-pick" data-folder="none" aria-pressed="${folderFilter === 'none'}">No folder <b>${noFolder}</b></button></div>
+    ${folderFilter != null ? '<button type="button" class="text-button" data-folder="">Show every folder</button>' : ''}
+    ${archivedFolders.length ? `<details class="archived-folders"><summary>Archived folders (${archivedFolders.length})</summary>${archivedFolders.map(f => `<div class="folder-row"><span>📁 ${escape(f.name)} <b>${f.note_count}</b></span><button type="button" class="text-button" data-folder-restore="${f.id}">Restore</button></div>`).join('')}</details>` : ''}`;
+  const search = $('#notes-search').value;
+  const rows = notebookRows({notes, meetings, filmNotes, view: notebookFilter, folder: folderFilter, search}).map(r => ({...r, html:
+    r.kind === 'note' ? `<button type="button" class="meeting-row" data-open-note="${r.id}"><span class="meeting-date">${icon('note')}</span><span class="meeting-title"><strong>${escape(r.note.title)}</strong><small>${escape(shortDate(r.note.note_date))} · ${escape(notebookOf(r.note.notebook))}${r.note.folder_id != null ? ` · 📁 ${escape(folders.find(f => f.id === r.note.folder_id)?.name || archivedFolders.find(f => f.id === r.note.folder_id)?.name || '')}` : ''}${r.note.input_method !== 'type' ? ` · ${escape(r.note.input_method)}` : ''}${r.note.summary ? ' · Recap' : ''}</small></span></button>`
+    : r.kind === 'meeting' ? `<button type="button" class="meeting-row" data-open-player="${escape(r.meeting.attendees[0])}"><span class="meeting-date">${icon('people')}</span><span class="meeting-title"><strong>${escape(r.meeting.title)}</strong><small>${escape(shortDate(r.meeting.date))} · ${escape(meetingTypeLabel(r.meeting.meeting_type))} · ${r.meeting.items.filter(i => i.kind === 'action').length} homework</small></span><span class="badge reviewed">✓ Checked</span></button>`
+    : `<button type="button" class="meeting-row" data-open-film-note="${r.film.film_id}@${r.film.t_seconds}"><span class="meeting-date">${icon('check')}</span><span class="meeting-title"><strong>${escape(r.film.text.slice(0, 80))}</strong><small>${escape(shortDate(r.date))} · Film · ${escape(r.film.film_title)}</small></span></button>`}));
+  $('#recent-heading').textContent = search.trim() ? 'Search results' : folderFilter != null ? 'In this folder' : 'Recent notes';
+  $('#recent').innerHTML = rows.slice(0, 7).map(r => r.html).join('') || `<p class="radar-empty">${search.trim() ? 'No note matches. Search looks in every folder.' : folderFilter != null ? 'No notes here yet. Open a note and pick this folder.' : 'No notes yet. Write one in the middle and press Save note.'}</p>`;
   $('#recent-count').textContent = rows.length > 7 ? `7 of ${rows.length}` : '';
   const gameCard = nextGame?.event ? `<div class="next-game"><span class="ng-kicker">NEXT GAME · ${escape(nextGame.when.toUpperCase())}</span><strong>${escape(nextGame.opponent || nextGame.event.title)}</strong><small>${nextGame.home_away ? (nextGame.home_away === 'home' ? 'Home · ' : 'Away · ') : ''}${escape(shortDate(nextGame.event.date))} ${clockLabel(nextGame.event.start_at)}</small><small>Before kickoff: ${nextGame.homework_due_count} homework${filmTodo.length ? ` · ${filmTodo.length} film to break down` : ''}</small></div>` : '';
   const filmRows = filmTodo.slice(0, 2).map(f => `<button type="button" class="upcoming-item ev-row-film" data-open-film-home="${f.id}"><span class="upcoming-date">Film<small>${escape(f.status === 'in_progress' ? 'In progress' : 'To do')}</small></span><span><strong>Film to break down: ${escape(f.title)}</strong><small>${escape(f.assigned_to)}</small></span></button>`).join('');
@@ -602,22 +691,28 @@ function renderHome() {
   const repeatRows = repeatFlags.slice(0, 3).map(f => `<button class="radar-item" data-plan-one="${escape(f.player_id)}"><span class="status-dot amber" aria-hidden="true"></span><span><strong>Same correction ${f.weeks} weeks: ${escape(f.player_name)}</strong><small>${escape(f.tag)}</small><em class="amber-word">Plan a 1-on-1 →</em></span>${icon('chevron')}</button>`).join('');
   $('#watch-list').innerHTML = (review + repeatRows + lateRows.join('') + (late.length > 4 ? `<p class="watch-more">+${late.length - 4} more late</p>` : '') + checkins) || '<p class="radar-empty">All clear. Nobody is late on homework.</p>';
 }
+async function folderAction(run) {
+  try { const message = await run(); if (message) { notify(message); await refreshHomeData(); } } catch (error) { notify(error.message, true); }
+}
+$('#notes-search').addEventListener('input', () => renderHome());
 async function refreshHomeData() {
   try {
-    const [n, st, up, bellData, game, repeats, films] = await Promise.all([api('/notes', undefined, 'GET'), api('/players/status', undefined, 'GET'), api('/events/upcoming?limit=3', undefined, 'GET'), api('/notifications', undefined, 'GET'), api('/next-game', undefined, 'GET'), api('/watch-list/repeats', undefined, 'GET'), api('/films', undefined, 'GET')]);
+    const [n, st, up, bellData, game, repeats, films, allFolders, fnotes] = await Promise.all([api('/notes', undefined, 'GET'), api('/players/status', undefined, 'GET'), api('/events/upcoming?limit=3', undefined, 'GET'), api('/notifications', undefined, 'GET'), api('/next-game', undefined, 'GET'), api('/watch-list/repeats', undefined, 'GET'), api('/films', undefined, 'GET'), api('/folders?archived=true', undefined, 'GET'), api('/film-notes', undefined, 'GET').catch(() => [])]);
     notes = n; playerStatuses = st; upcomingEvents = up; watchReviewCount = bellData.items.filter(i => i.kind === 'review').length;
+    folders = allFolders.filter(f => !f.archived_at); archivedFolders = allFolders.filter(f => f.archived_at); filmNotes = fnotes; editor.refreshFolders();
+    if (folderFilter != null && folderFilter !== 'none' && !folders.some(f => String(f.id) === String(folderFilter))) folderFilter = null;
     nextGame = game; repeatFlags = repeats; filmTodo = films.filter(f => f.status !== 'done' && f.assigned_to);
   } catch { /* the connection message is already shown */ }
   render(); miniCalendar.refresh(); bell.refresh();
 }
 const editor = createNoteEditor($('#note-editor-root'), {
-  api, notify, getMode: () => mode,
+  api, notify, getMode: () => mode, players: demo.players, getFolders: () => folders,
   onSaved: () => refreshHomeData(),
   onContextChange: () => askPanel?.refreshChips(),
   findHomework: (note) => openFindHomework(note),
   sendToReview: (note, recap) => openFindHomework(note, recap),
   addToSchedule: (event) => { showSchedule(event.start_at.slice(0, 10), 'week'); schedule.openAdd(event); },
-  openWhiteboard: (note) => openWhiteboard({api, notify, players: demo.players}, {template: note.notebook === 'team_strategy' ? 'play' : 'play', note_id: note.id, title: note.title}),
+  openWhiteboard: (note, opts = {}) => openWhiteboard({api, notify, players: demo.players, onSaved: opts.onSaved, onClose: opts.onClose}, opts.id ? {id: opts.id} : {template: 'play', note_id: note.id, title: note.title}),
 });
 function openFindHomework(note, recap = null) {
   if (busy) return;
@@ -684,23 +779,49 @@ function openReviewDraft({meeting, items: drafted}) {
 const filmRoom = createFilmRoom($('#film-root'), {api, notify, players: demo.players, getMode: () => mode, openReviewDraft, openPlayer: (id) => openPlayerTimeline(id), onChanged: () => refreshHomeData()});
 const bell = createBell($('#bell'), {api, notify, openLink, getSettings: () => settings, saveSettings});
 $('#open-ask').addEventListener('click', () => askPanel.toggle());
-$('#new-note').addEventListener('click', () => { switchView('desk'); editor.reset({notebook: notebookFilter !== 'all' ? notebookFilter : 'personal'}); editor.focus(); });
+$('#new-note').addEventListener('click', () => { switchView('desk'); editor.reset({notebook: ['personal', 'player_meetings', 'team_strategy'].includes(notebookFilter) ? notebookFilter : 'personal', folder_id: folderFilter && folderFilter !== 'none' ? folderFilter : ''}); editor.focus(); });
 $('#new-meeting').addEventListener('click', newMeeting);
 document.addEventListener('click', e => {
   const nb = e.target.closest('[data-notebook]'); if (nb) { notebookFilter = nb.dataset.notebook; renderHome(); }
+  const fp = e.target.closest('[data-folder]'); if (fp) { folderFilter = fp.dataset.folder === '' ? null : fp.dataset.folder === 'none' ? 'none' : Number(fp.dataset.folder); if (folderFilter != null && notebookFilter === 'film') notebookFilter = 'all'; renderHome(); }
+  const fn = e.target.closest('[data-open-film-note]'); if (fn) { const [fid, t] = fn.dataset.openFilmNote.split('@'); switchView('film'); filmRoom.openFilm(Number(fid), Number(t)); }
+  if (e.target.closest('[data-new-folder]')) folderAction(async () => { const name = prompt('Folder name (for example "Week 12" or "Recruiting")'); if (name?.trim()) { const f = await api('/folders', {name: name.trim()}); folderFilter = f.id; return `Folder "${f.name}" created. Open a note and choose it under Folder.`; } });
+  const ren = e.target.closest('[data-folder-rename]'); if (ren) folderAction(async () => { const f = folders.find(x => x.id === Number(ren.dataset.folderRename)); const name = prompt('Rename folder', f.name); if (name?.trim() && name.trim() !== f.name) { await api(`/folders/${f.id}`, {name: name.trim()}, 'PATCH'); return 'Folder renamed. Its notes did not change.'; } });
+  const arc = e.target.closest('[data-folder-archive]'); if (arc) folderAction(async () => { const f = folders.find(x => x.id === Number(arc.dataset.folderArchive)); if (confirm(`Archive "${f.name}"? It is hidden from the list. Its notes stay in it and still show in All notes and search.`)) { await api(`/folders/${f.id}`, {archived: true}, 'PATCH'); return `"${f.name}" archived.`; } });
+  const res = e.target.closest('[data-folder-restore]'); if (res) folderAction(async () => { await api(`/folders/${res.dataset.folderRestore}`, {archived: false}, 'PATCH'); return 'Folder restored.'; });
+  const del = e.target.closest('[data-folder-delete]'); if (del) folderAction(async () => { const f = folders.find(x => x.id === Number(del.dataset.folderDelete)); if (confirm(DELETE_FOLDER_TEXT(f.name, f.note_count))) { const r = await api(`/folders/${f.id}`, undefined, 'DELETE'); if (String(folderFilter) === String(f.id)) folderFilter = null; return `Folder deleted. ${r.moved_to_no_folder} note${r.moved_to_no_folder === 1 ? '' : 's'} moved to No folder.`; } });
   const openNote = e.target.closest('[data-open-note]'); if (openNote) editor.open(Number(openNote.dataset.openNote));
   if (e.target.closest('[data-open-schedule]')) showSchedule(today(), 'week');
   const sd = e.target.closest('[data-schedule-date]'); if (sd) showSchedule(sd.dataset.scheduleDate, 'day');
   const ask = e.target.closest('[data-ask-prompt]'); if (ask) askPanel.open(ask.dataset.askPrompt);
-  if (e.target.closest('nav [data-view="schedule"]')) schedule.show(today(), 'week');
-  if (e.target.closest('nav [data-view="film"]')) filmRoom.show();
+  if (e.target.closest('nav [data-view="schedule"]')) schedule.show(today());
+  if (e.target.closest('nav [data-view="film"]')) { filmRoom.show(); maybeTour('film'); }
   const filmHome = e.target.closest('[data-open-film-home]'); if (filmHome) { switchView('film'); filmRoom.openFilm(Number(filmHome.dataset.openFilmHome)); }
   const plan = e.target.closest('[data-plan-one]'); if (plan) { const p = player(plan.dataset.planOne); const d = new Date(); d.setDate(d.getDate() + 1); showSchedule(d.toLocaleDateString('en-CA'), 'week'); schedule.openAdd({type: 'meeting', title: `1-on-1: ${p.name}`, start_at: `${d.toLocaleDateString('en-CA')}T14:00`, duration_min: 30, audience: `player:${p.id}`}); }
 });
-const profileMenu = createProfileMenu($('#profile-button'), {getSettings: () => settings, saveSettings, notify, openSettings: () => { $('#bell').click(); setTimeout(() => document.querySelector('.bell-pop [data-settings]')?.click(), 50); }});
+function openSettingsPage(section = null) {
+  renderSettings($('#settings-root'), {getSettings: () => settings, saveSettings, notify, onChanged: () => { profileMenu.refresh(); setTeamName(); bell.refresh(); }});
+  switchView('settings');
+  const target = section === 'profile' ? $('[data-settings-form="profile"] [name="name"]') : $('#settings-title');
+  target?.focus({preventScroll: true}); window.scrollTo({top: 0});
+}
+function openHelpPage() { renderHelp($('#help-root'), {replayTour}); switchView('help'); $('#help-title')?.focus({preventScroll: true}); window.scrollTo({top: 0}); }
+function setTeamName() { const t = settings.team?.name; $('#sidebar-team').innerHTML = t ? `${escape(t)}<small>Falcon Follow-up</small>` : 'picInfiniti<small>Football Meeting Tracker</small>'; $('.sidebar-bottom .team-avatar').textContent = t ? t.slice(0, 2) : 'pi'; }
+// Tours: first visit only; finished or closed is remembered in Settings. Replay lives in Help.
+let toursReady = false;
+function runTour(id) { startTour(id, {onEnd: (how) => saveSettings({tour: {id, state: how}}).catch(() => {})}); }
+function maybeTour(id) { if (toursReady && !tourActive() && shouldStart(settings, id)) setTimeout(() => runTour(id), 400); }
+function replayTour(id) {
+  const go = () => setTimeout(() => runTour(id), 400);
+  if (id === 'film') { switchView('film'); filmRoom.show(); go(); }
+  else if (id === 'playboard') { openWhiteboard({api, notify, players: demo.players}, {template: 'play', title: 'Tour practice'}); go(); }
+  else { switchView('desk'); go(); }
+}
+document.addEventListener('playboard-opened', () => maybeTour('playboard'));
+const profileMenu = createProfileMenu($('#profile-button'), {getSettings: () => settings, openSettings: openSettingsPage, openHelp: openHelpPage});
 createQuickNote({api, notify, players: demo.players, getMeetings: () => meetings, onSaved: () => refreshHomeData(),
   getContext: () => ({page: view === 'film' ? 'film' : view, player_id: view === 'players' && playerDetailOpen ? selectedPlayer : null})});
-api('/settings', undefined, 'GET').then(s => { settings = s; setDateLine(); profileMenu.refresh(); }).catch(() => setDateLine());
+api('/settings', undefined, 'GET').then(s => { settings = s; setDateLine(); profileMenu.refresh(); setTeamName(); toursReady = true; maybeTour('welcome'); }).catch(() => setDateLine());
 if (editor.restoreDraft()) notify('Your unsaved draft is back.');
 loadSample('individual'); $('#mode').value = mode; render(); switchView('desk');
 async function initializeNotebook() {

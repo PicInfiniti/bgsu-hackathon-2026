@@ -64,7 +64,7 @@ export function createFilmRoom(root, ctx) {
   let tab = 'films', films = [], film = null, player = null, clips = [], notes = [], grades = [], drawings = [], summary = {};
   let side = 'notes', now = 0, markIn = null, markOut = null, loopClip = false, gradeState = { clip: 0, player: 0 }, recap = null, filters = { kind: '', room: '', search: '', mine: false };
 
-  root.innerHTML = `<p class="film-about">For coaches and staff. <strong>Films</strong>: game and practice video with notes at a time, clips and Quick grades. <strong>Cut-ups &amp; Teach list</strong>: clips picked by filters (a cut-up) or a hand-picked teaching order (Teach list, up to 15). <strong>Film packs</strong>: a read-only page for one player or position room with chosen clips, notes, drawings and homework. <strong>Playbook</strong>: drawn diagrams (routes, coverages), not video.</p><div class="film-tabs" role="tablist">${[['films', 'Films'], ['cutups', 'Cut-ups & Teach list'], ['packs', 'Film packs'], ['playbook', 'Playbook']].map(([k, v]) => `<button type="button" role="tab" data-film-tab="${k}">${v}</button>`).join('')}</div><div data-film-body></div><aside class="event-panel film-panel" data-film-panel hidden></aside>`;
+  root.innerHTML = `<p class="film-about">For coaches and staff. <strong>Films</strong>: game and practice video with notes at a time, clips and Quick grades. <strong>Cut-ups &amp; Teach list</strong>: clips picked by filters (a cut-up) or a hand-picked teaching order (Teach list, up to 15). <strong>Film packs</strong>: a read-only page for one player or position room with chosen clips, notes, drawings and homework. <strong>Playbook</strong>: play diagrams drawn on the Playboard (routes, coverages), not video.</p><div class="film-tabs" role="tablist">${[['films', 'Films'], ['cutups', 'Cut-ups & Teach list'], ['packs', 'Film packs'], ['playbook', 'Playbook']].map(([k, v]) => `<button type="button" role="tab" data-film-tab="${k}">${v}</button>`).join('')}</div><div data-film-body></div><aside class="event-panel film-panel" data-film-panel hidden></aside>`;
   const $ = (s) => root.querySelector(s);
   const body = () => $('[data-film-body]');
 
@@ -352,7 +352,7 @@ export function createFilmRoom(root, ctx) {
   // ---------- playbook ----------
   async function showPlaybook() {
     const diagrams = await api('/diagrams', undefined, 'GET').catch(() => []);
-    body().innerHTML = `<div class="film-lib-head"><p class="muted">Every drawing from notes, meetings and film.</p><button type="button" class="primary" data-new-drawing>+ New drawing</button></div>
+    body().innerHTML = `<div class="film-lib-head"><p class="muted">Every play diagram drawn on the Playboard, from notes, meetings and film.</p><button type="button" class="primary" data-new-drawing>+ New play diagram</button></div>
       <div class="film-grid">${diagrams.map(d => `<button type="button" class="film-card" data-open-drawing="${d.id}"><span class="film-thumb">${d.has_preview ? `<img src="/api/diagrams/${d.id}/preview.png?v=${encodeURIComponent(d.updated_at)}" alt="${esc(d.alt_text || d.title)}">` : '✎'}</span><span class="film-card-body"><strong>${esc(d.title)}</strong><small>${esc(d.updated_at.slice(0, 10))}${d.film_id ? ` · film ${mmss(d.t_seconds || 0)}` : ''}</small><small>${d.player_ids.map(shortName).map(esc).join(', ')}</small></span></button>`).join('') || '<p class="radar-empty">No drawings yet.</p>'}</div>`;
   }
 

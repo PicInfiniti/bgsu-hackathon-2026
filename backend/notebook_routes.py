@@ -11,6 +11,7 @@ from . import coach_logic as logic
 from .core import DEMO
 from .notebook import Notebook, build_ics, expand_events, parse_data_url
 from .assistant_router import Brain
+from . import schedule_tools as sched
 
 PLAYERS = DEMO['players']
 NOT_FOUND = "I couldn't find that in your notes."
@@ -38,9 +39,9 @@ def register(app: FastAPI, store, notebook: Notebook, extra_notifications=None, 
 
     # ---------- notes ----------
     @app.get('/api/notes')
-    def list_notes(notebook_name: str | None = Query(None, alias='notebook'), search: str | None = None):
+    def list_notes(notebook_name: str | None = Query(None, alias='notebook'), search: str | None = None, folder: str | None = None):
         try:
-            return notebook.list_notes(notebook_name, search)
+            return notebook.list_notes(notebook_name, search, folder)
         except ValueError as error:
             raise fail(error) from None
 
@@ -170,7 +171,11 @@ def register(app: FastAPI, store, notebook: Notebook, extra_notifications=None, 
             written = [{'source': 'note', 'type': 'note', 'id': n['id'], 'occurrence_id': f"note-{n['id']}", 'title': n['title'],
                         'date': n['note_date'], 'notebook': n['notebook'], 'start_at': None}
                        for n in notes if start <= n['note_date'] <= end]
-            return {'items': items + saved + due + written, 'today': today}
+            del written  # notes are not scheduled activities; they stay in the Coach's notebook
+            for item in items:
+                if item.get('todo'):  # coach to-do: an all-day item, not a timed event
+                    item.update(type='coach_todo', source='todo', start_at=None, done=bool(item.get('done_at')))
+            return {'items': items + saved + due, 'today': today}
         except ValueError as error:
             raise fail(error) from None
 
@@ -181,11 +186,50 @@ def register(app: FastAPI, store, notebook: Notebook, extra_notifications=None, 
                  if datetime.fromisoformat(e['start_at']) + timedelta(minutes=e['duration_min']) >= now]
         return items[:max(1, min(limit, 20))]
 
+    def export_range(start, end):
+        today = date.today()
+        if not start or not end:
+            first, last = sched.season_range(today, notebook.settings().get('season'))
+            return first.isoformat(), last.isoformat()
+        date.fromisoformat(start)
+        date.fromisoformat(end)
+        return start, end
+
     @app.get('/api/events/export.ics')
-    def export_ics():
-        rows = [r for r in logic.homework(store.list(), PLAYERS) if r['due_date'] and not r['completed']]
-        return Response(build_ics(notebook.list_events(), rows), media_type='text/calendar; charset=utf-8',
-                        headers={'Content-Disposition': 'attachment; filename="falcon-schedule.ics"'})
+    def export_ics(start: str | None = Query(None, alias='from'), end: str | None = Query(None, alias='to'), homework: int = 1, names: int = 0):
+        try:
+            first, last = export_range(start, end)
+            occ = occurrences(first, last)
+            rows = [r for r in logic.homework(store.list(), PLAYERS) if r['due_date'] and first <= r['due_date'] <= last]
+            body = sched.build_range_ics(occ, rows, PLAYERS, include_homework=bool(homework), include_names=bool(names))
+        except ValueError as error:
+            raise fail(error) from None
+        return Response(body, media_type='text/calendar; charset=utf-8',
+                        headers={'Content-Disposition': f'attachment; filename="falcon-schedule-{first}-to-{last}.ics"'})
+
+    @app.get('/api/schedule/search')
+    def schedule_search(q: str = '', kind: str = 'all'):
+        try:
+            today = date.today()
+            if kind not in ('all', *sched.TYPE_GROUPS):
+                raise ValueError('Unknown filter.')
+            if len(q) > 120:
+                raise ValueError('Search is limited to 120 characters.')
+            occ = occurrences((today - timedelta(days=200)).isoformat(), today.isoformat()) + occurrences((today + timedelta(days=1)).isoformat(), (today + timedelta(days=200)).isoformat())
+            items = sched.schedule_items(occ, logic.homework(store.list(), PLAYERS), store.list(), PLAYERS)
+            return {**sched.search(items, q, kind, today.isoformat(), PLAYERS), 'searched': [(today - timedelta(days=200)).isoformat(), (today + timedelta(days=200)).isoformat()]}
+        except ValueError as error:
+            raise fail(error) from None
+
+    @app.get('/api/schedule/checklist')
+    def schedule_checklist():
+        now = datetime.now()
+        today = now.date()
+        occ = occurrences((today - timedelta(days=60)).isoformat(), (today + timedelta(days=60)).isoformat())
+        from .film import next_game
+        game = next_game([e for e in occ if not e.get('todo')], now)
+        todos = [e for e in occ if e.get('todo')]
+        return {**sched.checklist(logic.homework(store.list(), PLAYERS), todos, game, today.isoformat()), 'game': game}
 
     @app.get('/api/events/{event_id}')
     def get_event(event_id: int):
@@ -215,6 +259,61 @@ def register(app: FastAPI, store, notebook: Notebook, extra_notifications=None, 
         except KeyError as error:
             raise fail(error) from None
         return Response(status_code=204)
+
+    # ---------- folders ----------
+    @app.get('/api/folders')
+    def folders(archived: bool = False):
+        return notebook.folders(include_archived=archived)
+
+    @app.post('/api/folders', status_code=201)
+    def create_folder(body: dict):
+        try:
+            return notebook.create_folder(body)
+        except ValueError as error:
+            raise fail(error) from None
+
+    @app.patch('/api/folders/{folder_id}')
+    def update_folder(folder_id: int, body: dict):
+        try:
+            return notebook.update_folder(folder_id, body)
+        except (ValueError, KeyError) as error:
+            raise fail(error) from None
+
+    @app.delete('/api/folders/{folder_id}')
+    def delete_folder(folder_id: int):
+        try:
+            return notebook.delete_folder(folder_id)
+        except KeyError as error:
+            raise fail(error) from None
+
+    @app.post('/api/notes/{note_id}/move')
+    def move_note(note_id: int, body: dict):
+        try:
+            return notebook.move_note(note_id, (body or {}).get('folder_id'))
+        except (ValueError, KeyError) as error:
+            raise fail(error) from None
+
+    # ---------- who played (official games) ----------
+    @app.get('/api/events/{event_id}/played')
+    def played(event_id: int, game_date: str = Query(..., alias='date')):
+        try:
+            return notebook.game_list(event_id, game_date)
+        except (ValueError, KeyError) as error:
+            raise fail(error) from None
+
+    @app.put('/api/events/{event_id}/played')
+    def save_played(event_id: int, body: dict):
+        try:
+            return notebook.save_game_list(event_id, (body or {}).get('date'), (body or {}).get('player_ids'), {p['id'] for p in PLAYERS})
+        except (ValueError, KeyError, TypeError) as error:
+            raise fail(ValueError(str(error))) if isinstance(error, TypeError) else fail(error) from None
+
+    @app.get('/api/players/{player_id}/development')
+    def development(player_id: str):
+        if player_id not in {p['id'] for p in PLAYERS}:
+            raise HTTPException(404, 'Player not found.')
+        return {'games_played': notebook.games_played(player_id),
+                'standards': logic.standard_counts(store.list(), player_id, date.today().isoformat())}
 
     @app.get('/api/settings')
     def settings():
@@ -283,7 +382,7 @@ def register(app: FastAPI, store, notebook: Notebook, extra_notifications=None, 
             ctx_in = {**ctx_in, 'player_id': None}
         if page == 'player' and isinstance(selected, str) and not ctx_in.get('player_id'):
             ctx_in = {**ctx_in, 'player_id': selected}
-        smart = brain.handle(intent, message, ctx_in, mode, history, today.isoformat(), now)
+        smart = brain.handle(intent, message, ctx_in, mode, history, today.isoformat(), now, page)
         if smart is not None:
             return {**reply, **smart}
         reply['context'] = brain.context_after(message, ctx_in)

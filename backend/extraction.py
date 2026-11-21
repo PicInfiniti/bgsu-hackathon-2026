@@ -49,6 +49,15 @@ def match_player(mention, players):
     return candidates[0] if len(candidates) == 1 else (None, 'unmatched')
 
 
+def speaker_of(quote, note):
+    """In a 'Name: text' transcript, the tagged speaker of the line containing the quote (or None)."""
+    for line in note.splitlines():
+        match = re.match(r'^\s*(?:\[\d{1,2}:\d{2}\]\s*)?([A-Z][\w .\'-]{0,40}?):\s+(.*)$', line)
+        if match and quote.strip() and quote.strip() in match.group(2):
+            return match.group(1).strip()
+    return None
+
+
 def source_quote(quote, note):
     if quote in note:
         return quote, True
@@ -122,6 +131,11 @@ def normalize_records(payload, meeting, players):
             targets = [None]
             warnings.append('Unmatched player/group. Choose the correct attendee or remove this record.')
             hard_errors.append(f'{prefix}: unmatched player/group.')
+        speaker = speaker_of(quote, meeting['note'])
+        if speaker and speaker.casefold() != 'coach':
+            # A tagged transcript line spoken by a player is the player's own words, not coach feedback.
+            warnings.append(f"This line was spoken by {speaker}, not the coach. Keep it only if it is really the coach's point.")
+            hard_errors.append(f'{prefix}: quote is a player\'s own words.')
         confidence = 'low' if warnings else confidence
         common = dict(schema_version=2, topic=topic, skill=skill, tags=tags, details=details, confidence=confidence,
                       quote=quote, source_valid=source_valid, mention=mention, match_method=method,

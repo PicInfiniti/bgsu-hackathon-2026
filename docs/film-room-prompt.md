@@ -1,4 +1,4 @@
-# Film room, Play whiteboard, Skill checks and Film packs
+# Film room, Playboard, Skill checks and Film packs
 
 Build brief approved by Salma on November 21, 2026 (10:12 AM). It combines the coordinator's delivered prompt with these items from the earlier research draft: player packet "Opened" / "I watched it" status, the keyboard grading flow with "Everyone did his job", the 80% target and optional Technique/Effort marks, the YouTube IFrame API, Mark in/out with I/O and auto-start of the next clip, Must/Should/Later order with a 4:00 PM stop-and-report, and the packet line "works on this computer and local network only". Later the same day Salma added two rules: **no fixed categories anywhere (open tags)**, and **accept any video file type** (convert to MP4 with ffmpeg if installed).
 
@@ -10,7 +10,7 @@ Build brief approved by Salma on November 21, 2026 (10:12 AM). It combines the c
 | Notes (Home editor), versions, ink | `backend/notebook.py`, `backend/notebook_routes.py`; `frontend/src/notes-editor.js` |
 | Player timeline | `frontend/src/main.js` (`openPlayerTimeline`, `#timeline`), now plus `frontend/src/player-film.js` |
 | Schedule | `backend/notebook.py` (events, `expand_events`, `.ics`), `frontend/src/schedule-view.js` |
-| Pen pad / undo | `frontend/src/pen-pad.js`, `frontend/src/history-stack.js` (re-used by the whiteboard) |
+| Pen pad / undo | `frontend/src/pen-pad.js`, `frontend/src/history-stack.js` (re-used by the Playboard) |
 | Ask Aivana | `backend/notebook_routes.py` (`/api/assistant/message`), `backend/coach_logic.py`, `frontend/src/ask-panel.js` |
 | Database and "migrations" | One SQLite file (`backend/coach.sqlite3`). No migration tool: each store runs `CREATE TABLE IF NOT EXISTS` at start-up, so new tables appear on the next backend start and old data is untouched |
 | Upload storage | Note photos: `backend/coach_files/`. Film, drawings and frame captures: `data/film/` (git-ignored). Override with `COACH_FILM_DIR` |
@@ -30,8 +30,8 @@ Build brief approved by Salma on November 21, 2026 (10:12 AM). It combines the c
 - **Assign film**: assigned coach + status To do / In progress / Done; shows on Home Next up as "Film to break down: …".
 - **Playbook** tab with all drawings.
 
-### Play whiteboard
-- Opens from the Home note editor (✎ Whiteboard), the Film room (Draw on this frame, Playbook), and the player page.
+### Playboard
+- Opens from the Home note editor (✎ Playboard), the Film room (Draw on this frame, Playbook), and the player page.
 - Templates: Play diagram (yard lines every 5, numbers, hashes, draggable blue line of scrimmage and yellow 1st-down line), Full field (120 × 53⅓ yd), Film frame, Blank. Objects are stored in yards (board units), so they don't move when the screen size changes.
 - Tools (44 px buttons with tooltips and keys): Select V (drag, group box), Pen P, Arrow A (solid/dashed/curved), Line L (plain or Block T), Player M (circle/X/O/square, any label, offense white / defense orange, double-click to relabel or link a roster #), Text T, Highlight H, Eraser E (objects only), Undo/Redo (Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z, Ctrl+Y), Zoom −/+/Fit, Pan (Space, or finger when a pen is used), Duplicate Ctrl+D, Delete, Flip left/right, Replay, PNG export. Six colors and S/M/L widths.
 - Quick formations (all editable): Pro I (11), Shotgun 2x2, Trips, Empty, 4-3 Over, 3-4, Cover 2 shell, Cover 3 shell, Punt, Kickoff.

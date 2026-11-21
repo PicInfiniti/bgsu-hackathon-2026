@@ -47,6 +47,7 @@ The user selected **Project A: Coach Meeting Tracker** as the final hackathon pr
 
 - **Categories are open.** No note, tag, clip or extracted item is forced into a fixed list. Aivana suggests any tags it finds (0–3 per item, plain words); the coach can keep, edit, remove or type any tag. `topic` and `skill` are optional free text. Starter suggestions (datalists, `data/categories.json`, `backend/vocabulary.py`) are hints, never a limit. Code only tidies tags (lower-case, trim, exact synonyms). `confidence` and `match_method` are review metadata and stay checked.
 - Rules that stay: the API key stays in the backend; nothing AI-made is saved without coach approval; no AI grades, scores or ratings; dates, counts, % and trends are computed in code; health/insurance items stay sensitive.
+- Players, folders, Settings, Help and tours (November 21, 2026) are documented in `docs/profile-notebook-review.md` and `docs/app-guide.md`. The roster now comes from `/api/players` (`backend/roster.py`: synthetic pack plus the `players` table, same ids); players are never deleted, only marked inactive. The frontend keeps active players in `demo.players` and inactive ones only for names and history. There is still no real authentication, so no Sign out is shown.
 - Film room, Play whiteboard, Skill checks and Film packs are documented in `docs/film-room-prompt.md`. Any video file type is accepted (converted to MP4 only if ffmpeg is installed).
 
 ## Run and continue

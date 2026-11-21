@@ -1064,7 +1064,7 @@ def next_game(occurrences, now, homework_rows=None, films=None, player_id=None):
     due = [r for r in (homework_rows or []) if not r['completed'] and r['due_date'] and r['due_date'] <= kickoff.date().isoformat()
            and (player_id is None or r['player_id'] == player_id)]
     film_todo = [f for f in (films or []) if f['status'] != 'done' and f.get('assigned_to')]
-    one_on_one = next((e for e in occurrences if (e.get('audience') or '').startswith('player:') and datetime.fromisoformat(e['start_at']) >= now
+    one_on_one = next((e for e in occurrences if e.get('type') == 'meeting' and (e.get('audience') or '').startswith('player:') and datetime.fromisoformat(e['start_at']) >= now
                        and (player_id is None or e['audience'] == f'player:{player_id}')), None)
     days = (kickoff.date() - now.date()).days
     return {'event': game, 'opponent': opponent, 'home_away': home_away, 'kickoff': game['start_at'], 'days_left': days,

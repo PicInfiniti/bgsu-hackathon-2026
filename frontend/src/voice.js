@@ -17,7 +17,7 @@ export function formatTimer(ms) {
 }
 
 /** Starts recognition; calls onText(finalText, interimText). Returns a stop() function. */
-export function startDictation(win, { onText, onEnd, onError }) {
+export function startDictation(win, { onText, onEnd, onError, onFinal }) {
   const Recognition = speechRecognitionClass(win);
   if (!Recognition) throw Error(VOICE_TOOLTIP);
   const recognition = new Recognition();
@@ -27,7 +27,7 @@ export function startDictation(win, { onText, onEnd, onError }) {
     let interim = '';
     for (let i = event.resultIndex; i < event.results.length; i++) {
       const piece = event.results[i][0].transcript;
-      if (event.results[i].isFinal) finalText += (finalText && !finalText.endsWith(' ') ? ' ' : '') + piece.trim();
+      if (event.results[i].isFinal) { finalText += (finalText && !finalText.endsWith(' ') ? ' ' : '') + piece.trim(); onFinal?.(piece.trim()); }
       else interim += piece;
     }
     onText(finalText, interim);

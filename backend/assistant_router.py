@@ -39,10 +39,11 @@ class Brain:
         keep_skill = ctx_in.get('skill') if pid and pid == ctx_in.get('player_id') else None
         return {'player_id': pid, 'player_name': self.names.get(pid), 'skill': skill if skill is not None else keep_skill, 'film_id': ctx_in.get('film_id')}
 
-    def handle(self, intent, message, ctx_in, mode, history, today, now):
+    def handle(self, intent, message, ctx_in, mode, history, today, now, page='home'):
         wants_rec = bool(RECOMMEND.search(message))
         named = logic.players_in_text(message, self.players)
-        wants_summary = bool(SUMMARY.search(message)) and (intent != 'summarize_note' or bool(named))
+        # 'Recap this note' on a note page stays a note recap; 'summarize his feedback' is about the player in context.
+        wants_summary = bool(SUMMARY.search(message)) and (intent != 'summarize_note' or bool(named) or (page not in ('note', 'film') and bool(ctx_in.get('player_id'))))
         wants_homework = intent == 'late' or (bool(HOMEWORK.search(message)) and intent == 'question')
         if intent in ACTION_INTENTS and not wants_rec:
             return None

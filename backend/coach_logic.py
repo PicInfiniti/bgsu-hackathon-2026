@@ -194,6 +194,39 @@ def homework(meetings, players, include_sensitive=False):
     return rows
 
 
+# Program standards (from USA Football's "What do coaches want from their players").
+# These are not scores: only counts of approved notes the coach tagged with a standard.
+STANDARDS = [('prepared', 'Prepared & on time', ('prepared', 'on time', 'prepared & on time', 'preparation', 'punctual')),
+             ('effort', 'Effort', ('effort', 'hustle')),
+             ('communication', 'Communication', ('communication', 'communicate')),
+             ('ownership', 'Ownership', ('ownership', 'accountability')),
+             ('attitude', 'Attitude', ('attitude',)),
+             ('respect', 'Respect', ('respect',))]
+
+
+def standard_of(tags):
+    tags = {str(t).strip().casefold() for t in tags or []}
+    return [key for key, _, words in STANDARDS if tags & set(words)]
+
+
+def standard_counts(meetings, player_id, today, days=30):
+    since = (date.fromisoformat(today) - timedelta(days=days)).isoformat()
+    out = {key: {'key': key, 'label': label, 'praise': 0, 'concern': 0, 'notes': []} for key, label, _ in STANDARDS}
+    for meeting in meetings:
+        if not since <= meeting['date'] <= today:
+            continue
+        for item in meeting.get('items', []):
+            if item.get('sensitive') or item.get('kind') not in ('praise', 'improvement'):
+                continue
+            if item.get('player_id') != player_id and player_id not in (item.get('player_ids') or []):
+                continue
+            for key in standard_of(item.get('tags')):
+                row = out[key]
+                row['praise' if item['kind'] == 'praise' else 'concern'] += 1
+                row['notes'].append({'meeting_id': meeting['id'], 'item_id': item['id'], 'date': meeting['date'], 'kind': item['kind'], 'text': item['text']})
+    return {'since': since, 'standards': list(out.values())}
+
+
 def homework_status(row, today):
     if row['completed']:
         return 'done'

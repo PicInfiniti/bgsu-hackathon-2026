@@ -14,14 +14,22 @@ INPUT_METHODS = ('type', 'pen', 'photo', 'voice')
 EVENT_TYPES = ('game', 'practice', 'scrimmage', 'film', 'meeting', 'lift', 'walkthrough', 'note', 'other')
 EVENT_LABELS = {'game': 'Official game', 'practice': 'Practice', 'scrimmage': 'Scrimmage', 'film': 'Film review', 'meeting': 'Meeting',
                 'lift': 'Lift', 'walkthrough': 'Walk-through', 'note': 'Note', 'other': 'Other'}
-EVENT_EXTRA = ('opponent', 'home_away', 'location', 'focus')
+EVENT_EXTRA = ('opponent', 'home_away', 'location', 'focus', 'todo', 'done_at')
 VERSION_SOURCES = ('typing', 'save', 'convert', 'aivana_fix', 'restore')
 MAX_VERSIONS = 200
 MAX_ATTACHMENTS = 5
 MAX_IMAGE_BYTES = 8 * 1024 * 1024
 DATA_URL = re.compile(r'^data:(image/(?:png|jpeg));base64,([A-Za-z0-9+/=\s]+)$')
 NOTIFICATION_KINDS = ('review', 'late', 'due_tomorrow', 'next_up', 'recap')
-DEFAULT_SETTINGS = {'game_day': 'saturday', 'day_labels': {}, 'notification_kinds': {k: True for k in NOTIFICATION_KINDS}}
+DEFAULT_SETTINGS = {'game_day': 'saturday', 'day_labels': {}, 'notification_kinds': {k: True for k in NOTIFICATION_KINDS},
+                    'team': {'name': None}, 'calendar': {'default_view': 'week', 'show_homework': True},
+                    'privacy': {'export_names': False}, 'tours': {}}
+ROLES = ('Head coach', 'Offensive coordinator', 'Defensive coordinator', 'Special teams coordinator', 'Position coach', 'Graduate assistant', 'Analyst', 'Other')
+CALENDAR_VIEWS = ('day', 'week', 'month')
+TOURS = ('welcome', 'film', 'playboard')
+TOUR_STATES = ('done', 'dismissed')
+# Smart views are computed from what a note is; they are never stored or edited.
+SMART_VIEWS = {'all': None, 'private': ('personal',), 'player_meetings': ('player_meetings',), 'game_plans': ('team_strategy',)}
 
 
 def now_iso():
@@ -55,6 +63,32 @@ def parse_start(value):
     except ValueError:
         raise ValueError('Start must look like 2026-11-24T15:30.') from None
     return parsed.replace(second=0, microsecond=0, tzinfo=None).isoformat(timespec='minutes')
+
+
+def validate_segments(raw):
+    """Voice lines labelled by the coach ("Who's talking?"). Never produced by speech detection."""
+    if raw is None:
+        return []
+    if not isinstance(raw, list) or len(raw) > 500:
+        raise ValueError('Up to 500 voice lines per note.')
+    out = []
+    for seg in raw:
+        if not isinstance(seg, dict):
+            raise ValueError('Each voice line must be an object.')
+        label = clean_text(seg.get('speaker_label') or 'Unknown', 'Speaker', 40, required=True)
+        player_id = seg.get('player_id') or None
+        if player_id is not None and (not isinstance(player_id, str) or not re.fullmatch(r'p\d{2}', player_id)):
+            raise ValueError('Speaker must be a roster player, Coach, Other or Unknown.')
+        if label.lower() in ('unknown', 'coach', 'other'):
+            player_id = None  # only a named player line is linked to a player
+        start = seg.get('start_ms', 0)
+        if not isinstance(start, int) or isinstance(start, bool) or not 0 <= start <= 6 * 3600 * 1000:
+            raise ValueError('Line times must be milliseconds from the start of the recording.')
+        if seg.get('source', 'coach_tag') != 'coach_tag':
+            raise ValueError('Speaker labels can only come from the coach.')
+        out.append({'speaker_label': label, 'player_id': player_id, 'start_ms': start,
+                    'text': clean_text(seg.get('text'), 'Line', 2000, required=True), 'source': 'coach_tag'})
+    return out
 
 
 def validate_audience(value):
@@ -99,6 +133,12 @@ def validate_event(raw, partial=False):
     for key, limit in (('opponent', 80), ('location', 120), ('focus', 200)):
         if key in raw or not partial:
             event[key] = clean_text(raw.get(key) or None, key.capitalize(), limit)
+    if 'todo' in raw:
+        event['todo'] = 1 if raw.get('todo') else 0
+    if 'done' in raw:
+        if raw['done'] not in (True, False):
+            raise ValueError('Done must be true or false.')
+        event['done_at'] = now_iso() if raw['done'] else None
     if 'home_away' in raw or not partial:
         value = raw.get('home_away') or None
         if value not in (None, 'home', 'away', 'neutral'):
@@ -214,10 +254,18 @@ class Notebook:
             CREATE TABLE IF NOT EXISTS notifications (
               id INTEGER PRIMARY KEY, key TEXT UNIQUE, kind TEXT, text TEXT, link TEXT, created_at TEXT, read_at TEXT NULL);
             CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS folders (id INTEGER PRIMARY KEY, name TEXT NOT NULL, archived_at TEXT NULL, created_at TEXT);
+            CREATE TABLE IF NOT EXISTS game_lists (event_id INTEGER, game_date TEXT, saved_at TEXT, PRIMARY KEY (event_id, game_date));
+            CREATE TABLE IF NOT EXISTS game_players (event_id INTEGER, game_date TEXT, player_id TEXT, PRIMARY KEY (event_id, game_date, player_id));
             ''')
             self._migrate_events(db)
-            if 'player_id' not in {r[1] for r in db.execute('PRAGMA table_info(notes)')}:
+            note_columns = {r[1] for r in db.execute('PRAGMA table_info(notes)')}
+            if 'player_id' not in note_columns:
                 db.execute('ALTER TABLE notes ADD COLUMN player_id TEXT NULL')  # Quick Note: related player
+            if 'segments_json' not in note_columns:
+                db.execute('ALTER TABLE notes ADD COLUMN segments_json TEXT NULL')  # voice lines tagged by the coach
+            if 'folder_id' not in note_columns:
+                db.execute('ALTER TABLE notes ADD COLUMN folder_id INTEGER NULL')  # one optional personal folder
 
     @staticmethod
     def _migrate_events(db):
@@ -238,7 +286,7 @@ class Notebook:
             columns = {r[1] for r in db.execute('PRAGMA table_info(events)')}
         for column in EVENT_EXTRA:
             if column not in columns:
-                db.execute(f'ALTER TABLE events ADD COLUMN {column} TEXT')
+                db.execute(f"ALTER TABLE events ADD COLUMN {column} {'INTEGER DEFAULT 0' if column == 'todo' else 'TEXT'}")
         for row in db.execute("SELECT id, title FROM events WHERE type = 'game' AND opponent IS NULL").fetchall():
             match = re.search(r'\b(vs\.?|at|@)\s+(.+)$', row[1])
             if match:
@@ -259,7 +307,10 @@ class Notebook:
         with self.connect() as db:
             stored = {row['key']: json.loads(row['value']) for row in db.execute('SELECT key, value FROM settings')}
         result = json.loads(json.dumps(DEFAULT_SETTINGS))
-        result['profile'] = stored.get('profile', {'name': None, 'photo': None})
+        result['profile'] = {'name': None, 'photo': None, 'role': None, **stored.get('profile', {})}
+        for key in ('team', 'calendar', 'privacy', 'tours'):
+            result[key] = {**result[key], **stored.get(key, {})}
+        result['season'] = stored.get('season', {'start': '08-01', 'end': '01-31'})
         for key in ('game_day', 'day_labels'):
             if key in stored:
                 result[key] = stored[key]
@@ -280,7 +331,43 @@ class Notebook:
                 parse_data_url(photo)
                 if len(photo) > 400_000:
                     raise ValueError('Use a smaller picture.')
-            changes['profile'] = {'name': (name or '').strip() or None, 'photo': photo}
+            role = profile.get('role', self.settings()['profile'].get('role')) or None
+            if role is not None and role not in ROLES:
+                raise ValueError('Choose a role from the list.')
+            changes['profile'] = {'name': (name or '').strip() or None, 'photo': photo, 'role': role}
+        if 'team' in raw:
+            team = raw['team']
+            if not isinstance(team, dict):
+                raise ValueError('Team must be an object.')
+            changes['team'] = {'name': (clean_text(team.get('name') or None, 'Team name', 80) or '').strip() or None}
+        if 'calendar' in raw:
+            cal = raw['calendar']
+            current = self.settings()['calendar']
+            if not isinstance(cal, dict) or cal.get('default_view', current['default_view']) not in CALENDAR_VIEWS or not isinstance(cal.get('show_homework', current['show_homework']), bool):
+                raise ValueError('Calendar view is day, week or month; deadlines are on or off.')
+            changes['calendar'] = {**current, **{k: cal[k] for k in ('default_view', 'show_homework') if k in cal}}
+        if 'privacy' in raw:
+            privacy = raw['privacy']
+            if not isinstance(privacy, dict) or not isinstance(privacy.get('export_names'), bool):
+                raise ValueError('Choose whether exports show player names.')
+            changes['privacy'] = {'export_names': privacy['export_names']}
+        if 'tour' in raw:
+            tour = raw['tour']
+            if not isinstance(tour, dict) or tour.get('id') not in TOURS or tour.get('state') not in (*TOUR_STATES, None):
+                raise ValueError('Unknown tour.')
+            tours = dict(self.settings()['tours'])
+            if tour['state'] is None:
+                tours.pop(tour['id'], None)  # Replay
+            else:
+                tours[tour['id']] = tour['state']
+            changes['tours'] = tours
+        if 'season' in raw:
+            season = raw['season']
+            if not isinstance(season, dict) or not all(re.fullmatch(r'\d{2}-\d{2}', str(season.get(k, ''))) for k in ('start', 'end')):
+                raise ValueError('Season dates look like 08-01 and 01-31.')
+            for k in ('start', 'end'):
+                date.fromisoformat(f"2024-{season[k]}")
+            changes['season'] = {'start': season['start'], 'end': season['end']}
         if 'game_day' in raw:
             if raw['game_day'] not in ('saturday', 'friday'):
                 raise ValueError('Game day is Saturday or Friday.')
@@ -317,6 +404,7 @@ class Notebook:
             raise KeyError('Note not found.')
         note = dict(row)
         note['summary'] = json.loads(note.pop('summary_json')) if note.get('summary_json') else None
+        note['segments'] = json.loads(note.pop('segments_json')) if note.get('segments_json') else []
         if full:
             note['attachments'] = [dict(a) for a in db.execute('SELECT id, kind, created_at FROM note_attachments WHERE note_id = ? ORDER BY id', (note_id,))]
             note['strokes'] = [{'seq': s['seq'], 'color': s['color'], 'points': json.loads(s['points_json'])}
@@ -324,13 +412,24 @@ class Notebook:
             note['version_count'] = db.execute('SELECT COUNT(*) FROM note_versions WHERE note_id = ?', (note_id,)).fetchone()[0]
         return note
 
-    def list_notes(self, notebook=None, search=None):
-        query, args = 'SELECT id FROM notes', []
+    def list_notes(self, notebook=None, search=None, folder=None):
+        query, args, where = 'SELECT id FROM notes', [], []
         if notebook:
             if notebook not in NOTEBOOKS:
                 raise ValueError('Unknown notebook.')
-            query += ' WHERE notebook = ?'
+            where.append('notebook = ?')
             args.append(notebook)
+        if folder not in (None, '', 'any'):
+            if folder == 'none':
+                where.append('folder_id IS NULL')
+            else:
+                try:
+                    where.append('folder_id = ?')
+                    args.append(int(folder))
+                except (TypeError, ValueError):
+                    raise ValueError('Unknown folder.') from None
+        if where:
+            query += ' WHERE ' + ' AND '.join(where)
         query += ' ORDER BY updated_at DESC, id DESC'
         with self.connect() as db:
             notes = [self._note(db, row['id'], full=False) for row in db.execute(query, args).fetchall()]
@@ -341,6 +440,107 @@ class Notebook:
             words = search.casefold()
             notes = [n for n in notes if words in f"{n['title']} {n['body']}".casefold()]
         return notes
+
+    # ---------- folders (personal, optional; built-in views are computed) ----------
+    def _folder_id(self, value):
+        if value in (None, '', 'none'):
+            return None
+        if not isinstance(value, int) or isinstance(value, bool):
+            raise ValueError('Unknown folder.')
+        with self.connect() as db:
+            row = db.execute('SELECT archived_at FROM folders WHERE id = ?', (value,)).fetchone()
+        if not row:
+            raise ValueError('Unknown folder.')
+        if row['archived_at']:
+            raise ValueError('That folder is archived. Restore it first.')
+        return value
+
+    def folders(self, include_archived=False):
+        with self.connect() as db:
+            counts = dict(db.execute('SELECT folder_id, COUNT(*) FROM notes WHERE folder_id IS NOT NULL GROUP BY folder_id').fetchall())
+            rows = [dict(r) for r in db.execute('SELECT * FROM folders ORDER BY lower(name)')]
+        return [{**r, 'note_count': counts.get(r['id'], 0)} for r in rows if include_archived or not r['archived_at']]
+
+    def _folder_name(self, raw, skip_id=None):
+        name = (clean_text((raw or {}).get('name') if isinstance(raw, dict) else None, 'Folder name', 40, required=True) or '').strip()
+        if any(f['name'].casefold() == name.casefold() and f['id'] != skip_id for f in self.folders(include_archived=True)):
+            raise ValueError('You already have a folder with that name.')
+        if name.casefold() in ('all notes', 'private', 'player meetings', 'game plans', 'film observations', 'no folder'):
+            raise ValueError('That name is used by a built-in view.')
+        return name
+
+    def create_folder(self, raw):
+        name = self._folder_name(raw)
+        with self.connect() as db:
+            folder_id = db.execute('INSERT INTO folders (name, created_at) VALUES (?, ?)', (name, now_iso())).lastrowid
+        return self.get_folder(folder_id)
+
+    def get_folder(self, folder_id):
+        folder = next((f for f in self.folders(include_archived=True) if f['id'] == folder_id), None)
+        if not folder:
+            raise KeyError('Folder not found.')
+        return folder
+
+    def update_folder(self, folder_id, raw):
+        self.get_folder(folder_id)
+        if not isinstance(raw, dict):
+            raise ValueError('Folder must be an object.')
+        with self.connect() as db:
+            if 'name' in raw:
+                db.execute('UPDATE folders SET name = ? WHERE id = ?', (self._folder_name(raw, folder_id), folder_id))
+            if 'archived' in raw:
+                if not isinstance(raw['archived'], bool):
+                    raise ValueError('Archived is true or false.')
+                db.execute('UPDATE folders SET archived_at = ? WHERE id = ?', (now_iso() if raw['archived'] else None, folder_id))
+        return self.get_folder(folder_id)
+
+    def delete_folder(self, folder_id):
+        """Deleting a folder never deletes notes: they move to No folder."""
+        self.get_folder(folder_id)
+        with self.connect() as db:
+            moved = db.execute('UPDATE notes SET folder_id = NULL WHERE folder_id = ?', (folder_id,)).rowcount
+            db.execute('DELETE FROM folders WHERE id = ?', (folder_id,))
+        return {'moved_to_no_folder': moved}
+
+    def move_note(self, note_id, folder_id):
+        """Changes only folder_id: links, dates, versions and the note itself stay as they are."""
+        folder_id = self._folder_id(folder_id)
+        with self.connect() as db:
+            self._note(db, note_id, full=False)
+            db.execute('UPDATE notes SET folder_id = ? WHERE id = ?', (folder_id, note_id))
+            return self._note(db, note_id)
+
+    # ---------- who played (official games only; counts are computed here) ----------
+    def game_list(self, event_id, game_date):
+        event = self.get_event(event_id)
+        if event['type'] != 'game':
+            raise ValueError('Only official games keep a played list.')
+        date.fromisoformat(game_date)
+        with self.connect() as db:
+            saved = db.execute('SELECT saved_at FROM game_lists WHERE event_id = ? AND game_date = ?', (event_id, game_date)).fetchone()
+            ids = [r[0] for r in db.execute('SELECT player_id FROM game_players WHERE event_id = ? AND game_date = ? ORDER BY player_id', (event_id, game_date))]
+        return {'event_id': event_id, 'game_date': game_date, 'saved_at': saved['saved_at'] if saved else None, 'player_ids': ids}
+
+    def save_game_list(self, event_id, game_date, player_ids, roster_ids):
+        self.game_list(event_id, game_date)
+        if not isinstance(player_ids, list) or any(p not in roster_ids for p in player_ids):
+            raise ValueError('Tick players from the roster.')
+        with self.connect() as db:
+            db.execute('DELETE FROM game_players WHERE event_id = ? AND game_date = ?', (event_id, game_date))
+            db.executemany('INSERT INTO game_players VALUES (?, ?, ?)', [(event_id, game_date, p) for p in dict.fromkeys(player_ids)])
+            db.execute('INSERT OR REPLACE INTO game_lists VALUES (?, ?, ?)', (event_id, game_date, now_iso()))
+        return self.game_list(event_id, game_date)
+
+    def games_played(self, player_id, active_since=None):
+        """'Games played N of M' over official games with a saved list. None when no list was saved."""
+        with self.connect() as db:
+            lists = db.execute("SELECT l.event_id, l.game_date FROM game_lists l JOIN events e ON e.id = l.event_id WHERE e.type = 'game'").fetchall()
+            played = {(r[0], r[1]) for r in db.execute('SELECT event_id, game_date FROM game_players WHERE player_id = ?', (player_id,))}
+        if active_since:
+            lists = [r for r in lists if r[1] >= active_since]
+        if not lists:
+            return None
+        return {'played': sum(1 for r in lists if (r[0], r[1]) in played), 'of': len(lists)}
 
     def get_note(self, note_id):
         with self.connect() as db:
@@ -372,6 +572,10 @@ class Notebook:
             if meeting_id is not None and (not isinstance(meeting_id, str) or len(meeting_id) > 100):
                 raise ValueError('Invalid meeting link.')
             note['meeting_id'] = meeting_id
+        if 'segments' in raw:
+            note['segments_json'] = json.dumps(validate_segments(raw.get('segments')))
+        if 'folder_id' in raw:
+            note['folder_id'] = self._folder_id(raw.get('folder_id'))
         if 'player_id' in raw:
             player_id = raw.get('player_id') or None
             if player_id is not None and (not isinstance(player_id, str) or not re.fullmatch(r'p\d{2}', player_id)):
@@ -455,6 +659,10 @@ class Notebook:
             cursor = db.execute('INSERT INTO notes (notebook, title, body, input_method, meeting_id, note_date, created_at, updated_at, player_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
                                 (note['notebook'], note['title'], note['body'], note['input_method'], note.get('meeting_id'), note['note_date'], stamp, stamp, note.get('player_id')))
             note_id = cursor.lastrowid
+            if note.get('segments_json'):
+                db.execute('UPDATE notes SET segments_json = ? WHERE id = ?', (note['segments_json'], note_id))
+            if note.get('folder_id'):
+                db.execute('UPDATE notes SET folder_id = ? WHERE id = ?', (note['folder_id'], note_id))
             self._store_extras(db, note_id, raw)
             self._add_version(db, note_id, note['body'], 'save')
             return self._note(db, note_id)
@@ -534,10 +742,10 @@ class Notebook:
             if match and not event.get('home_away'):
                 event['home_away'] = 'away' if re.search(r'\b(?:at|@)\s', event['title']) else 'home'
         with self.connect() as db:
-            cursor = db.execute('INSERT INTO events (type, title, start_at, duration_min, audience, note, repeat_weekly, repeat_until, meeting_id, created_at, opponent, home_away, location, focus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            cursor = db.execute('INSERT INTO events (type, title, start_at, duration_min, audience, note, repeat_weekly, repeat_until, meeting_id, created_at, opponent, home_away, location, focus, todo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                                 (event['type'], event['title'], event['start_at'], event['duration_min'], event['audience'], event['note'],
                                  event['repeat_weekly'], event.get('repeat_until'), event.get('meeting_id'), now_iso(),
-                                 event.get('opponent'), event.get('home_away'), event.get('location'), event.get('focus')))
+                                 event.get('opponent'), event.get('home_away'), event.get('location'), event.get('focus'), event.get('todo', 0)))
             event_id = cursor.lastrowid
         return self.get_event(event_id)
 
