@@ -27,7 +27,7 @@ export async function renderPack(root, token) {
   const clips = (list, heading) => list.length ? `<section><h2>${heading}</h2>${list.map((c, i) => `<article class="pack-clip"><h3>${i + 1}. ${esc(clipTitle(c))}</h3><p class="muted">${esc(c.film.title)} · ${mmss(c.start_s)}–${mmss(c.end_s)}</p>${videoFor(c)}</article>`).join('')}</section>` : '';
   root.innerHTML = `<main class="pack-main">
     <header><p class="pack-kicker">FALCON FOLLOW-UP · FILM PACK</p><h1>${esc(pack.title)}</h1><p>For ${esc(pack.audience)}${pack.due_date ? ` · watch by <strong>${esc(pack.due_date)}</strong>` : ''}</p></header>
-    ${pack.homework.length ? `<section class="pack-homework"><h2>Homework</h2><ul>${pack.homework.map(h => `<li>${esc(h)}</li>`).join('')}</ul></section>` : ''}
+    ${pack.homework.length ? `<section class="pack-homework"><h2>Actions</h2><ul>${pack.homework.map(h => `<li>${esc(h)}</li>`).join('')}</ul></section>` : ''}
     ${clips(pack.clips, 'Clips to study')}
     ${pack.notes.length ? `<section><h2>Coaching points</h2><ul class="pack-notes">${pack.notes.map(n => `<li><span class="pack-time">${mmss(n.t_seconds)}</span> ${esc(n.text)} <small>${esc(n.film.title)}</small></li>`).join('')}</ul></section>` : ''}
     ${pack.diagrams.length ? `<section><h2>Drawings</h2>${pack.diagrams.map(d => `<figure>${d.has_preview ? `<img src="/api/pack/${encodeURIComponent(token)}/diagrams/${d.id}.png" alt="${esc(d.alt_text || d.title)}">` : ''}<figcaption><strong>${esc(d.title)}</strong>${d.remember ? ` · ${esc(d.remember)}` : ''}</figcaption></figure>`).join('')}</section>` : ''}

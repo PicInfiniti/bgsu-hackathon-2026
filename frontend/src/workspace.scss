@@ -6,6 +6,9 @@ $line: #e3d8c9;
 $paper: #fcf8f1;
 
 .workspace-app {
+  --workspace-header-height: 96px;
+  --workspace-sticky-gap: 18px;
+  --workspace-sticky-top: calc(var(--workspace-header-height) + var(--workspace-sticky-gap));
   min-height: 100dvh;
   background: #f8f2e9;
   color: $ink;
@@ -58,7 +61,7 @@ $paper: #fcf8f1;
   #note { min-height: 280px; padding: 17px 16px 17px 37px; line-height: 29px; font-size: 1rem; background-color: #faf5e9; background-image: linear-gradient(90deg, transparent 27px, #dc9c8373 27px, #dc9c8373 28px, transparent 28px), repeating-linear-gradient(transparent 0, transparent 28px, #c8c7bb8c 28px, #c8c7bb8c 29px); background-attachment: local; border-color: #e3d6c5; border-radius: 9px; }
   .writing-help { margin: -4px 0 14px; font-size: .78rem; summary { color: #8b6849; text-decoration-style: dotted; } p { background: #f1e7d7; font-size: .82rem; } }
   .editor-footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; border-top: 1px solid $line; padding: 15px 0; >span { display: flex; align-items: center; gap: 6px; font-size: .75rem; color: #8b745b; .ui-icon { width: 16px; height: 16px; } } }
-  .primary { display: inline-flex; justify-content: center; align-items: center; background: $orange; color: #301b0f; border-color: #e34900; border-radius: 8px; box-shadow: 0 2px 3px #8b390f0c; font-weight: 750; padding: 11px 16px; font-size: .9rem; &:hover:not(:disabled) { background: #ed4900; } }
+  .primary { display: inline-flex; justify-content: center; align-items: center; background: var(--coach-primary-bg); color: var(--coach-primary-ink); border-color: #e34900; border-radius: 8px; box-shadow: 0 2px 3px #8b390f0c; font-weight: 750; padding: 11px 16px; font-size: .9rem; &:hover:not(:disabled) { background: var(--coach-primary-hover); } }
   .secondary { background: #faf3e7; color: $brown; border-color: #d9c6ac; border-radius: 7px; &:hover:not(:disabled) { background: #eedfc9; } }
   .review-panel { background: #f5ede0; padding: 18px 15px; border-radius: 9px; margin-top: 0; border: 1px solid #e5d8c3; .panel-heading { gap: 10px; padding: 0 0 14px; margin-bottom: 14px; border-color: #e0d2bd; color: $brown; h3 { font-size: .95rem; } p { font-size: .8rem; color: $muted; } } }
   .empty-review { padding: 15px 0; .paper-icon { display: none; } h3 { font-size: .93rem; margin: 0 0 6px; } p { font-size: .8rem; line-height: 1.7; margin-bottom: 10px; } .legend { margin-top: 12px; span { background: #fbf6ed; border-color: #dfd0bb; color: #7d6146; } } }
@@ -181,7 +184,7 @@ $paper: #fcf8f1;
   .checkin-remaining { font-size: .8rem; color: #9c8266; line-height: 1.7; margin: 12px 0 0; }
   #overview-meeting-types { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); border: 1px solid #e5d7c1; border-radius: 8px; overflow: hidden; button { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px; background: #fcf5e9; border: 0; border-right: 1px solid #e5d7c1; color: #7e5c3c; text-align: left; &:last-child { border-right: 0; } &:hover { background: #f3e2c9; } span { display: flex; gap: 9px; align-items: center; font-size: .85rem; } .ui-icon { width: 19px; height: 19px; } strong { font-size: 1.5rem; font-weight: 650; color: #4f2c1d; } } }
   .meeting-page-heading { margin: 4px 0 22px; h2 { font-size: 1.8rem; } p:not(.eyebrow) { color: #9b8063; font-size: .9rem; line-height: 1.7; margin: 8px 0 0; } }
-  .meeting-workspace { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); align-items: start; gap: 24px; >.review-panel { position: sticky; top: 18px; max-height: calc(100dvh - 36px); overflow-y: auto; padding: 22px; } }
+  .meeting-workspace { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); align-items: start; gap: 24px; >.review-panel { position: sticky; top: var(--workspace-sticky-top); max-height: calc(100dvh - var(--workspace-sticky-top) - var(--workspace-sticky-gap)); overflow-y: auto; padding: 22px; } }
   .meeting-sheet-heading { display: flex; align-items: center; gap: 9px; padding: 14px 16px; background: #4f2c1d; border-radius: 8px; color: #fff2df; font-weight: 650; margin-bottom: 14px; font-size: 1rem; .ui-icon { width: 20px; height: 20px; } }
 }
 @media (max-width: 1100px) { .workspace-app { .overview-grid { grid-template-columns: minmax(0,1fr) 275px; gap: 18px; } #desk>.stats { gap: 10px; >a { padding: 16px; span { font-size: .8rem; } strong { font-size: 1.8rem; } &.urgent { padding-top: 14px; } } } .meeting-workspace { grid-template-columns: 1fr; >.review-panel { position: static; max-height: none; } } .overview-lead h2 { font-size: 1.6rem; } #overview-meeting-types button { padding: 12px; .ui-icon { display: none; } } } }
@@ -353,7 +356,7 @@ $paper: #fcf8f1;
   .player-history-main { min-width: 0; }
   .player-history-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 13px; margin-bottom: 27px; >div { display: flex; align-items: center; gap: 11px; padding: 16px; border: 1px solid #e2d1bb; background: #fffaf2; border-radius: 8px; } strong { font-size: 1.65rem; font-weight: 700; color: #6d482a; } span { color: #a1815f; font-size: .76rem; } .is-overdue strong { color: #b65323; } }
   .player-history-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 15px; h3 { font-size: 1rem; color: #795436; margin: 0; } .sensitive-toggle { font-size: .73rem; margin: 0; } }
-  .player-calendar-rail { position: sticky; top: 18px; .calendar-panel { padding: 22px; } .eyebrow { margin-bottom: 16px; font-size: .65rem; } .calendar-activities { >h3 { font-size: .95rem; color: #795436; margin: 0 0 14px; } } }
+  .player-calendar-rail { position: sticky; top: var(--workspace-sticky-top); .calendar-panel { padding: 22px; } .eyebrow { margin-bottom: 16px; font-size: .65rem; } .calendar-activities { >h3 { font-size: .95rem; color: #795436; margin: 0 0 14px; } } }
   .player-calendar-meeting { display: block; text-align: left; width: 100%; padding: 11px 0; border: 0; border-bottom: 1px solid #eddfcb; background: none; strong { display: block; color: #82603d; font-size: .78rem; line-height: 1.75; font-weight: 600; } small { display: block; color: #b09270; font-size: .7rem; margin-top: 4px; } &:hover strong { text-decoration: underline; } }
   .player-calendar-due { border-bottom: 1px solid #eddfcb; padding-bottom: 12px; strong { font-size: .77rem; color: #98734c; line-height: 1.8; display: block; font-weight: 500; } small { color: #b09270; display: block; margin-top: 4px; font-size: .69rem; line-height: 1.7; } }
   .player-history-main .timeline-meeting-card { background: #fffaf2; border: 1px solid #e0cfb7; border-radius: 10px; padding: 19px 22px; margin: 17px 0; box-shadow: 0 2px 4px #57382203; >header { border-bottom: 1px solid #eee2d1; padding-bottom: 14px; margin-bottom: 5px; h3 { font-size: 1rem; line-height: 1.7; margin: 10px 0 5px; } >p { font-size: .72rem; color: #ab8c69; margin: 0; } } .meeting-type-badge { font-size: .65rem; padding: 4px 8px; font-weight: 600; background: #f0e6d7; color: #a17e53; } &.group-meeting-card .meeting-type-badge { background: #f9e8d0; color: #b47536; } &.team-meeting-card .meeting-type-badge { background: #ede1d1; color: #815a36; } >.record { border: 0; border-radius: 0; background: transparent; border-bottom: 1px solid #eee2d1; margin: 0; padding: 17px 0; h4 { font-size: .88rem; line-height: 1.8; margin: 9px 0; } .record-origin { display: none; } .record-meta { font-size: .72rem; } .record-top { font-size: .7rem; } summary { font-size: .72rem; } .secondary { font-size: .72rem; min-height: 34px; padding: 7px 10px; } } .timeline-original-note { padding-top: 12px; border: 0; display: grid; gap: 11px; summary { font-size: .72rem; color: #aa8a64; } .timeline-attendees { margin: 0; } } .timeline-no-records { font-size: .8rem; margin: 15px 0; } }
@@ -367,7 +370,7 @@ $paper: #fcf8f1;
 .workspace-app #tasks {
   .action-followup-layout { display: grid; grid-template-columns: minmax(0,1fr) 310px; gap: 24px; align-items: start; }
   .action-followup-main { min-width: 0; >.sensitive-toggle { margin-top: 22px; } }
-  .action-calendar-rail { position: sticky; top: 18px; .calendar-panel { padding: 22px; } .calendar-activities { max-height: 430px; overflow-y: auto; >h3 { font-size: .95rem; color: #795436; margin: 0 0 14px; } } }
+  .action-calendar-rail { position: sticky; top: var(--workspace-sticky-top); .calendar-panel { padding: 22px; } .calendar-activities { max-height: 430px; overflow-y: auto; >h3 { font-size: .95rem; color: #795436; margin: 0 0 14px; } } }
   .action-tools { grid-template-columns: minmax(160px,1fr) minmax(140px,180px) auto; gap: 10px; }
 }
 @media (max-width:1450px) { .workspace-app #tasks .action-followup-main .action-meeting-grid { grid-template-columns: 1fr; } }
@@ -449,7 +452,7 @@ $paper: #fcf8f1;
 .workspace-app {
   .library-layout { display: grid; grid-template-columns: minmax(0,1fr) 310px; gap: 24px; align-items: start; }
   .library-main { min-width: 0; .library-periods { margin-top: 0; } }
-  .library-calendar-rail { position: sticky; top: 18px; .calendar-panel { padding: 22px; } .calendar-activities { max-height: 430px; overflow-y: auto; >h3 { font-size: .95rem; color: #795436; margin: 0 0 14px; } } }
+  .library-calendar-rail { position: sticky; top: var(--workspace-sticky-top); .calendar-panel { padding: 22px; } .calendar-activities { max-height: 430px; overflow-y: auto; >h3 { font-size: .95rem; color: #795436; margin: 0 0 14px; } } }
   .library-selected-day { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 12px 15px; margin-top: 16px; border: 1px solid #dfc5a5; border-radius: 7px; background: #f7e8d4; color: #795436; font-size: .82rem; .rail-link { padding: 0; font-size: .78rem; } }
 }
 @media (max-width:1100px) { .workspace-app { .library-layout { grid-template-columns: minmax(0,1fr) 275px; gap: 18px; } .library-calendar-rail .calendar-panel { padding: 17px; } .library-main .library-filters { grid-template-columns: 1fr 1fr; .library-search { grid-column: 1/-1; } } .library-main .library-meeting { gap: 13px; flex-wrap: wrap; >button { margin-left: 97px; } } } }

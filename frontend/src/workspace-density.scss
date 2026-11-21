@@ -1,8 +1,11 @@
 // Compact desktop sizing matching the approved 80% screenshot at normal browser zoom.
 // Use type, spacing and width tokens instead of scaling the page or overriding browser zoom.
+// Smoothly move from the normal mobile type scale to compact desktop sizing.
+// With a 16px browser default: 16px at 680px, approximately 13px at 901px.
+:root:has(.workspace-app) { font-size: clamp(81.25%, calc(157.7% - 1.357vw), 100%); }
 @media (min-width: 901px) {
-  :root:has(.workspace-app) { font-size: 81.25%; }
   .workspace-app {
+    --workspace-header-height: 78px;
     .sidebar { width: 172px; padding: 26px 13px 19px; }
     .shell { margin-left: 172px; }
     .brand { gap: 10px; }

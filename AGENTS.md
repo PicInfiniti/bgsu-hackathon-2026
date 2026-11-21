@@ -13,6 +13,8 @@ The user selected **Project A: Coach Meeting Tracker** as the final hackathon pr
 
 ## Latest user direction and Level 2 status — November 21, 2026
 
+- Design consistency fixes: shared primary action colors now give Home Save the same contrast as other primary buttons; sticky calendar/review/schedule panels use an observed header-height offset; root type scales smoothly from normal mobile to compact desktop rather than jumping at 900px. Assistant helper text has an 11px minimum/darker color and body/question copy a 12px minimum. User-facing Home/Film/schedule/pack labels consistently say Actions (Review actions/Create action); protocol fields/endpoints are unchanged. All 25 frontend test files, build, header measurement unit tests and drawer/Home/Film/calendar DOM checks pass. Native visual checks remain unavailable. No backend, storage or live AI changes.
+
 - User subsequently requested hiding Overview from the sidebar. Its navigation button is hidden; the original dashboard remains available internally for existing links. Home remains the default visible page.
 
 - UI follow-up: Home mini-calendar now uses the Meetings legend/markers (Individual, Group, Team, non-sensitive open action due); all calendar legends stay on one line and Home’s Open schedule link is removed. Fixed drawer composer collapse by removing imported global `.ask-panel` CSS from Home styles and explicitly stacking the question, controls and voice help. 24 frontend test files, build, compiled-CSS/Home DOM and existing chat-voice checks pass; native layout remains unverified.

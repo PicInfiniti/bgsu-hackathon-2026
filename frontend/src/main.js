@@ -14,6 +14,7 @@ import './note-media.scss';
 import { mountNoteMedia } from './note-media.js';
 import './ask-panel.scss';
 import './workspace-density.scss';
+import { observeWorkspaceHeader } from './workspace-layout.js';
 import { createAskPanel } from './ask-panel.js';
 import { startTour, shouldStart, tourActive, readTourSettings, rememberTour } from './tour.js';
 import { mountNoteDictation } from './note-dictation.js';
@@ -116,7 +117,7 @@ document.querySelector('#app').innerHTML = `
           <div class="home-col home-right">
             <section class="panel mini-cal-card"><div id="mini-calendar"></div></section>
             <section class="panel next-up-card"><div class="section-heading"><h2>Next up</h2>${icon('calendar')}</div><div id="next-up"></div></section>
-            <section class="panel watch-card"><div class="section-heading"><h2>Needs attention</h2>${icon('check')}</div><div id="watch-list"></div><button class="rail-link" type="button" data-view="tasks">All homework →</button></section>
+            <section class="panel watch-card"><div class="section-heading"><h2>Needs attention</h2>${icon('check')}</div><div id="watch-list"></div><button class="rail-link" type="button" data-view="tasks">All actions →</button></section>
           </div>
         </div>
       </section>
@@ -215,6 +216,8 @@ document.querySelector('#app').innerHTML = `
       <footer><span>FALCON FOLLOW-UP <b> / </b> picInfiniti</span><span>Every conversation deserves a next step. · Synthetic data only</span></footer>
     </main>
   </div>`;
+
+observeWorkspaceHeader($('.topbar'));
 
 let noteMedia;
 const noteDictation = mountNoteDictation({

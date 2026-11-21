@@ -5,7 +5,7 @@ import { meetingCalendarSource } from './meeting-library.js';
 import { iso, parse, addDays, addMonths, weekStart, weekDays, monthGrid, monthTitle, MONTHS, shortDate, clockLabel, dayLabel, HOURS, slotFor, searchItems, pad } from './home-calendar-math.js';
 
 const esc = (s = '') => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-export const TYPE_LABELS = { coach_todo: 'Coach to-do', game: 'Official game', practice: 'Practice', scrimmage: 'Scrimmage', film: 'Film review', meeting: 'Meeting', lift: 'Lift', walkthrough: 'Walk-through', note: 'Note', todo: 'Assignment due', other: 'Other' };
+export const TYPE_LABELS = { coach_todo: 'Coach to-do', game: 'Official game', practice: 'Practice', scrimmage: 'Scrimmage', film: 'Film review', meeting: 'Meeting', lift: 'Lift', walkthrough: 'Walk-through', note: 'Note', todo: 'Action due', other: 'Other' };
 export const EVENT_TYPES = ['game', 'practice', 'scrimmage', 'film', 'meeting', 'lift', 'walkthrough', 'note', 'other'];
 const TITLE_IDEAS = ['Practice (pads)', 'Practice (shells)', 'Practice (helmets)', 'Walk-through', 'Lift', 'Film', 'Install', 'Scout team', 'Travel: bus leaves', 'Bye week', 'Off day', 'Position room', '1-on-1'];
 const GROUPS = ['QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'DB', 'ST'];
@@ -48,7 +48,7 @@ export function openPicker(anchor, current, onPick) {
 }
 
 // Type chips: the same filter applies to the calendar and to search, in every view.
-export const KIND_CHIPS = [['all', 'All'], ['games', 'Games'], ['practices', 'Practices'], ['film', 'Film'], ['meetings', 'Meetings'], ['assignments', 'Assignments']];
+export const KIND_CHIPS = [['all', 'All'], ['games', 'Games'], ['practices', 'Practices'], ['film', 'Film'], ['meetings', 'Meetings'], ['assignments', 'Actions']];
 export const KIND_OF = { game: 'games', scrimmage: 'games', practice: 'practices', walkthrough: 'practices', lift: 'practices', film: 'film', meeting: 'meetings', todo: 'assignments', coach_todo: 'assignments' };
 export const matchesKind = (item, kind) => kind === 'all' || KIND_OF[item.type] === kind;
 
@@ -89,8 +89,8 @@ export function createSchedule(root, ctx) {
     <div class="view-switch" role="tablist" aria-label="View">${['day', 'week', 'month', 'year'].map(v => `<button type="button" role="tab" data-view-mode="${v}">${v[0].toUpperCase() + v.slice(1)}</button>`).join('')}</div>
   </div>
   <div class="schedule-tools">
-    <label class="schedule-search"><span class="sr-only">Search the schedule</span><input type="search" data-search placeholder="Search games, practices, players or assignments" autocomplete="off"><div class="search-results" data-results hidden></div></label>
-    <label class="toggle" title="Player assignments (homework) with a due date"><input type="checkbox" data-show-homework checked> Show assignment deadlines</label>
+    <label class="schedule-search"><span class="sr-only">Search the schedule</span><input type="search" data-search placeholder="Search games, practices, players or actions" autocomplete="off"><div class="search-results" data-results hidden></div></label>
+    <label class="toggle" title="Player actions with a due date"><input type="checkbox" data-show-homework checked> Show action deadlines</label>
     <label class="game-day">Game day <select data-game-day><option value="saturday">Saturday</option><option value="friday">Friday</option></select></label>
     <div class="export-wrap"><button type="button" class="secondary compact" data-export-menu aria-haspopup="dialog" aria-expanded="false">Export / Print ▾</button><div class="export-pop" data-export-pop hidden></div></div>
     <button type="button" class="primary" data-add-event>+ Add event</button>
@@ -99,7 +99,7 @@ export function createSchedule(root, ctx) {
   <div class="cal-toggle" role="tablist" aria-label="Calendar or checklist"><button type="button" role="tab" data-pane="calendar" aria-selected="true">Calendar</button><button type="button" role="tab" data-pane="todo" aria-selected="false">To do</button></div>
   <div class="schedule-legend">${[...EVENT_TYPES.filter(t => t !== 'other' && t !== 'note'), 'todo', 'coach_todo'].map(t => `<span class="legend-${t}">${TYPE_LABELS[t]}</span>`).join('')}</div>
   <div class="schedule-main" data-pane-current="calendar"><div class="schedule-body" data-body></div>
-    <aside class="todo-panel" data-todo aria-label="To do"><details open><summary><strong>To do</strong> <small>homework and your to-dos</small></summary><div data-todo-body><p class="muted">Loading…</p></div></details></aside></div>
+    <aside class="todo-panel" data-todo aria-label="To do"><details open><summary><strong>To do</strong> <small>player actions and coach to-dos</small></summary><div data-todo-body><p class="muted">Loading…</p></div></details></aside></div>
   <div class="print-schedule" data-print aria-hidden="true"></div>
   <aside class="event-panel" data-panel hidden aria-labelledby="event-panel-title"></aside>`;
   const $ = (s) => root.querySelector(s);
@@ -289,10 +289,10 @@ export function createSchedule(root, ctx) {
     const g = data.groups;
     const section = (title, list, cls = '') => list.length ? `<h5 class="${cls}">${title} <small>${list.length}</small></h5><ul>${list.map(item).join('')}</ul>` : '';
     const game = data.game?.event ? `before ${data.game.home_away === 'away' ? 'at' : 'vs.'} ${data.game.opponent || 'the game'} (${shortDate(data.game.event.date)})` : null;
-    el.innerHTML = (section('Late', g.overdue, 'late') + section('Today', g.today) + section(game ? `Due ${game}` : 'Before next game', g.before_game) || `<p class="muted">Nothing due ${game ? game : 'right now'}. Homework you approve with a due date shows here.</p>`)
+    el.innerHTML = (section('Late', g.overdue, 'late') + section('Today', g.today) + section(game ? `Due ${game}` : 'Before next game', g.before_game) || `<p class="muted">Nothing due ${game ? game : 'right now'}. Approved actions with a due date show here.</p>`)
       + (g.done.length ? `<details class="todo-done"><summary>Done this week · ${g.done.length}</summary><ul>${g.done.map(item).join('')}</ul></details>` : '')
       + `<form class="todo-add" data-todo-add><input name="title" maxlength="160" placeholder="Add a to-do (for example: confirm bus time)" required><input name="date" type="date" value="${today()}" required aria-label="Due date"><button type="submit" class="secondary compact">Add</button></form>
-        <p class="muted todo-help">Ticking homework here marks it done everywhere (Homework board, player page, calendar). Your to-dos stay in the app and are not exported.</p>`;
+        <p class="muted todo-help">Completing an action here updates it everywhere (Actions, player history and calendar). Your to-dos stay in the app and are not exported.</p>`;
   }
   root.addEventListener('change', async e => {
     const box = e.target.closest('[data-check]');
@@ -323,7 +323,7 @@ export function createSchedule(root, ctx) {
         <label><input type="radio" name="range" value="month"> This month</label>
         <label><input type="radio" name="range" value="season"> Season <input name="season_start" value="${esc(s.start)}" size="5" aria-label="Season starts (MM-DD)"> to <input name="season_end" value="${esc(s.end)}" size="5" aria-label="Season ends (MM-DD)"></label>
         <label><input type="radio" name="range" value="custom"> From <input type="date" name="from"> to <input type="date" name="to"></label></fieldset>
-      <label class="check-line"><input type="checkbox" name="homework" checked> Include assignment deadlines (all-day)</label>
+      <label class="check-line"><input type="checkbox" name="homework" checked> Include action deadlines (all-day)</label>
       <label class="check-line"><input type="checkbox" name="names" ${getSettings().privacy?.export_names ? 'checked' : ''}> Include player names</label>
       <p class="muted">The .ics file opens in Google Calendar, Apple Calendar and Outlook. Repeating practices are written out one by one. Importing again updates the same events instead of adding copies (Google: import into the same calendar). Notes, private to-dos and health items are never exported. Times are saved in UTC so they show correctly on any phone.</p>
       <div class="pp-actions"><button type="button" class="secondary compact" data-print-schedule>Print schedule</button><button type="submit" class="primary compact">Download .ics</button></div></form>`;

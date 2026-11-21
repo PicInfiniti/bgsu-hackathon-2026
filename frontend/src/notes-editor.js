@@ -13,16 +13,16 @@ const esc = (s = '') => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<':
 export function recapMarkup(recap) {
   if (!recap) return '';
   const list = (items) => items.length ? `<ul>${items.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p class="muted">Nothing here.</p>';
-  const todos = recap.to_dos.length ? `<ul class="recap-todos">${recap.to_dos.map((t, n) => `<li><strong>${esc(t.player)}</strong>${t.unknown_name ? ' <span class="badge overdue">unknown name</span>' : ''} · ${esc(t.task)}${t.due_date ? ` <span class="due-chip">Due ${esc(t.due_date)}</span>` : t.due_phrase ? ` <span class="due-chip muted">“${esc(t.due_phrase)}” · set a date</span>` : ''}${t.source_text ? `<blockquote>${esc(t.source_text)}</blockquote>` : ''}${t.due_date ? `<button type="button" class="text-button" data-recap-calendar="${n}">Add to schedule</button>` : ''}</li>`).join('')}</ul>` : '<p class="muted">No homework in this note.</p>';
+  const todos = recap.to_dos.length ? `<ul class="recap-todos">${recap.to_dos.map((t, n) => `<li><strong>${esc(t.player)}</strong>${t.unknown_name ? ' <span class="badge overdue">unknown name</span>' : ''} · ${esc(t.task)}${t.due_date ? ` <span class="due-chip">Due ${esc(t.due_date)}</span>` : t.due_phrase ? ` <span class="due-chip muted">“${esc(t.due_phrase)}” · set a date</span>` : ''}${t.source_text ? `<blockquote>${esc(t.source_text)}</blockquote>` : ''}${t.due_date ? `<button type="button" class="text-button" data-recap-calendar="${n}">Add to schedule</button>` : ''}</li>`).join('')}</ul>` : '<p class="muted">No actions in this note.</p>';
   return `<div class="recap-card" aria-live="polite"><div class="recap-head"><h3>✦ Recap</h3><span class="recap-origin">${recap.origin === 'demo' ? 'Demo recap · made by code, not AI' : 'By Aivana · check it before you use it'}</span></div>
     <section><h4>Summary</h4><p>${esc(recap.summary || '—')}</p></section>
     <section><h4>Key points</h4>${list(recap.key_points)}</section>
-    <section><h4>Player homework</h4>${todos}</section>
+    <section><h4>Player actions</h4>${todos}</section>
     <section><h4>Decisions</h4>${list(recap.decisions)}</section>
     <section><h4>Follow up</h4>${list(recap.questions_to_follow_up)}</section>
     ${recap.players_mentioned?.length ? `<p class="recap-players">Players mentioned: ${recap.players_mentioned.map(p => `${esc(p.name)}${p.unknown_name ? ' (unknown name)' : ''}`).join(', ')}</p>` : ''}
     ${recap.events?.length ? `<section class="recap-events"><h4>Schedule items found in this note</h4><p class="muted">Worked out by code from the note's date. Nothing is added until you press Add to Schedule and save.</p><ul>${recap.events.map((ev, n) => ev.draft ? `<li><strong>${esc(ev.draft.title)}</strong> · ${esc(new Date(ev.draft.start_at).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }))}${ev.draft.opponent ? ` · ${ev.draft.home_away === 'away' ? 'Away' : 'Home'}` : ''}<blockquote>${esc(ev.source_text)}</blockquote><button type="button" class="secondary compact" data-recap-event="${n}">Add to Schedule</button></li>` : `<li class="muted">${esc(ev.message)}<blockquote>${esc(ev.source_text)}</blockquote></li>`).join('')}</ul></section>` : ''}
-    <div class="recap-actions"><button type="button" class="secondary compact" data-recap-copy>Copy</button>${recap.to_dos.some(t => t.player_id) ? '<button type="button" class="secondary compact" data-recap-review>Send homework to review</button>' : '<span class="recap-none">No assignments found in this note.</span><button type="button" class="secondary compact" data-recap-manual>Add an assignment by hand</button>'}${recap.notebook && recap.notebook !== 'team_strategy' ? '<button type="button" class="text-button" data-recap-gameplan>Move this note to Game plan</button>' : recap.notebook === 'team_strategy' ? '<span class="recap-none">✓ Saved in Game plan</span>' : ''}</div></div>`;
+    <div class="recap-actions"><button type="button" class="secondary compact" data-recap-copy>Copy</button>${recap.to_dos.some(t => t.player_id) ? '<button type="button" class="secondary compact" data-recap-review>Send actions to review</button>' : '<span class="recap-none">No actions found in this note.</span><button type="button" class="secondary compact" data-recap-manual>Add an action by hand</button>'}${recap.notebook && recap.notebook !== 'team_strategy' ? '<button type="button" class="text-button" data-recap-gameplan>Move this note to Game plan</button>' : recap.notebook === 'team_strategy' ? '<span class="recap-none">✓ Saved in Game plan</span>' : ''}</div></div>`;
 }
 
 /** Highlights uncertain words (and [?]) so the coach can fix them with one tap. */
@@ -80,7 +80,7 @@ export function createNoteEditor(root, ctx) {
       <span class="toolbar-gap"></span><button type="button" data-undo title="Undo (Ctrl+Z)">↶ Undo</button><button type="button" data-redo title="Redo (Ctrl+Y)">↷ Redo</button>
     </div>
     <div class="editor-page">
-      <div data-pane="type"><label class="sr-only" for="ne-body">Note</label><textarea id="ne-body" class="lined-page" rows="12" maxlength="20000" placeholder="What happened? Who needs homework? Write it like you would on paper…"></textarea></div>
+      <div data-pane="type"><label class="sr-only" for="ne-body">Note</label><textarea id="ne-body" class="lined-page" rows="12" maxlength="20000" placeholder="What happened? Who has next steps? Write it like you would on paper…"></textarea></div>
       <div data-pane="pen" hidden><canvas class="pen-canvas" aria-label="Handwriting area. Draw with a finger, mouse or pen."></canvas><div class="pane-actions"><span class="muted">Write with a finger, mouse, Apple Pencil or Surface pen.</span><button type="button" class="secondary compact" data-convert>Convert to text</button></div></div>
       <div data-pane="photo" hidden><label class="photo-drop"><input id="ne-photos" type="file" accept="image/png,image/jpeg" capture="environment" multiple><span>📷 Add photo</span><small>Paper notes, Playboard or a film screenshot · up to ${MAX_PHOTOS} · PNG or JPEG</small></label><div class="photo-strip" id="ne-photo-strip"></div><div class="pane-actions"><span class="muted" id="ne-photo-count"></span><button type="button" class="secondary compact" data-read-photos disabled>Read photos</button></div></div>
       <div data-pane="voice" hidden><div class="voice-box"><button type="button" class="mic-button" data-mic aria-pressed="false"><span class="mic-dot"></span><span data-mic-label>Start talking</span></button><span class="recording" hidden><i></i> Recording <b data-voice-timer>0:00</b></span><div class="who-talking" data-who><span>Who's talking? <small>(optional: tap a name each time the speaker changes; labels are set by you, not detected)</small></span><div class="who-buttons" data-who-buttons></div><select data-who-add aria-label="Add a player"><option value="">+ Player…</option>${(ctx.players || []).map(p => `<option value="${p.id}">#${p.number} ${esc(p.name)}</option>`).join('')}</select></div><p class="voice-live" data-voice-live aria-live="polite">Press the mic and talk. Your words show up here. Your browser’s speech service may process audio online. This app stores no audio.</p></div></div>
@@ -92,7 +92,7 @@ export function createNoteEditor(root, ctx) {
       <input type="range" min="0" max="0" value="0" data-replay-slider aria-label="Replay position"><button type="button" class="speed" data-replay-speed>1×</button><span class="replay-label" data-replay-label></span>
     </div>
     <div class="replay-preview" data-replay-preview hidden></div>
-    <div class="editor-footer"><div><button type="button" class="secondary" data-recap>✦ Recap</button><p class="privacy-line">Your private note is sent to Aivana only for this recap or when you convert writing to text.</p></div><div class="footer-right"><button type="button" class="text-button" data-whiteboard title="Draw players and routes on a football field">✎ Playboard</button><button type="button" class="text-button" data-find-homework hidden>Find homework</button><button type="button" class="text-button danger" data-delete hidden>Delete</button><button type="button" class="primary" data-save>Save note</button></div></div>
+    <div class="editor-footer"><div><button type="button" class="secondary" data-recap>✦ Recap</button><p class="privacy-line">Your private note is sent to Aivana only for this recap or when you convert writing to text.</p></div><div class="footer-right"><button type="button" class="text-button" data-whiteboard title="Draw players and routes on a football field">✎ Playboard</button><button type="button" class="text-button" data-find-homework hidden>Review actions</button><button type="button" class="text-button danger" data-delete hidden>Delete</button><button type="button" class="primary" data-save>Save note</button></div></div>
     <div data-recap-card></div>
   </section>`;
   const $ = (s) => root.querySelector(s);
@@ -284,7 +284,7 @@ export function createNoteEditor(root, ctx) {
     if (e.target.closest('[data-lines-use]')) {
       method = 'voice'; noteSegments = [...noteSegments, ...lines];
       insertText(labelledText(lines), 'convert'); lines = []; $('[data-check]').hidden = true; setView('type');
-      notify('Transcript added with speaker names. Find homework or Recap will treat lines spoken by a player as his own words.');
+      notify('Transcript added with speaker names. Review actions or Recap will treat lines spoken by a player as his own words.');
     }
   });
   $('[data-check]').addEventListener('change', e => {
@@ -405,7 +405,7 @@ export function createNoteEditor(root, ctx) {
   $('[data-recap-card]').addEventListener('click', async e => {
     const recap = note?.summary; if (!recap) return;
     if (e.target.closest('[data-recap-copy]')) {
-      const text = [`Recap: ${note.title}`, recap.summary, '', 'Key points:', ...recap.key_points.map(x => `- ${x}`), '', 'Player homework:', ...recap.to_dos.map(t => `- ${t.player}: ${t.task}${t.due_date ? ` (due ${t.due_date})` : ''}`), '', 'Decisions:', ...recap.decisions.map(x => `- ${x}`), '', 'Follow up:', ...recap.questions_to_follow_up.map(x => `- ${x}`)].join('\n');
+      const text = [`Recap: ${note.title}`, recap.summary, '', 'Key points:', ...recap.key_points.map(x => `- ${x}`), '', 'Player actions:', ...recap.to_dos.map(t => `- ${t.player}: ${t.task}${t.due_date ? ` (due ${t.due_date})` : ''}`), '', 'Decisions:', ...recap.decisions.map(x => `- ${x}`), '', 'Follow up:', ...recap.questions_to_follow_up.map(x => `- ${x}`)].join('\n');
       try { await navigator.clipboard.writeText(text); notify('Recap copied.'); } catch { notify('Copy was blocked by the browser.', true); }
     }
     if (e.target.closest('[data-recap-review]')) sendToReview?.(note, recap);
@@ -413,7 +413,7 @@ export function createNoteEditor(root, ctx) {
     const ev = e.target.closest('[data-recap-event]'); if (ev) { const d = recap.events[Number(ev.dataset.recapEvent)].draft; addToSchedule?.({ ...d, note: `From note: ${note.title}` }); }
     if (e.target.closest('[data-recap-gameplan]')) { $('#ne-notebook').value = 'team_strategy'; const saved = await save({ quiet: true }); if (saved) { note.summary = { ...recap, notebook: 'team_strategy' }; $('[data-recap-card]').innerHTML = recapMarkup(note.summary); notify('Note moved to Game plan.'); } }
     const cal = e.target.closest('[data-recap-calendar]');
-    if (cal) { const t = recap.to_dos[Number(cal.dataset.recapCalendar)]; addToSchedule?.({ type: 'other', title: `Homework due: ${t.player} – ${t.task}`.slice(0, 160), start_at: `${t.due_date}T08:00`, duration_min: 30, audience: t.player_id ? `player:${t.player_id}` : 'team' }); }
+    if (cal) { const t = recap.to_dos[Number(cal.dataset.recapCalendar)]; addToSchedule?.({ type: 'other', title: `Action due: ${t.player} – ${t.task}`.slice(0, 160), start_at: `${t.due_date}T08:00`, duration_min: 30, audience: t.player_id ? `player:${t.player_id}` : 'team' }); }
   });
 
   // ---------- Replay (versions or pen strokes) ----------
