@@ -38,23 +38,15 @@ python3 -m venv .venv
 .venv/bin/python -m pip install -r backend/requirements-dev.txt
 ```
 
-In Bash, set your key without displaying it or putting it in shell history:
+The backend automatically loads **`backend/.env`**, using an explicit server-side path. This checkout’s private file has been configured from the existing `aivana.api` key. On a fresh checkout, copy `backend/.env.example` to `backend/.env` and replace the placeholder privately. Both `.env` and the old key file are ignored by Git. Never put the key in a `VITE_` variable or browser code.
+
+Start the backend from this repository root:
 
 ```bash
-read -rsp 'Aivana Live API key: ' AIVANA_API_KEY
-export AIVANA_API_KEY
-.venv/bin/python -m uvicorn backend.main:app --host 127.0.0.1 --port 8001
+.venv/bin/python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8001
 ```
 
-Keep the frontend running in another terminal; choose **Live · local backend**. Vite forwards `/api` to port 8001. A `.env` file is not automatically loaded; export the variable in the backend terminal. Never use a `VITE_` variable for the key. Never commit secrets.
-
-If you already stored the raw key in the ignored `aivana.api` file, stop the old backend with Ctrl+C in its terminal, then launch from the project root:
-
-```bash
-IFS= read -r AIVANA_API_KEY < aivana.api
-export AIVANA_API_KEY
-.venv/bin/python -m uvicorn backend.main:app --host 127.0.0.1 --port 8001
-```
+Exported environment variables take precedence over `.env`; remove a stale export with `unset AIVANA_API_KEY` if you want to use the file. Restart the backend after changing `.env` (the Python reload watcher may not notice that file). Keep the frontend running in another terminal; choose **Live · local backend**. Vite forwards `/api` to port 8001.
 
 `GET /api/health` reports whether the running server has a key; it does not validate the key with Aivana. Check the current health response before using live extraction; an older server may need restarting to receive the environment variable.
 

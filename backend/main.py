@@ -7,7 +7,9 @@ from fastapi.responses import StreamingResponse
 
 from . import aivana
 from .core import DEMO, PLAYERS, Store, demo_extract, validate_item, validate_meeting
+from .config import load_environment
 
+load_environment()
 app = FastAPI(title='Falcon Follow-up prototype')
 db_path = Path(os.environ.get('COACH_DB_PATH', Path(__file__).with_name('coach.sqlite3')))
 store = Store(db_path)

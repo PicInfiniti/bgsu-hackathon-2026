@@ -41,7 +41,7 @@ The user selected **Project A: Coach Meeting Tracker** as the final hackathon pr
 
 - Read README.md for exact frontend/backend commands. Use `npm ci` inside `frontend/`; offline installation can use the existing local npm cache. Never share node_modules with B through a symlink.
 - Run `.venv/bin/python -m unittest discover -s tests -v` from this root and `npm run build` from frontend. `scripts/verify_backend.py --port 18001` runs HTTP checks without AI calls; `--live --key-file aivana.api` explicitly consumes tokens for two real calls. Stop a conflicting server or use another port.
-- Set `AIVANA_API_KEY` only in the backend environment. The user privately supplied an ignored `aivana.api` file; never display or commit its contents. `.env` is ignored but not automatically loaded. A server on 8001 previously reported no key; this is historical, not a current health check. Check `/api/health` and restart with the environment configured if necessary for frontend live use.
+- Set `AIVANA_API_KEY` only in the backend environment. The user privately supplied an ignored `aivana.api` file; its key is now also configured in ignored `backend/.env`. Never display or commit either file. The backend automatically loads ignored `backend/.env` with python-dotenv before creating the store; exported variables take precedence. Restart after editing the file. `COACH_ENV_FILE` can select a separate file for isolated checks. A server on 8001 previously reported no key; this is historical, not a current health check. Check `/api/health` and restart with the environment configured if necessary for frontend live use.
 - Follow the ordered next steps above. Do not ask for another A/B choice.
 
 ## Competition requirements

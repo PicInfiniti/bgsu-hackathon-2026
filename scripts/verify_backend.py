@@ -52,6 +52,8 @@ def main():
 
     with tempfile.TemporaryDirectory(prefix='coach-backend-check-') as directory:
         env['COACH_DB_PATH'] = str(Path(directory) / 'verify.sqlite3')
+        # Never load the developer's private .env, including during no-AI checks.
+        env['COACH_ENV_FILE'] = str(Path(directory) / 'verify.env')
         with (Path(directory) / 'server.log').open('w+') as log:
             process = subprocess.Popen([sys.executable, '-m', 'uvicorn', 'backend.main:app', '--host', '127.0.0.1', '--port', str(args.port)], cwd=ROOT, env=env, stdout=log, stderr=log)
             try:
