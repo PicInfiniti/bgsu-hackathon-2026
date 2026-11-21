@@ -11,6 +11,13 @@ The user selected **Project A: Coach Meeting Tracker** as the final hackathon pr
 - Frontend port 5174; backend port 8001. Independent dependencies, fixtures, browser storage, and database.
 - User reaffirmed Project A on November 20, 2026. Treat remaining A/B comparison wording as stale; do not restart project selection.
 
+## Latest user direction and Level 2 status — November 21, 2026
+
+- The user explicitly reported completing browser checks for the existing workspace and accepted our own synthetic pack as the dataset for this project. Do not keep organizer-pack availability or those prior browser checks as development blockers. Preserve provenance: the pack is team-authored, not organizer-provided. Historical QA entries below describe earlier states; the user report is separate evidence from agent-run checks.
+- Level 2 now implements all three official feature options: filtered source-cited AI questions (Individual/Group/Team), streamed one-on-one preparation, and a code-computed list of players not met recently.
+- Overview → Players to check in with defaults to Individual / 14 days. Windows: 7/14/30/60/90 days. Types: Individual, Group, Team, Any. Approved meeting dates through today count, including note-only meetings; future dates are excluded. Today and the preceding N−1 dates form the recent window. Never-recorded players sort first, then oldest last-meeting date, with timeline links. No sensitive text or AI call is used. Calculations and rendering live in `frontend/src/check-in-recency.js`.
+- All 15 frontend test files, 70 backend tests, production build, syntax and whitespace checks passed for this completion. The user's earlier browser confirmation predates the new recent-check-in controls; do not claim those controls have already received user/agent browser verification. Level 3 remains stretch work. No publication or hosting is authorized.
+
 ## Reviewed status and next steps — November 20, 2026
 
 - Latest extraction/schema and UI checks are in `docs/qa-2026-11-21.md`; older historical evidence is in `docs/qa-2026-11-20.md`; consult that report before repeating historical claims.

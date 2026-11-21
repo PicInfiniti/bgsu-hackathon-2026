@@ -5,6 +5,7 @@ import { workspaceMode } from './access.js';
 import { loadSharedNotebook } from './shared-notebook.js';
 import { formatBrief } from './brief-format.js';
 import { summarizePlayers, filterPlayers } from './player-directory.js';
+import { checkInRecency, checkInMarkup } from './check-in-recency.js';
 import categories from '../../data/categories.json';
 import { appliesTo, reviewIssues, reviewPriority, highlightSource } from './review-state.js';
 import { meetingTypeForAttendees } from './meeting-input.js';
@@ -84,7 +85,7 @@ document.querySelector('#app').innerHTML = `
             <section class="upcoming-panel"><div class="section-heading"><h2>Upcoming</h2>${icon('calendar')}</div><p class="upcoming-caption">Open actions due today or later</p><div id="upcoming-list"></div><button class="rail-link" data-stat="open">View all open actions</button></section>
           <section class="overview-conversations"><div id="recent-heading" class="section-heading"><div><p class="eyebrow">THE RUNNING RECORD</p><h2>Recent conversations</h2><span id="overview-recent-count" class="recent-count"></span></div><button class="rail-link" data-view="meetings">Write a note</button></div><div id="recent" class="recent-list"></div></section>
           </div>
-          <section class="panel overview-checkins"><div class="section-heading"><div><p class="eyebrow">KEEP THE CONNECTION</p><h2>Individual check-ins</h2></div>${icon('people')}</div><div id="overview-checkins"></div><button class="rail-link" data-view="players">Browse the football roster</button></section>
+          <section class="panel overview-checkins"><div class="section-heading"><div><p class="eyebrow">KEEP THE CONNECTION</p><h2>Players to check in with</h2></div>${icon('people')}</div><div class="checkin-controls"><label>Look back<select id="checkin-window"><option value="7">7 days</option><option value="14" selected>14 days</option><option value="30">30 days</option><option value="60">60 days</option><option value="90">90 days</option></select></label><label>Count meetings<select id="checkin-type"><option value="individual">Individual</option><option value="">Any meeting type</option><option value="group">Group</option><option value="team">Team</option></select></label></div><div id="overview-checkins"></div><button class="rail-link" data-view="players">Browse the football roster</button></section>
           <section class="panel overview-types"><div class="section-heading"><h2>Your conversations</h2><span class="muted">All saved meetings</span></div><div id="overview-meeting-types"></div></section>
         </div><aside class="overview-aside">
 
@@ -418,12 +419,17 @@ let calendarMonth = today().slice(0, 7), selectedCalendarDate = null;
 let actionCalendarMonth = today().slice(0,7), actionCalendarDate = today();
 function renderOverview() {
   $('#overview-recent-count').textContent = meetings.length ? `Latest ${Math.min(meetings.length,5)} of ${meetings.length} saved` : 'Your approved notes appear here';
-  const individual = new Set(meetings.filter(m => m.meeting_type === 'individual').flatMap(m => m.attendees));
-  const reached = demo.players.filter(p => individual.has(p.id)).length;
-  const remaining = demo.players.length - reached;
-  $('#overview-checkins').innerHTML = `<div class="checkin-summary"><strong>${reached}<span> / ${demo.players.length}</span></strong><p>players have a saved one-on-one conversation.</p></div><progress max="${demo.players.length}" value="${reached}" aria-label="Players with a saved individual meeting">${reached} of ${demo.players.length}</progress><p class="checkin-remaining">${remaining} player${remaining === 1 ? '' : 's'} without a saved individual check-in. Group and team meetings are counted separately.</p>`;
+  renderCheckIns();
   $('#overview-meeting-types').innerHTML = [['individual','One-on-one'],['group','Group'],['team','Team']].map(([type,label]) => `<button data-library-type="${type}"><span>${icon(type === 'individual' ? 'user' : 'people')}${label}</span><strong>${meetings.filter(m => m.meeting_type === type).length}</strong></button>`).join('');
 }
+function renderCheckIns() {
+  if (!connected) { $('#overview-checkins').innerHTML = '<p class="checkin-date-note">Connect to the shared notebook to check recent meetings.</p>'; return; }
+  $('#overview-checkins').innerHTML = checkInMarkup(checkInRecency(demo.players,meetings,today(),{
+    days:Number($('#checkin-window').value), type:$('#checkin-type').value,
+  }));
+}
+$('#checkin-window').addEventListener('change', renderCheckIns);
+$('#checkin-type').addEventListener('change', renderCheckIns);
 function renderPlayerCalendar() {
   const source = calendarMeetings(playerCalendarMeetings(meetings,selectedPlayer),$('#player-calendar-type').value);
   const [year,month] = playerCalendarMonth.split('-').map(Number);

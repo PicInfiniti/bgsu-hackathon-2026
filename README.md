@@ -6,19 +6,21 @@
 
 ---
 
-**Current practice pack:** `data/synthetic/` is now football version 2, revision 4: 25 fictional players with football positions/groups and nicknames, 19 scenarios, and 86 reference records. Regenerate app fixtures with `.venv/bin/python scripts/build_demo_data.py`, restart the backend, and refresh the frontend. Versioned football seeds are added once; existing saved notes and completion states remain unchanged as history. Login/signup and the workspace retain the BGSU notebook style with football positions, film-review copy, and play-diagram artwork. This is our original practice data, not the missing organizer pack. Football schema-v2 live spot checks are recorded in [the November 21 QA report](docs/qa-2026-11-21.md); these are not a general accuracy benchmark.
+**Current status:** Level 1 core and all three Level 2 feature options are implemented. The user reports completing browser checks for the existing workspace and has accepted our team-authored synthetic pack for this project. The newly added recent-check-in list has automated verification; those prior browser checks do not cover this new control. Level 3 features remain stretch work.
+
+**Current practice pack:** `data/synthetic/` is now football version 2, revision 4: 25 fictional players with football positions/groups and nicknames, 19 scenarios, and 86 reference records. Regenerate app fixtures with `.venv/bin/python scripts/build_demo_data.py`, restart the backend, and refresh the frontend. Versioned football seeds are added once; existing saved notes and completion states remain unchanged as history. Login/signup and the workspace retain the BGSU notebook style with football positions, film-review copy, and play-diagram artwork. This is our team-authored synthetic pack, accepted by the user as the project dataset; it is not organizer-provided data. Football schema-v2 live spot checks are recorded in [the November 21 QA report](docs/qa-2026-11-21.md); these are not a general accuracy benchmark.
 
 **Players view (implemented):** a compact football roster table with search, unit/group/position filters, actual meeting/open-action counts, and a player snapshot. Selecting a row updates the summary; **View timeline** opens full records, source notes, completion controls, and preparation. **Back to players** restores the directory and filters. Counts include saved historical meetings; source details remain attached.
 
-**Action board (implemented):** compact meeting cards under Follow-ups, with Open/Overdue/Completed/All buttons, search and player selection, and category/sort controls under More filters. Each card shows the meeting type, title, date, assignment previews, and next deadline. Expand View assignments for source notes, player timeline links, and Complete/Reopen; shared assignments expose per-player controls. Expanded state is retained through updates. Cards use two columns on wide screens and one on smaller screens. Sensitive actions remain hidden by default. New visual/browser QA remains pending.
+**Action board (implemented):** compact meeting cards under Follow-ups, with Open/Overdue/Completed/All buttons, search and player selection, and category/sort controls under More filters. Each card shows the meeting type, title, date, assignment previews, and next deadline. Expand View assignments for source notes, player timeline links, and Complete/Reopen; shared assignments expose per-player controls. Expanded state is retained through updates. Cards use two columns on wide screens and one on smaller screens. Sensitive actions remain hidden by default. The user reports the existing browser checks complete.
 
-**Current workspace:** Overview is a summary dashboard with Upcoming on the left and Recent conversations on the right inside one main panel; the calendar stays in its own right sidebar. **Meeting notes** is a separate sidebar view with the note editor and approval review side by side on wide screens. Selecting more than one attendee changes an Individual meeting to Group; selecting one restores Individual. Explicit Full team is retained while all players are selected. Clicking a calendar date shows that day’s saved meetings and due actions, including completed actions. Mode-change confirmations use a nonblocking top-right alert that disappears after three seconds; ordinary success notices use the same three-second alert and errors/review warnings remain visible.
+**Current workspace:** Overview is a summary dashboard with Upcoming on the left and Recent conversations on the right inside one main panel; the calendar stays in its own right sidebar. **Meetings** is the sidebar library; Create meeting opens the note editor and approval review side by side on wide screens. Selecting more than one attendee changes an Individual meeting to Group; selecting one restores Individual. Explicit Full team is retained while all players are selected. Clicking a calendar date shows that day’s saved meetings and due actions, including completed actions. Mode-change confirmations use a nonblocking top-right alert that disappears after three seconds; ordinary success notices use the same three-second alert and errors/review warnings remain visible.
 
-**Extraction upgrade:** typed football topics/skills, confidence and unmatched-player flags, deterministic Python deadlines, group fan-out, shared team feedback, manual additions, highlighted evidence, sensitive-topic filtering, and field-level approval audit logs are implemented. Old SQLite records remain readable. The live individual browser flow passed extraction, edit/remove/manual-add, approval, save/reload, timeline/source, complete/reopen, and streamed preparation checks on a disposable database. Broader browser QA and validation on the missing organizer pack remain outstanding. See [verification and limitations](docs/qa-2026-11-21.md).
+**Extraction upgrade:** typed football topics/skills, confidence and unmatched-player flags, deterministic Python deadlines, group fan-out, shared team feedback, manual additions, highlighted evidence, sensitive-topic filtering, and field-level approval audit logs are implemented. Old SQLite records remain readable. The live individual browser flow passed extraction, edit/remove/manual-add, approval, save/reload, timeline/source, complete/reopen, and streamed preparation checks on a disposable database. The user has subsequently reported browser checks complete and selected our synthetic pack as the project dataset. See [verification and limitations](docs/qa-2026-11-21.md).
 
-**AI Assistant (implemented):** sidebar chat view with Individual, Group and Team scopes, position-group shortcuts, skill/topic/meeting-type/date filters, action status/search filters, suggested prompts, and clickable dated sources leading to timeline records. Timeline and Action-board buttons carry context into the assistant. Live uses one bounded structured Aivana call; Demo lists saved excerpts. Sensitive records are excluded and questions are independent. One real HTTP answer passed on disposable data; new assistant browser/mobile QA is pending because browser access was unavailable.
+**AI Assistant (implemented):** sidebar chat view with Individual, Group and Team scopes, position-group shortcuts, skill/topic/meeting-type/date filters, action status/search filters, suggested prompts, and clickable dated sources leading to timeline records. Timeline and Action-board buttons carry context into the assistant. Live uses one bounded structured Aivana call; Demo lists saved excerpts. Sensitive records are excluded and questions are independent. One real HTTP answer passed on disposable data; the user subsequently reported browser checks complete. Earlier agent-run browser limitations remain documented in the dated QA report.
 
-**Shared meeting records (implemented):** Group/team review combines identical source-backed records into one shared card listing the affected players. Expand to review warnings or edit each player's version; **Update shared cards** separates changed versions before approval. Individual assignments remain separate. The Action board combines matching shared assignments into expandable rows, shows completed/total players, and keeps each player's Complete/Reopen controls independent. Player/status/search filters still apply to individual actions; the group states how many members match. Every action and timeline record shows the meeting type/title. The backend derives `display_group` metadata for new extractions and saved history without rewriting stored records or statuses. Similar wording alone never causes a merge: meeting, content, exact quote, categories, deadline, and sensitivity must match. Visual/browser verification remains pending.
+**Shared meeting records (implemented):** Group/team review combines identical source-backed records into one shared card listing the affected players. Expand to review warnings or edit each player's version; **Update shared cards** separates changed versions before approval. Individual assignments remain separate. The Action board combines matching shared assignments into expandable rows, shows completed/total players, and keeps each player's Complete/Reopen controls independent. Player/status/search filters still apply to individual actions; the group states how many members match. Every action and timeline record shows the meeting type/title. The backend derives `display_group` metadata for new extractions and saved history without rewriting stored records or statuses. Similar wording alone never causes a merge: meeting, content, exact quote, categories, deadline, and sensitivity must match. The user subsequently reported browser checks complete.
 
 **Selected-attendee references:** Live extraction explicitly sends selected attendee IDs, names/jerseys, and their count alongside the attendee roster. In group/team notes, supported phrases such as “these three players”, “this 3 player”, “these players”, and “both attendees” may refer to all selected attendees. A stated count must match; subsets, exclusions, and evidence containing separately named player assignments stay unresolved. The backend fans one collective record out to selected attendees and marks the interpretation for coach confirmation in the shared review card. The note's supporting quote remains exact and approval is still required. Future-conversation plans are observations, not player tasks; vague “next week” does not become an invented date. An existing unmatched draft needs re-extraction after updating the backend.
 
@@ -99,7 +101,7 @@ The Football Coach Meeting Tracker lets a coach paste meeting notes (photo input
 
 - **Question box** ("What did I tell Jay about positioning?"). The backend first filters saved records by selected player/group/team, meeting type, skill, topic, and date range, then sends only those entries to Aivana. The answer must cite meeting dates and record IDs.
 - **Streamed prep brief** for the next one-on-one. Summarizes past feedback, open action items, and suggests follow-up questions based only on documented feedback.
-- **Planned: players needing attention**, computed in code: not met with in N days, overdue action items, or repeated "Improvement" feedback in the same skill.
+- **Players not met recently:** Overview → Players to check in with. Code computes each player’s most recent approved meeting date, defaults to Individual / 14 days, and supports 7/14/30/60/90-day windows and Individual/Group/Team/Any type. Shows players with no past matching meeting first, then oldest saved dates, with timeline links. Today and the preceding N−1 days count as recent; future-dated plans do not count. Note-only meetings count; sensitive note/record text is never used or displayed. Existing overdue-action lists remain separate; repeated-improvement flags are future work.
 
 ### Level 3: Advanced (planned stretch work)
 
@@ -199,7 +201,7 @@ npm run dev
 
 Open <http://127.0.0.1:5174/login>. Coach ID **`demo`**, password **`demo`** opens Demo extraction. Inside the workspace, select **Live · Aivana** for real extraction. This is a local convenience, not authentication. Signup/other accounts remain previews; no passwords are stored or sent. FastAPI docs: <http://127.0.0.1:8001/docs>.
 
-Both modes read and save the same SQLite records; changing modes never changes the notebook. The original team-authored football pack supplies the roster, exact Demo samples, and seven pre-reviewed, versioned seed meetings (the original seeds plus shared assignments, encouragement notes, and a fictional sensitive trainer follow-up). Seeding and browser-history migration are idempotent; existing SQLite records and completion states win conflicts, and the old browser copy is kept. No destructive reset is part of normal startup. The organizer pack is still missing.
+Both modes read and save the same SQLite records; changing modes never changes the notebook. The original team-authored football pack supplies the roster, exact Demo samples, and seven pre-reviewed, versioned seed meetings (the original seeds plus shared assignments, encouragement notes, and a fictional sensitive trainer follow-up). Seeding and browser-history migration are idempotent; existing SQLite records and completion states win conflicts, and the old browser copy is kept. No destructive reset is part of normal startup. The user has accepted this team-authored pack as the project dataset.
 
 Regenerate fixtures with `.venv/bin/python scripts/build_demo_data.py`, restart FastAPI, and refresh Vite. Existing records are retained as historical notes. Dates and display counts use code; the model does not calculate them.
 
@@ -229,7 +231,7 @@ HTTP smoke checks use a disposable SQLite file and cannot load the private `.env
 | **`max_tokens`, `effort`** | Token control; `effort: "low"` for short transcription | 1 to 3 |
 | **`intelligence_trace`** (optional) | Planned debug/inspection support | 3 |
 
-What the model does **not** do: compute dates, count records, sort, decide overdue status, or calculate trends. Relative deadlines and extraction validation run in Python; frontend dates, counts, filtering, and sorting run in application code. Attention/trend features remain planned.
+What the model does **not** do: compute dates, count records, sort, decide overdue status, or calculate trends. Relative deadlines and extraction validation run in Python; frontend dates, counts, filtering, and sorting run in application code. Recent-check-in calculations also run in JavaScript. Repeated-improvement flags and trend analytics remain planned.
 
 Example extraction request body (simplified):
 
@@ -607,7 +609,7 @@ The browser calls the local FastAPI backend through Vite’s `/api` proxy; it ne
 | `GET` | `/api/players/{player_id}/prep` | SSE brief from up to ten non-sensitive approved records. |
 | `POST` | `/api/assistant` | Individual, group or team question with optional meeting-type/skill/topic/date/action/search filters; returns checked citations and supporting records. |
 
-Separate roster/timeline endpoints, `/api/attention`, transcription, exports, and insights are planned. The current frontend reads the shared roster fixture and approved meetings. There is no public hosting/authentication boundary; run locally with synthetic data.
+Separate roster/timeline endpoints, transcription, exports, and insights are planned. Recent-check-in calculations run locally in JavaScript over the shared approved meetings; no additional API endpoint or Aivana call is needed. The current frontend reads the shared roster fixture and approved meetings. There is no public hosting/authentication boundary; run locally with synthetic data.
 
 ### AI Assistant
 
@@ -697,7 +699,7 @@ Raw structured extraction output and normalized drafts are logged separately fro
 - Roster matching and `unmatched` handling
 - Relative deadline resolution ("by Friday" from a Tuesday meeting date)
 - Group fan-out into per-player action items
-- Overdue computation, player summaries, and sensitive previews (attention flags remain planned)
+- Overdue computation, player summaries, and sensitive previews; recent-check-in windows, meeting-type filters, future-date exclusion, never-recorded players, and calendar-day boundaries
 - Validation loop: unknown `player_id`, missing source text, bad dates
 - Error handling for mocked 402, 429, and 502 responses
 
@@ -739,7 +741,7 @@ The `record_edits` log captures coach changes. A future edit-rate display must n
 | 2:30 to 3:15 | **Follow-up.** Open the Action board, filter by player/status, complete an action, then reopen it. |
 | 3:15 to 4:15 | **Level 2 assistant.** Use Jordan's seeded records. Ask “What did I tell Jordan about coverage?” in Live. Open a date citation and its timeline record. Explain that only filtered approved records were sent. |
 | 4:15 to 4:45 | **Second Aivana feature.** Start Jordan's streamed preparation brief from his timeline. |
-| 4:45 to 5:00 | **Close.** Coach approval, exact evidence, code-computed dates/counts, synthetic data, and the organizer-pack validation limitation. |
+| 4:45 to 5:00 | **Close.** Coach approval, exact evidence, code-computed dates/counts, synthetic data, and the provenance of our team-authored synthetic dataset. |
 
 Backup plan: if the network or Aivana is down, show a saved extraction from a previous run (clearly labeled as recorded) and the manual entry path.
 
@@ -765,11 +767,11 @@ Backup plan: if the network or Aivana is down, show a saved extraction from a pr
 
 | Status | Item | Level |
 |---|---|---|
-| Implemented; live individual browser flow passed; organizer-data QA pending | Meeting form, structured extraction, source highlighting, manual/edit/remove/approve, shared SQLite, timelines, open/overdue actions | 1 |
+| Implemented; agent live flow checked and user reports browser checks complete; team dataset accepted | Meeting form, structured extraction, source highlighting, manual/edit/remove/approve, shared SQLite, timelines, open/overdue actions | 1 |
 | Implemented; live spot checks passed | Confidence/unmatched flags, attendee name/nickname/jersey matching, Python deadlines, group/team expansion, bounded correction, edit audit | 1 |
-| Implemented; one real HTTP answer checked, browser QA pending | Individual/group/team AI Assistant with filtered records and attributed date/source links | 2 |
+| Implemented; one real HTTP answer checked; user reports browser checks complete | Individual/group/team AI Assistant with filtered records and attributed date/source links | 2 |
 | Implemented; live stream checked | Streamed one-on-one prep brief from approved non-sensitive context | 2 |
-| Planned | Players needing attention (computed in code) | 2 |
+| Implemented; automated recency checks passed | Players not met recently, with lookback/type controls and timeline links | 2 |
 | Stretch | Handwritten note photos | 3 |
 | Stretch | `.ics` follow-up reminders | 3 |
 | Stretch | Team themes dashboard and action-item timing analysis | 3 |
@@ -786,7 +788,7 @@ Backup plan: if the network or Aivana is down, show a saved extraction from a pr
 |---|---|
 | Core functionality (30) | Section 2, Level 1: full note → extraction → review → save → timeline → action items flow on the data pack. |
 | Use of Aivana (20) | Sections 6 and 8: strict JSON Schema for extraction/assistant, streaming prep brief, `max_tokens`, no calculations left to the model. |
-| Depth (15) | Implemented Level 2 individual/group/team assistant and streamed prep brief. Attention list and Level 3 features remain planned. |
+| Depth (15) | All three Level 2 options: individual/group/team assistant, streamed prep brief, and code-computed recent-check-in list. Level 3 features remain planned. |
 | Reliability and data handling (15) | Sections 9 and 12: validation loop, roster checks, error handling for 401/402/429/502, coach approval, no invented facts. |
 | Usability (10) | Side-by-side review with highlighted source text, confidence colors, dropdowns for unmatched players. |
 | Demo and documentation (10) | Section 15 demo script; this README covers running the app, Aivana features, and known limits; key kept out of the repo. |
