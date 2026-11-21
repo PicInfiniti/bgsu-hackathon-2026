@@ -2,22 +2,21 @@ import './styles.scss';
 import './workspace.scss';
 import demo from '../../data/demo.json';
 import { extractDemo } from './demo-extraction.js';
+import { workspaceMode } from './access.js';
+import { loadSharedNotebook } from './shared-notebook.js';
 
 const $ = (s) => document.querySelector(s);
 const escape = (s = '') => String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const key = 'picinfiniti.coach.prototype.v1';
 const clone = (x) => structuredClone(x);
-let meetings;
-try { meetings = JSON.parse(localStorage.getItem(key)) ?? clone(demo.meetings); if (!Array.isArray(meetings)) throw Error(); }
-catch { meetings = clone(demo.meetings); }
-let mode = 'demo', view = 'desk', draft = [], origin = 'demo', selectedPlayer = 'p01', busy = false, prepSource = null;
+let meetings = [];
+let mode = workspaceMode(window.location.search), view = 'desk', draft = [], origin = 'demo', selectedPlayer = 'p01', busy = false, connected = false, prepSource = null;
 let current = clone(demo.samples[0]);
 const player = (id) => demo.players.find(p => p.id === id);
 const name = (id) => player(id)?.name ?? 'Unknown player';
-const today = () => mode === 'demo' ? demo.reference_date : new Date().toLocaleDateString('en-CA');
+const today = () => new Date().toLocaleDateString('en-CA');
 const overdue = (x) => x.kind === 'action' && !x.completed && x.due_date && x.due_date < today();
 const items = () => meetings.flatMap(m => m.items.map(i => ({...i, meeting:m})));
-const persist = () => { try { localStorage.setItem(key, JSON.stringify(meetings)); } catch { notify('Browser storage is full or unavailable. These changes will not survive a reload.', true); } };
+
 
 const icon = (name) => {
   const paths = {
@@ -48,7 +47,7 @@ document.querySelector('#app').innerHTML = `
   <div class="shell">
     <header class="topbar"><div><h1>Your coaching workspace</h1><p>A place for every conversation. A plan for what comes next.</p></div><div class="header-actions"><button class="primary" id="new-meeting">${icon('plus')} New meeting</button><a class="profile-link" href="/login" aria-label="Open coach sign-in preview">${icon('user')}</a></div></header>
     <main>
-      <div class="workspace-toolbar"><span class="workspace-date">${icon('note')} Your notebook, at a glance</span><label class="mode-control">Workspace <select id="mode"><option value="demo">Demo · no API needed</option><option value="live">Live · local backend</option></select></label></div>
+      <div class="workspace-toolbar"><span class="workspace-date">${icon('note')} Your notebook, at a glance</span><label class="mode-control">Extraction <select id="mode"><option value="demo">Demo · prepared samples</option><option value="live">Live · Aivana</option></select></label></div>
       <div id="mode-note" class="notice"></div>
       <div id="message" role="status" aria-live="polite" hidden></div>
       <section id="desk" class="view">
@@ -96,7 +95,7 @@ function notify(text, error = false) {
 async function api(path, body, method = 'POST') {
   let res;
   try { res = await fetch(`/api${path}`, {method, headers:{'Content-Type':'application/json'}, ...(body === undefined ? {} : {body: JSON.stringify(body)})}); }
-  catch { throw Error('Backend unavailable. Start FastAPI on port 8001 or switch to demo mode.'); }
+  catch { throw Error('Shared notebook unavailable. Start FastAPI on port 8001; both Demo and Live use SQLite.'); }
   let data; try { data = await res.json(); } catch { throw Error('Backend unavailable or returned an invalid response. Start FastAPI on port 8001.'); }
   if (!res.ok) throw Error(typeof data.detail === 'string' ? data.detail : 'Request could not be completed. Check the meeting fields.');
   return data;
@@ -145,9 +144,10 @@ function render() {
   const all = items(), actions = all.filter(i => i.kind === 'action'), open = actions.filter(i => !i.completed);
   $('#meeting-count').textContent = meetings.length; $('#open-count').textContent = open.length; $('#overdue-count').textContent = open.filter(overdue).length;
   $('#players-count').textContent = new Set(meetings.flatMap(m => m.attendees)).size; $('#nav-count').textContent = open.length;
-  $('#clock-note').textContent = `As of ${today()}${mode === 'demo' ? ' · demo clock' : ''}`;
-  $('#mode-note').textContent = mode === 'demo' ? 'Demo notebook · Fictional players and prepared sample extractions, not AI. Saved in this browser. Demo date: November 20, 2026.' : 'LIVE WORKSPACE · Uses your local backend and Aivana account. Only approved records are saved to SQLite. Synthetic notes only.';
+  $('#clock-note').textContent = `As of ${today()}`;
+  $('#mode-note').textContent = mode === 'demo' ? 'DEMO EXTRACTION · Prepared samples, no AI calls. Uses the same SQLite notebook and practice data pack as Live. New records require your approval.' : 'LIVE EXTRACTION · Aivana reads your notes. Uses the same SQLite notebook and practice data pack as Demo. New records require your approval.';
   $('#extract').textContent = mode === 'demo' ? 'Extract sample records' : 'Extract with Aivana';
+  $('#extract').disabled = busy || !connected;
   $('#recent').innerHTML = [...meetings].sort((a,b) => b.date.localeCompare(a.date)).map(m => `<button class="meeting-row" data-open-player="${escape(m.attendees[0])}"><span class="meeting-date">${icon('note')}</span><span class="meeting-title"><strong>${escape(m.title)}</strong><small>${escape(m.date)} · ${m.items.length} records</small></span><span class="badge">${m.origin === 'demo' ? 'Demo fixture' : 'Reviewed'}</span></button>`).join('') || '<div class="panel empty">No meetings yet. Save your first reviewed extraction.</div>';
   $('#roster').innerHTML = `<p class="eyebrow">FICTIONAL TEAM ROSTER</p>${demo.players.map(p => `<button data-player="${p.id}" class="player-row ${p.id === selectedPlayer ? 'selected':''}"><span class="avatar">${p.number}</span><span><strong>${escape(p.name)}</strong><small>${escape(p.position)}</small></span></button>`).join('')}`;
   renderPlanning();
@@ -251,8 +251,8 @@ $('#review').addEventListener('click', async e => {
     if (draft.some(i => !current.attendees.includes(i.player_id) || !i.text?.trim() || !i.skill?.trim() || !current.note.includes(i.quote))) throw Error('Each record needs an attendee, text, skill area, and source quote from the note.');
     const body = {...clone(current), approved:true, origin, items:clone(draft)};
     busy = true; e.target.disabled = true;
-    const meeting = mode === 'demo' ? {...body,id:crypto.randomUUID(),items:body.items.map(i => ({...i,id:crypto.randomUUID(),completed:false}))} : await api('/meetings',body);
-    meetings.unshift(meeting); if (mode === 'demo') persist();
+    const meeting = await api('/meetings',body);
+    meetings.unshift(meeting);
     draft = []; renderReview(); cancelPrep(); render(); notify('Meeting approved and saved. Its records are now in player timelines and the action board.');
   } catch (error) { notify(error.message,true); if ($('#save')) $('#save').disabled = false; }
   finally { busy = false; }
@@ -282,25 +282,22 @@ document.addEventListener('click', async e => {
     try {
       action.disabled = true; busy = true;
       const meeting = meetings.find(m => m.id === action.dataset.meeting), item = meeting.items.find(i => i.id === action.dataset.item);
-      if (mode === 'demo') { item.completed = !item.completed; persist(); }
-      else { const updated = await api(`/meetings/${encodeURIComponent(meeting.id)}/items/${encodeURIComponent(item.id)}`,{completed:!item.completed},'PATCH'); meetings = meetings.map(m => m.id === updated.id ? updated : m); }
+      const updated = await api(`/meetings/${encodeURIComponent(meeting.id)}/items/${encodeURIComponent(item.id)}`,{completed:!item.completed},'PATCH');
+      meetings = meetings.map(m => m.id === updated.id ? updated : m);
       cancelPrep(); render(); notify('Action status updated.');
     } catch (error) { action.disabled = false; notify(error.message,true); }
     finally { busy = false; }
   }
 });
 $('#task-filter').addEventListener('change',render);
-$('#mode').addEventListener('change', async e => {
+$('#mode').addEventListener('change', e => {
   if (busy) { e.target.value = mode; return; }
-  const next = e.target.value, previous = mode;
-  try {
-    busy = true; e.target.disabled = true;
-    let loaded;
-    if (next === 'live') { const status = await api('/health', undefined, 'GET'); loaded = await api('/meetings', undefined, 'GET'); notify(status.aivana_configured ? 'Backend connected. Aivana mode is ready to test.' : 'Backend connected. Set AIVANA_API_KEY before extracting notes.', !status.aivana_configured); }
-    else { try { loaded = JSON.parse(localStorage.getItem(key)) ?? clone(demo.meetings); } catch { loaded = clone(demo.meetings); } notify('Returned to the independent browser demo workspace.'); }
-    mode = next; meetings = loaded; draft = []; cancelPrep(); renderReview(); render();
-  } catch (error) { e.target.value = previous; notify(error.message,true); }
-  finally { busy = false; e.target.disabled = false; }
+  mode = e.target.value;
+  const url = new URL(window.location.href); url.searchParams.set('mode', mode);
+  window.history.replaceState(null, '', url);
+  draft = []; cancelPrep(); renderReview(); render();
+  if (!connected) { initializeNotebook(); return; }
+  notify(`${mode === 'demo' ? 'Demo sample' : 'Live Aivana'} extraction selected. Your SQLite records stay the same.`);
 });
 $('#prep').addEventListener('click', () => {
   cancelPrep();
@@ -316,4 +313,18 @@ $('#prep').addEventListener('click', () => {
   prepSource.addEventListener('done', e => { const data = JSON.parse(e.data); prepSource?.close(); prepSource = null; $('#prep').disabled = false; if (data.finish_reason === 'length') notify('The brief was cut short. Treat this as an incomplete draft.',true); });
   prepSource.addEventListener('error', e => { let message = 'Preparation stream failed. Check your backend, key, balance, and connection.'; try { message = JSON.parse(e.data).message || message; } catch {} notify(message,true); prepSource?.close(); prepSource = null; $('#prep').disabled = false; $('#prep-text').textContent = content || 'No brief was generated.'; });
 });
-loadSample('individual'); render(); switchView('desk');
+loadSample('individual'); $('#mode').value = mode; render(); switchView('desk');
+async function initializeNotebook() {
+  busy = true; $('#mode').disabled = true; render();
+  notify('Loading the shared SQLite notebook…');
+  try {
+    let storage;
+    try { storage = window.localStorage; } catch { /* SQLite works without browser storage. */ }
+    const result = await loadSharedNotebook(api, storage);
+    meetings = result.meetings; connected = true;
+    const missingKey = mode === 'live' && !result.status.aivana_configured;
+    notify(result.migrationError || (missingKey ? 'Notebook loaded. Configure backend/.env before live extraction; Demo needs no Aivana key.' : 'Notebook connected. Demo and Live share the same saved records.'), Boolean(result.migrationError || missingKey));
+  } catch (error) { notify(error.message, true); }
+  finally { busy = false; $('#mode').disabled = false; render(); }
+}
+initializeNotebook();

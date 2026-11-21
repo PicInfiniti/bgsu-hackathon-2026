@@ -1,5 +1,6 @@
 import './styles.scss';
 import './auth.scss';
+import { isDemoLogin } from './access.js';
 
 const route = window.location.pathname.replace(/\/$/, '') || '/';
 if (route === '/workspace') {
@@ -36,18 +37,18 @@ if (route === '/workspace') {
           <p class="auth-description">${signup ? 'A little more clarity. A lot more follow-through.<br>Create a place for every coaching conversation.' : 'Your conversations, your players, your next steps.<br>Pick up where you left off.'}</p>
           <form id="auth-form">
             ${signup ? '<label for="coach-name">Full name</label><input id="coach-name" name="name" autocomplete="name" placeholder="Your name" required maxlength="100">' : ''}
-            <label for="coach-email">Email address</label><input id="coach-email" name="email" type="email" autocomplete="email" placeholder="coach@example.com" required maxlength="254">
+            <label for="coach-email">${signup ? 'Email address' : 'Coach ID or email'}</label><input id="coach-email" name="${signup ? 'email' : 'username'}" type="${signup ? 'email' : 'text'}" autocomplete="${signup ? 'email' : 'username'}" placeholder="${signup ? 'coach@example.com' : 'demo'}" required maxlength="254">
             ${signup ? '<label for="coach-team">Team or program <span class="auth-optional">(optional)</span></label><input id="coach-team" name="team" autocomplete="organization" placeholder="Your team or program" maxlength="100">' : ''}
             <label for="coach-password">Password</label>
             <div class="auth-password"><input id="coach-password" name="password" type="password" autocomplete="${signup ? 'new-password' : 'current-password'}" ${signup ? 'minlength="12"' : ''} placeholder="${signup ? 'Create a password' : 'Enter your password'}" required aria-describedby="password-help"><button id="toggle-password" type="button" aria-controls="coach-password" aria-label="Show password" aria-pressed="false">Show</button></div>
-            <p id="password-help" class="auth-input-help">${signup ? 'Use at least 12 sample characters for this preview.' : 'Design preview — use sample details only.'}</p>
+            <p id="password-help" class="auth-input-help">${signup ? 'Use at least 12 sample characters for this preview.' : 'Demo access: use demo for both ID and password.'}</p>
             <button class="primary auth-submit" type="submit">${signup ? 'Create coach account' : 'Sign in'}</button>
             <div id="auth-feedback" class="auth-feedback" role="status" hidden></div>
           </form>
           <div class="auth-divider"><span>TAKE A LOOK FIRST</span></div>
-          <a class="auth-demo" href="/workspace">Explore the demo workspace</a>
-          <p class="auth-demo-caption">Fictional players. Sample meetings. No account needed.</p>
-          <p class="auth-preview"><strong>Design preview</strong> · Sign in and signup are not connected yet. No account is created and no password is saved or sent.</p>
+          <a class="auth-demo" href="/workspace?mode=live">Open live workspace</a>
+          <p class="auth-demo-caption">Demo login: ID demo · Password demo. Both modes use the same notebook.</p>
+          <p class="auth-preview"><strong>Local prototype</strong> · Demo credentials open sample extraction. Account creation is a preview; credentials are never saved or sent. Both modes require the local backend.</p>
         </div>
         <footer class="auth-footer"><span>Falcon Follow-up</span><span>A clearer plan for every player.</span></footer>
       </main>
@@ -63,9 +64,14 @@ if (route === '/workspace') {
   });
   document.querySelector('#auth-form').addEventListener('submit', event => {
     event.preventDefault();
+    if (!signup && isDemoLogin(document.querySelector('#coach-email').value, password.value)) {
+      password.value = '';
+      window.location.assign('/workspace?mode=demo');
+      return;
+    }
     const feedback = document.querySelector('#auth-feedback');
     feedback.hidden = false;
-    feedback.textContent = signup ? 'Your form is ready for review. Account creation is not available in this design preview. Explore the demo below.' : 'Sign in is not available in this design preview. Explore the demo workspace below.';
+    feedback.textContent = signup ? 'Your form is ready for review. Account creation is not available in this design preview. Sign in with demo / demo, or open the live workspace below.' : 'For Demo, use demo as both the coach ID and password. Other accounts are not connected; you can open the live workspace below.';
     password.value = '';
   });
 }
