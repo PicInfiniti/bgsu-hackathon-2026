@@ -2,7 +2,7 @@
 
 Original fictional basketball coaching data by picInfiniti, created November 20, 2026. **This is not the organizers' data pack** and does not establish compliance with their supplied-data requirement. All player names, meetings, and statements are invented; any resemblance is coincidental. No contact information, accounts, credentials, or medical records are included.
 
-The pack contains **25 players, 14 meetings, and 57 expected extraction records**. Its fixed comparison date is **2026-11-20**.
+The pack contains **25 players, 14 meetings, and 57 expected extraction records**. Its reference-answer date is **2026-11-20**; both app modes use the current local date for overdue status.
 
 | File | Purpose |
 | --- | --- |
@@ -16,11 +16,11 @@ The cases include individual, group, and full-team meetings; shared praise; sepa
 
 ## Use in Falcon Follow-up
 
-Run `.venv/bin/python scripts/build_demo_data.py` from the project root to regenerate `data/demo.json`. The app uses that generated file for its roster and offline sample selector. Choose a scenario in Meeting desk, extract its prepared records, review, and approve to save. Offline fixtures are not AI output. The scheduling-only scenario correctly returns no records and cannot be saved under the current nonempty-record rule.
+Run `.venv/bin/python scripts/build_demo_data.py` from the project root to regenerate `data/demo.json`. The app uses that generated file for its roster and offline sample selector. Choose a scenario in Meeting desk, extract its prepared records, review, and approve to save. Prepared Demo extractions are not AI output. Both modes require the backend and share SQLite. The scheduling-only scenario correctly returns no records and cannot be saved under the current nonempty-record rule.
 
 Existing browser demo history and live SQLite data are not reset or replaced. Existing IDs `p01`–`p08` keep their original identities. Previously saved eight-player team meetings remain historical records; new team meetings use all 25 players. Restart the backend after changing the pack because it loads roster data on startup.
 
-Only two prepared meetings are preloaded in a fresh browser demo. Reference answers are not imported into live SQLite or sent as part of extraction requests. Live extraction still requires coach review and explicit approval before saving.
+Only two pre-reviewed example meetings seed the shared SQLite notebook, once by stable ID. The remaining expected extraction answers are not imported or sent to Aivana. New extraction results in both modes require coach review and explicit approval before saving. Older browser Demo history is migrated on connection with stable IDs; existing SQLite records win conflicts, and the original browser copy is kept.
 
 ## Evaluate deliberately
 

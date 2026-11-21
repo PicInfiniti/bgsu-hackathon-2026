@@ -2,9 +2,9 @@
 
 The selected hackathon project for picInfiniti (Siavash and Salma), currently a local prototype. Project A was selected on November 20, 2026. This checkout is `/home/siavash/Programming/Hackathon/bgsu-hackathon-2026`. Its existing `origin` is `git@github.com:PicInfiniti/bgsu-hackathon-2026.git`; local commits do not publish changes. The earlier Project B implementation remains in Git history. Other checkouts are independent and are not modified by these instructions.
 
-## Run the interactive demo
+## Run the frontend
 
-Requirements: Node 20.19+ or 22.12+ (per Vite's supported versions), npm.
+Requirements: Node 20.19+ or 22.12+ (per Vite's supported versions), npm, and the backend described below. **Both Demo and Live use the same SQLite database.** Demo needs no Aivana key; Live extraction and streaming need one.
 
 ```bash
 # From this repository root:
@@ -13,11 +13,11 @@ npm ci
 npm run dev
 ```
 
-Open **http://127.0.0.1:5174** for the coach login design. The signup design is at **http://127.0.0.1:5174/signup**; choose **Explore the demo workspace** or open **http://127.0.0.1:5174/workspace** for the tracker. This is a separate port from Project B. No backend, key, account, or payment is needed in demo mode.
+Open **http://127.0.0.1:5174/login**. Use **`demo` for the coach ID and `demo` for the password** to open Demo extraction. The login field accepts a coach ID as well as an email. To use Aivana, choose **Open live workspace** or open **http://127.0.0.1:5174/workspace?mode=live**. The signup preview is at **http://127.0.0.1:5174/signup**. Both modes require FastAPI on port 8001; Vite serves the frontend on 5174. Switch the **Extraction** selector to change the extractor without replacing your records. The selected mode remains in the URL after reload.
 
 The frontend follows a warm notebook design with BGSU orange and brown: notebook navigation, a ruled meeting editor, a calendar based on saved meeting/action dates, and a follow-up sidebar. Login and signup use matching paper panels and notebook artwork.
 
-Login and signup are responsive design previews, with required-field/email validation, password visibility controls, and a 12-character minimum for the signup password. They do not authenticate, create accounts, store credentials, or send form data. The workspace remains directly accessible. Production build verified; browser visual and interaction checks remain unverified.
+The `demo` / `demo` login is a local access shortcut, not server authentication or an account. No password is saved or sent. Other account login and signup remain design previews; the workspace is directly accessible. Forms retain native required-field validation, email validation on signup, password visibility controls, and the signup password minimum. Browser interaction and visual QA remain unverified.
 
 1. Start with the one-on-one sample, or select the group/team example.
 2. Click **Extract sample records**. These are prepared fixtures, not AI-generated results. Extraction intentionally refuses changed notes, date, meeting type, or attendees rather than pretending to understand arbitrary text.
@@ -26,11 +26,13 @@ Login and signup are responsive design previews, with required-field/email valid
 5. Open player timelines or the action board; complete and reopen tasks. Source notes stay attached.
 6. Build a preparation checklist in a player's timeline. In demo mode this is a deterministic checklist, not an Aivana stream.
 
-Demo records persist in this browser's localStorage under `picinfiniti.coach.prototype.v1`. Demo overdue status uses a fixed **2026-11-20** reference date; live mode uses the current local date. Demo and live data are separate. Clearing this app's browser storage resets the demo.
+Both modes read, save, and update records through the same backend SQLite store. The practice pack’s two pre-reviewed example meetings are seeded once with stable IDs; later startups never overwrite existing SQLite records or completion states. Mode switching changes extraction and preparation behavior only. Both modes use the current local date for overdue status.
 
-## Run the live backend
+Older approved browser Demo history under `picinfiniti.coach.prototype.v1` is imported into SQLite on connection, preserving meeting/item IDs and completion status. Existing SQLite records win ID conflicts; imports are idempotent and the original browser copy is retained. Historical team notes from the smaller roster are allowed during migration; new team notes still require the current full roster. Invalid legacy notes are not partially imported; the app reports the issue and keeps the browser copy. Browser storage is no longer used for new saves. If the backend is unavailable, the app reports that instead of switching to a different dataset.
 
-Requirements: Python 3.10+, package download access, and a private Aivana Live key.
+## Run the shared backend
+
+Requirements: Python 3.10+ and package download access. A private Aivana Live key is needed only for Live extraction and preparation.
 
 ```bash
 # From this repository root
@@ -46,7 +48,7 @@ Start the backend from this repository root:
 .venv/bin/python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8001
 ```
 
-Exported environment variables take precedence over `.env`; remove a stale export with `unset AIVANA_API_KEY` if you want to use the file. Restart the backend after changing `.env` (the Python reload watcher may not notice that file). Keep the frontend running in another terminal; choose **Live · local backend**. Vite forwards `/api` to port 8001.
+Exported environment variables take precedence over `.env`; remove a stale export with `unset AIVANA_API_KEY` if you want to use the file. Restart the backend after changing `.env` (the Python reload watcher may not notice that file). Keep the frontend running in another terminal; choose **Live · Aivana**. Vite forwards `/api` to port 8001.
 
 `GET /api/health` reports whether the running server has a key; it does not validate the key with Aivana. Check the current health response before using live extraction; an older server may need restarting to receive the environment variable.
 
@@ -58,7 +60,7 @@ Live mode supports:
 - No automatic retries in this prototype: failures are surfaced and the user can deliberately retry. Never loop on failed requests.
 - Extraction requests up to 2048 output tokens, matching the verified workspace limit. Truncated extraction is rejected; shorten the note rather than saving partial output. For long team notes, use short sections with a few assignments each, retaining the original date, attendees, and context needed to attribute each statement; review and save each section separately. A short 25-attendee note with three named records has passed a live check. Automatic batching is not implemented. A 403 can indicate a workspace limit as well as key permissions.
 
-SQLite is stored in ignored `backend/coach.sqlite3`; override `COACH_DB_PATH` to use another local file. It starts empty in live mode. Load a sample and save a reviewed meeting to populate it.
+SQLite is stored in ignored `backend/coach.sqlite3`; override `COACH_DB_PATH` to use another local file. It contains the same pack examples and approved records in both modes. New extractions are never saved until the coach approves them.
 
 Official API references: [structured output](https://developers.aivana.ai/docs/structured-outputs), [streaming](https://developers.aivana.ai/docs/streaming).
 
@@ -88,7 +90,7 @@ Verification results and outstanding checks are recorded in [the QA report](docs
 
 ## Synthetic practice data
 
-See [the pack guide](data/synthetic/README.md) for the 25-player roster, readable meeting notes, and reference extraction answers. Regenerate app fixtures with `.venv/bin/python scripts/build_demo_data.py`. Restart the backend to load roster changes; refresh the frontend to see all 14 scenarios. Existing browser history and SQLite records are preserved. The all-player broadcast is an intentional 2048-token output-budget stress case, not a verified live demo. Reference answers are not sent to Aivana or automatically saved in live mode.
+See [the pack guide](data/synthetic/README.md) for the 25-player roster, readable meeting notes, and reference extraction answers. Regenerate app fixtures with `.venv/bin/python scripts/build_demo_data.py`. Restart the backend to load roster changes; refresh the frontend to see all 14 scenarios. Existing browser history and SQLite records are preserved. The all-player broadcast is an intentional 2048-token output-budget stress case, not a verified live demo. Reference answers are not sent to Aivana. Only the two pre-reviewed example meetings seed SQLite; the other expected records are for review/testing, not automatic import.
 
 The four workspace summary cards are navigation links: saved meetings jump to recent conversations, open actions and needs follow-up open their respective action filters, and players reached opens player timelines.
 
@@ -96,7 +98,7 @@ The four workspace summary cards are navigation links: saved meetings jump to re
 
 - Synthetic data only: `data/synthetic/` contains our own 25-player practice pack, 14 meeting scenarios, and 57 author-written expected records. `data/demo.json` is generated from it. It is **not** the organizers' data pack; validation on their supplied data remains outstanding.
 - This is a local prototype of the final selected project, not a completed competition submission. Live extraction has been sampled on individual, group, team, and deadline/attribution edge cases; this is not a general accuracy benchmark. The full browser live workflow still needs review.
-- The browser demo runs without Python. The production build passes, but the browser access host is unavailable in this environment; browser interaction and visual QA remain unverified.
+- Both extraction modes require the Python backend for shared SQLite storage. The production build passes, but the browser access host is unavailable in this environment; browser interaction and visual QA remain unverified.
 - Human review is required. Schema/source validation cannot prove that a paraphrase or player attribution is correct. Source quotations are evidence, not factual guarantees.
 - No authentication, multi-user synchronization, deletion UI, reminder export, voice input, handwritten notes, or accuracy benchmark is included. Demo fixture tests are not an AI accuracy evaluation.
 - Prototype data is local and single-user. Do not expose the development backend publicly.
