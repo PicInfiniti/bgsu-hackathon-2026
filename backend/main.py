@@ -12,6 +12,7 @@ from .extraction import normalize_records, enrich_demo, applies_to
 from .extraction_schema import CATEGORIES
 from .assistant import select_context, checked_answer, selected_players
 from .grouping import annotate_shared_records
+from . import strategy
 
 load_environment()
 app = FastAPI(title='Falcon Follow-up prototype')
@@ -163,3 +164,36 @@ def assistant(body: dict):
         raise HTTPException(422, str(error)) from None
     except aivana.AivanaError as error:
         raise HTTPException(error.status, str(error)) from None
+
+
+@app.get('/api/strategy-boards')
+def strategy_list():
+    return strategy.list_boards(store)
+
+
+@app.get('/api/strategy-boards/{board_id}')
+def strategy_get(board_id: str):
+    try:
+        return strategy.get_board(store, board_id)
+    except KeyError:
+        raise HTTPException(404, 'Strategy board not found.') from None
+
+
+@app.post('/api/strategy-boards', status_code=201)
+def strategy_create(body: dict):
+    try:
+        return strategy.save_board(store, body)
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from None
+
+
+@app.put('/api/strategy-boards/{board_id}')
+def strategy_update(board_id: str, body: dict):
+    try:
+        return strategy.save_board(store, body, board_id)
+    except KeyError:
+        raise HTTPException(404, 'Strategy board not found.') from None
+    except strategy.StrategyConflict as error:
+        raise HTTPException(409, str(error)) from None
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from None

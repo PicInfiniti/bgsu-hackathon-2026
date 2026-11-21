@@ -1,5 +1,7 @@
 import './styles.scss';
 import './workspace.scss';
+import './strategy.scss';
+import { initializeStrategy } from './strategy.js';
 import demo from '../../data/demo.json';
 import { workspaceMode } from './access.js';
 import { loadSharedNotebook } from './shared-notebook.js';
@@ -67,6 +69,7 @@ document.querySelector('#app').innerHTML = `
       <button data-view="meeting-library">${icon('note')} Meetings</button>
       <button data-view="players">${icon('people')} Players</button>
       <button data-view="tasks">${icon('check')} Actions <b id="nav-count"></b></button>
+      <button data-view="strategy">${icon('football')} Strategy</button>
       <button data-view="assistant">${icon('chat')} AI Assistant</button>
     </nav>
     <div class="sidebar-note">From the film room<br>to the next practice.<span>Make the follow-up count.</span></div>
@@ -139,6 +142,7 @@ document.querySelector('#app').innerHTML = `
         <label class="sensitive-toggle"><input id="show-sensitive-actions" type="checkbox" aria-describedby="task-hidden-note"> Show sensitive actions only <span id="sensitive-action-count"></span></label><p id="task-hidden-note" class="sensitive-notice" role="status" hidden></p>
         </div><aside class="action-calendar-rail"><section class="calendar-panel panel"><div class="calendar-heading"><h3 id="action-calendar-title"></h3><div><button class="icon-button" id="action-calendar-prev" aria-label="Previous action calendar month">${icon('chevron')}</button><button class="icon-button" id="action-calendar-next" aria-label="Next action calendar month">${icon('chevron')}</button></div></div><p class="calendar-caption">Meetings & action deadlines</p><label class="action-calendar-filter"><span class="sr-only">Calendar meeting type</span><select id="action-calendar-type"><option value="">All meeting types</option><option value="individual">Individual</option><option value="group">Group</option><option value="team">Team</option></select></label><div id="action-calendar" class="calendar-grid"></div><div class="calendar-key"><span class="meeting-individual">Individual</span><span class="meeting-group">Group</span><span class="meeting-team">Team</span><span class="action-due-key">Action due</span></div><div id="action-calendar-activities" class="calendar-activities" aria-live="polite"></div></section></aside></div>
       </section>
+      <section id="strategy" class="view" hidden></section>
       <section id="assistant" class="view" hidden>
         <div class="section-heading assistant-heading"><div><p class="eyebrow">BEFORE THE NEXT CONVERSATION</p><h2 id="assistant-title" tabindex="-1">AI Assistant</h2><p>Bring the right records into your next conversation. Ask about one player, a group, or your team.</p></div><span class="assistant-scope">${icon('chat')} Your approved notebook</span></div>
         <div class="assistant-scope-picker" role="group" aria-label="Who is this conversation about?">
@@ -171,6 +175,8 @@ document.querySelector('#app').innerHTML = `
       <footer><span>FALCON FOLLOW-UP <b> / </b> picInfiniti</span><span>Every conversation deserves a next step. · Synthetic data only</span></footer>
     </main>
   </div>`;
+
+const strategyRoom = initializeStrategy($('#strategy'), {players:demo.players,api,notify,today});
 
 function notify(text, error = false) {
   clearTimeout(statusTimer); $('#status-toast').hidden = true;
@@ -449,6 +455,7 @@ function renderActionBoard(actions = items().filter(i => i.kind === 'action')) {
 }
 function switchView(next) {
   view = next;
+  if (next === 'strategy') strategyRoom.show();
   document.querySelectorAll('.view').forEach(el => el.hidden = el.id !== view);
   document.querySelectorAll('[data-view]').forEach(el => { const active = el.dataset.view === view || el.closest('nav') && view === 'meetings' && el.dataset.view === 'meeting-library'; el.classList.toggle('active', Boolean(active)); if (active) el.setAttribute('aria-current','page'); else el.removeAttribute('aria-current'); });
 }
