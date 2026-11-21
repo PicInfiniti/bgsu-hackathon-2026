@@ -10,6 +10,8 @@ from .core import DEMO, PLAYERS, Store, demo_extract, validate_meeting
 from .config import load_environment
 from .extraction import normalize_records, enrich_demo, applies_to
 from .extraction_schema import CATEGORIES
+from .assistant import select_context, checked_answer
+from .grouping import annotate_shared_records
 
 load_environment()
 app = FastAPI(title='Falcon Follow-up prototype')
@@ -68,6 +70,7 @@ def extract(body: dict):
             if errors:
                 warnings = list(dict.fromkeys(warnings + errors))
                 warnings.append('Some records require correction. Unmatched players and invalid source quotes cannot be saved.')
+        items = annotate_shared_records(items, meeting, players)
         run_id = store.capture_extraction(meeting, items, warnings, origin, raw_outputs)
         return {'items': items, 'warnings': warnings, 'origin': origin, 'extraction_id': run_id, 'schema_version': 2}
     except ValueError as error:
@@ -133,3 +136,26 @@ def prep(player_id: str):
             message = str(error) if isinstance(error, aivana.AivanaError) else 'The Aivana connection was interrupted. Please retry.'
             yield f'event: error\ndata: {json.dumps({"message": message})}\n\n'
     return StreamingResponse(events(), media_type='text/event-stream', headers={'Cache-Control': 'no-cache'})
+
+
+@app.post('/api/assistant')
+def assistant(body: dict):
+    try:
+        question, sources, total, today = select_context(store.list(), body)
+        person = next(p for p in DEMO['players'] if p['id'] == body['player_id'])
+        answer = {'statements': [], 'suggestions': []}
+        if sources:
+            if body['mode'] == 'demo':
+                answer['statements'] = [{'text': s['text'], 'source_ids': [s['source_id']]} for s in sources[:8]]
+            else:
+                try:
+                    answer = checked_answer(aivana.answer_question(question, person, sources, today), sources)
+                except ValueError as error:
+                    raise aivana.AivanaError(str(error)) from None
+        return {**answer, 'sources': sources, 'matched_count': total, 'context_count': len(sources),
+                'limited': total > len(sources), 'origin': 'demo' if body['mode'] == 'demo' else 'aivana',
+                'player_id': person['id'], 'question': question}
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from None
+    except aivana.AivanaError as error:
+        raise HTTPException(error.status, str(error)) from None

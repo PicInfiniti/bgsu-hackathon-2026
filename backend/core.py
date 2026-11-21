@@ -6,6 +6,7 @@ import uuid
 from datetime import date
 from pathlib import Path
 from .extraction_schema import CATEGORIES, SENSITIVE_TOPICS
+from .grouping import annotate_shared_records
 
 ROOT = Path(__file__).resolve().parents[1]
 DEMO = json.loads((ROOT / 'data/demo.json').read_text())
@@ -122,6 +123,8 @@ class Store:
     def list(self):
         with self.connect() as db:
             meetings = [json.loads(row[0]) for row in db.execute('SELECT body FROM meetings')]
+        for meeting in meetings:
+            meeting['items'] = annotate_shared_records(meeting['items'], meeting, DEMO['players'])
         return sorted(meetings, key=lambda m: (m['date'], m['id']), reverse=True)
 
     def save(self, raw):
@@ -167,6 +170,7 @@ class Store:
                                (str(uuid.uuid4()), meeting['id'], extraction_id, draft_id, 'deleted', json.dumps(changes)))
             if extraction_id:
                 db.execute('UPDATE extraction_runs SET saved_meeting_id = ? WHERE id = ?', (meeting['id'], extraction_id))
+        meeting['items'] = annotate_shared_records(meeting['items'], meeting, DEMO['players'])
         return meeting
 
     def capture_extraction(self, meeting, items, warnings, origin, raw_output):
@@ -221,4 +225,5 @@ class Store:
                 raise KeyError('Action item not found.')
             item['completed'] = completed
             db.execute('UPDATE meetings SET body = ? WHERE id = ?', (json.dumps(meeting), meeting_id))
+        meeting['items'] = annotate_shared_records(meeting['items'], meeting, DEMO['players'])
         return meeting
