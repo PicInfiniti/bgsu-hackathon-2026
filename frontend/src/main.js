@@ -2,6 +2,12 @@ import './styles.scss';
 import './workspace.scss';
 import './strategy.scss';
 import './note-dictation.scss';
+import './meeting-calendar.scss';
+import './tour.scss';
+import './workspace-header.scss';
+import './ask-panel.scss';
+import { createAskPanel } from './ask-panel.js';
+import { startTour, shouldStart, tourActive, readTourSettings, rememberTour } from './tour.js';
 import { mountNoteDictation } from './note-dictation.js';
 import { initializeStrategy } from './strategy.js';
 import demo from '../../data/demo.json';
@@ -25,6 +31,8 @@ import { noteOnlyReview } from './note-only.js';
 import { playerMeetingHistory } from './timeline-view.js';
 import { filterMeetings, meetingListMarkup, meetingDetailMarkup, meetingCalendarSource } from './meeting-library.js';
 import { meetingCalendarMarkup, calendarDays, shiftCalendarDay } from './meeting-calendar-view.js';
+import { openMeetingDatePicker } from './meeting-date-picker.js';
+import { addMonths } from './calendar-math.js';
 
 const $ = (s) => document.querySelector(s);
 const escape = (s = '') => String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -42,7 +50,7 @@ const player = (id) => demo.players.find(p => p.id === id);
 const name = (id) => player(id)?.name ?? 'Unknown player';
 const positionLabel = (p) => p.position_label ? `${p.position} · ${p.position_label}` : p.position;
 const today = () => new Date().toLocaleDateString('en-CA');
-let meetingCalendarMonth = today().slice(0,7), meetingCalendarDate = null, meetingCalendarView = 'month', meetingWeekAnchor = today(), meetingCalendarFiltersOpen = false;
+let meetingCalendarMonth = today().slice(0,7), meetingCalendarDate = null, meetingCalendarView = 'month', meetingWeekAnchor = today(), meetingCalendarFiltersOpen = false, meetingShowDeadlines = true;
 let playerCalendarMonth = today().slice(0,7), playerCalendarDate = today();
 const overdue = (x) => x.kind === 'action' && !x.completed && x.due_date && x.due_date < today();
 const items = () => meetings.flatMap(m => m.items.map(i => ({...i, meeting:m})));
@@ -50,6 +58,7 @@ const items = () => meetings.flatMap(m => m.items.map(i => ({...i, meeting:m})))
 
 const icon = (name) => {
   const paths = {
+    search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',
     chat: '<path d="M21 11a8 8 0 0 1-8 8H7l-4 3V11a9 9 0 0 1 18 0Z"/><path d="M7 10h10M7 14h6"/>',
     team: '<circle cx="12" cy="7" r="3"/><path d="M7 21v-3a5 5 0 0 1 10 0v3M4 6a3 3 0 0 0 0 6M20 6a3 3 0 0 1 0 6M2 20v-3a4 4 0 0 1 3-4M22 20v-3a4 4 0 0 0-3-4"/>',
     football: '<path d="M2 12C6.5 3 17.5 3 22 12c-4.5 9-15.5 9-20 0Z" fill="currentColor" fill-opacity=".08"/><path d="M6 6.9a11 11 0 0 1 0 10.2M18 6.9a11 11 0 0 0 0 10.2"/><path d="M9 12h6m-5-1.6v3.2m2-3.2v3.2m2-3.2v3.2" stroke-width="1.4"/>',
@@ -80,10 +89,10 @@ document.querySelector('#app').innerHTML = `
     <div class="sidebar-bottom"><span class="team-avatar">pi</span><div>picInfiniti<small>Football Meeting Tracker</small></div></div>
   </aside>
   <div class="shell">
-    <header class="topbar"><div><h1>Your football workspace</h1><p>A place for every conversation. A plan for what comes next.</p></div><div class="header-actions"><button class="primary" id="new-meeting">${icon('plus')} New meeting</button><a class="profile-link" href="/login" aria-label="Open coach sign-in preview">${icon('user')}</a></div></header>
+    <header class="topbar"><div class="header-context"><p class="header-eyebrow">COACH’S NOTEBOOK</p><h1 id="page-title">Overview</h1><p id="page-date"></p></div><div class="header-actions"><label class="mode-control">Mode <select id="mode"><option value="demo">Demo · prepared samples</option><option value="live">Live · Aivana</option></select></label><button class="header-ask" id="header-ask" type="button" aria-label="Ask Aivana about a player"><span aria-hidden="true">✦</span><span>Ask Aivana</span></button><button class="secondary tour-replay" id="replay-tour" type="button" aria-label="Replay welcome tour">? <span>Tour</span></button><button class="primary" id="new-meeting" type="button" aria-label="Create a new meeting">${icon('plus')} New meeting</button><a class="profile-link" href="/login" aria-label="Open coach sign-in preview">${icon('user')}</a></div></header>
     <div id="status-toast" class="status-toast" role="status" aria-live="polite" hidden><span id="status-toast-text"></span><button class="icon-button" id="close-status-toast" aria-label="Dismiss notification">×</button></div>
     <main>
-      <div class="workspace-toolbar"><span class="workspace-date">${icon('football')} Football · Your coaching notebook</span><label class="mode-control">Mode <select id="mode"><option value="demo">Demo · prepared samples</option><option value="live">Live · Aivana</option></select></label></div>
+
       <div id="message" role="status" aria-live="polite" hidden></div>
       <section id="desk" class="view">
         <div class="overview-lead"><div><p class="eyebrow">THE COACH'S DASHBOARD</p><h2>A clear view of your team.</h2><p>Conversations captured. Next steps ready.</p></div><button class="secondary" data-view="meetings">${icon('note')} Open meeting notebook</button></div>
@@ -103,10 +112,9 @@ document.querySelector('#app').innerHTML = `
         </aside></div>
       </section>
       <section id="meeting-library" class="view" hidden>
-        <div id="meeting-library-list"><div class="section-heading library-heading"><div><p class="eyebrow">EVERY CONVERSATION, TOGETHER</p><h2 id="meetings-title" tabindex="-1">Meetings</h2><p>Individual check-ins, group conversations, and team meetings.</p></div><div class="library-heading-actions"><div class="meeting-view-switch" role="group" aria-label="Meetings display mode"><button type="button" data-meeting-view="month" aria-pressed="true">Month</button><button type="button" data-meeting-view="week" aria-pressed="false">Week</button><button type="button" data-meeting-view="list" aria-pressed="false">List</button></div><button class="secondary" type="button" data-new-meeting>${icon('plus')} Create meeting</button></div></div>
-          <div class="library-layout"><div class="library-main"><div class="library-periods" role="group" aria-label="Meeting dates"><button type="button" data-meeting-period="all" aria-pressed="true">All meetings <span id="library-all-count"></span></button><button type="button" data-meeting-period="upcoming" aria-pressed="false">Today & future <span id="library-upcoming-count"></span></button><button type="button" data-meeting-period="past" aria-pressed="false">Past <span id="library-past-count"></span></button></div>
-          <input id="meeting-period" type="hidden" value="all"><div class="meeting-calendar-filter-bar" id="meeting-calendar-filter-bar" hidden><button class="secondary" id="meeting-calendar-filter-toggle" type="button" aria-expanded="false" aria-controls="meeting-filter-panel">Filters</button><div id="meeting-calendar-filter-chips" class="meeting-calendar-filter-chips"></div></div><div class="panel library-filters" id="meeting-filter-panel"><label class="library-search">Search meetings<input id="meeting-search" type="search" placeholder="Title, attendee, or words from a note…"></label><label>Meeting type<select id="meeting-type-filter"><option value="">All types</option><option value="individual">Individual</option><option value="group">Group</option><option value="team">Team</option></select></label><label>Attendee<select id="meeting-player-filter"><option value="">All players</option>${demo.players.map(p => `<option value="${p.id}">#${p.number} ${escape(p.name)}</option>`).join('')}</select></label><label>From<input id="meeting-start" type="date"></label><label>Through<input id="meeting-end" type="date"></label><label class="meeting-sort-control">Sort<select id="meeting-sort"><option value="recent">Newest date</option><option value="oldest">Oldest date</option><option value="title">Meeting title</option></select></label></div>
-          <div class="library-selected-day" id="meeting-selected-day" hidden><span id="meeting-selected-date"></span><button class="rail-link" id="meeting-clear-date" type="button">Clear date</button></div><div class="library-results"><p id="meeting-results" role="status"></p><button id="meeting-reset" class="rail-link" type="button">Reset filters</button></div><p class="library-date-note">Dates belong to saved meetings. Future dates appear here and on the calendar; no invitations or reminders are sent.</p><div id="meeting-full-calendar" hidden><div class="meeting-wide-toolbar"><div class="meeting-wide-navigation"><button class="secondary" id="meeting-wide-today" type="button">Today</button><button class="icon-button" id="meeting-wide-prev" type="button" aria-label="Previous calendar period">${icon('chevron')}</button><button class="icon-button" id="meeting-wide-next" type="button" aria-label="Next calendar period">${icon('chevron')}</button><h3 id="meeting-wide-title"></h3></div><label><span class="sr-only">Jump to calendar month</span><input id="meeting-wide-jump" type="month"></label></div><div class="meeting-wide-key"><span class="event-individual">Individual</span><span class="event-group">Group</span><span class="event-team">Team</span><span class="event-due">Open action due</span></div><div class="meeting-large-scroll"><div id="meeting-large-grid"></div></div></div><div id="meeting-list" class="library-meeting-list"></div></div>
+        <div id="meeting-library-list"><div class="section-heading library-heading"><div><p class="eyebrow">EVERY CONVERSATION, TOGETHER</p><h2 id="meetings-title" tabindex="-1">Your meeting notebook</h2><p>Find the conversation. Keep the context. Follow through.</p></div><div class="library-heading-actions"><div id="meeting-heading-view-controls"><div class="meeting-view-switch" role="group" aria-label="Meetings display mode"><button type="button" data-meeting-view="month" aria-pressed="true">Month</button><button type="button" data-meeting-view="week" aria-pressed="false">Week</button><button type="button" data-meeting-view="day" aria-pressed="false">Day</button><button type="button" data-meeting-view="year" aria-pressed="false">Year</button><button type="button" data-meeting-view="list" aria-pressed="false">List</button></div></div><button class="secondary" type="button" data-new-meeting>${icon('plus')} Create meeting</button></div></div>
+          <div class="library-layout"><div class="library-main"><div class="meeting-library-tools"><div class="meeting-type-chips" role="group" aria-label="Filter meetings by type">${[['','All types'],['individual','Individual'],['group','Group'],['team','Team']].map(([type,label])=>`<button type="button" data-calendar-type="${type}" aria-pressed="${!type}">${label}</button>`).join('')}</div><div class="meeting-search-row"><label class="meeting-page-search">${icon('search')}<span class="sr-only">Search meetings</span><input id="meeting-search" type="search" placeholder="Search meetings, players or notes…" autocomplete="off"></label><div class="meeting-calendar-filter-bar" id="meeting-calendar-filter-bar" hidden><button class="secondary" id="meeting-calendar-filter-toggle" type="button" aria-expanded="false" aria-controls="meeting-filter-panel">Filters</button><div id="meeting-calendar-filter-chips" class="meeting-calendar-filter-chips"></div></div></div></div><div class="panel library-filters" id="meeting-filter-panel"><label>Meeting type<select id="meeting-type-filter"><option value="">All types</option><option value="individual">Individual</option><option value="group">Group</option><option value="team">Team</option></select></label><label>Attendee<select id="meeting-player-filter"><option value="">All players</option>${demo.players.map(p => `<option value="${p.id}">#${p.number} ${escape(p.name)}</option>`).join('')}</select></label><label>From<input id="meeting-start" type="date"></label><label>Through<input id="meeting-end" type="date"></label><label class="meeting-sort-control">Sort<select id="meeting-sort"><option value="recent">Newest date</option><option value="oldest">Oldest date</option><option value="title">Meeting title</option></select></label></div>
+          <div class="library-results"><div class="library-results-summary"><p id="meeting-results" role="status"></p><span class="meeting-selected-date-inline" id="meeting-selected-day" hidden><span id="meeting-selected-date"></span><button id="meeting-clear-date" type="button" aria-label="Clear selected date" title="Clear selected date">×</button></span></div><button id="meeting-reset" class="rail-link" type="button">Reset filters</button></div><p class="library-date-note">Dates belong to saved meetings. Future dates appear here and on the calendar; no invitations or reminders are sent.</p><div id="meeting-full-calendar" hidden><div class="meeting-wide-toolbar"><div class="meeting-wide-navigation"><button class="secondary" id="meeting-wide-today" type="button">Today</button><button class="icon-button" id="meeting-wide-prev" type="button" aria-label="Previous calendar period">${icon('chevron')}</button><button class="icon-button" id="meeting-wide-next" type="button" aria-label="Next calendar period">${icon('chevron')}</button><button type="button" class="meeting-title-picker" id="meeting-wide-picker" aria-haspopup="dialog"><span id="meeting-wide-title"></span> <span aria-hidden="true">▾</span></button></div><div class="meeting-wide-options"><div id="meeting-calendar-view-controls"></div><label class="meeting-deadlines-toggle"><input id="meeting-show-deadlines" type="checkbox" checked> Show action deadlines</label></div></div><div class="meeting-wide-key"><span class="event-individual">Individual</span><span class="event-group">Group</span><span class="event-team">Team</span><span class="event-due">Open action due</span></div><div class="meeting-large-scroll"><div id="meeting-large-grid"></div></div></div><div id="meeting-list-toolbar" class="meeting-list-toolbar" hidden><h3>Saved conversations</h3><div id="meeting-list-view-controls"></div><div id="meeting-list-sort"></div></div><div id="meeting-list" class="library-meeting-list"></div></div>
           <aside class="library-calendar-rail"><section class="calendar-panel panel"><div class="calendar-heading"><h3 id="meeting-calendar-title"></h3><div><button class="icon-button" id="meeting-calendar-prev" aria-label="Previous meetings calendar month">${icon('chevron')}</button><button class="icon-button" id="meeting-calendar-next" aria-label="Next meetings calendar month">${icon('chevron')}</button></div></div><p class="calendar-caption">Meeting dates & action deadlines</p><div class="calendar-grid" id="meeting-calendar"></div><div class="calendar-key"><span class="meeting-individual">Individual</span><span class="meeting-group">Group</span><span class="meeting-team">Team</span><span class="action-due-key">Action due</span></div><div id="meeting-calendar-activities" class="calendar-activities" aria-live="polite"></div></section></aside>
           </div>
         </div>
@@ -183,9 +191,25 @@ document.querySelector('#app').innerHTML = `
 const noteDictation = mountNoteDictation({
   textarea:$('#note'), button:$('#note-dictate'), status:$('#note-dictation-status'), preview:$('#note-dictation-preview'), form:$('#meeting-form'), review:$('#review'),
   canStart:() => !busy && view === 'meetings',
+  onStateChange:active=>{if(active)askPanel.cancelVoice();}
 });
 
 const strategyRoom = initializeStrategy($('#strategy'), {players:demo.players,api,notify,today});
+const askPanel = createAskPanel({
+  players:demo.players,
+  request:(body,signal)=>api('/assistant',body,'POST',signal),
+  getMode:()=>mode,
+  getContext:()=>({playerId:view==='players'&&playerDetailOpen?selectedPlayer:null}),
+  canSend:()=>connected&&!busy&&!noteDictation.active,
+  openRecord:source=>{
+    openPlayerTimeline(source.player_ids?.[0]||selectedPlayer);
+    const record=document.getElementById(`record-${source.meeting_id}-${source.record_id}`);
+    if(record){const disclosure=record.closest('[data-meeting-disclosure]');if(disclosure)disclosure.open=true;const details=record.querySelector('details');if(details)details.open=true;record.focus({preventScroll:true});record.scrollIntoView({block:'center',behavior:'smooth'});}
+    else notify('This record is no longer visible. Reload the notebook to check its latest state.',true);
+  },
+});
+$('#header-ask').setAttribute('aria-controls','coach-side-chat');
+$('#header-ask').setAttribute('aria-expanded','false');
 
 function notify(text, error = false) {
   clearTimeout(statusTimer); $('#status-toast').hidden = true;
@@ -202,10 +226,10 @@ function showModeAlert(text) {
 }
 $('#close-status-toast').addEventListener('click', () => { clearTimeout(statusTimer); $('#status-toast').hidden = true; });
 
-async function api(path, body, method = 'POST') {
+async function api(path, body, method = 'POST', signal) {
   let res;
-  try { res = await fetch(`/api${path}`, {method, headers:{'Content-Type':'application/json'}, ...(body === undefined ? {} : {body: JSON.stringify(body)})}); }
-  catch { throw Error('Shared notebook unavailable. Start FastAPI on port 8001; both Demo and Live use SQLite.'); }
+  try { res = await fetch(`/api${path}`, {method, signal, headers:{'Content-Type':'application/json'}, ...(body === undefined ? {} : {body: JSON.stringify(body)})}); }
+  catch(error) { if(error.name==='AbortError')throw error; throw Error('Shared notebook unavailable. Start FastAPI on port 8001; both Demo and Live use SQLite.'); }
   let data; try { data = await res.json(); } catch { throw Error('Backend unavailable or returned an invalid response. Start FastAPI on port 8001.'); }
   if (!res.ok) throw Error(typeof data.detail === 'string' ? data.detail : 'Request could not be completed. Check the meeting fields.');
   return data;
@@ -306,6 +330,7 @@ $('#player-unit-tabs').addEventListener('click', e => {
 });
 
 function render() {
+  askPanel.refresh();
   $('#assistant-mode-note').textContent = mode === 'demo' ? 'Demo shows matching saved excerpts. Switch to Live for an Aivana answer.' : 'Live · Aivana answers from matching records. Questions are not saved or sent with later questions.';
   $('#assistant-send').disabled = assistantPending || !connected;
   $('#open-calendar-export').disabled = busy || !connected;
@@ -341,29 +366,29 @@ function renderMeetingLibrary() {
   const wide=meetingCalendarView!=='list';
   $('#meeting-library').classList.toggle('is-calendar-view',wide);
   $('#meeting-full-calendar').hidden=!wide; $('#meeting-list').hidden=wide;
-  $('#meeting-calendar-filter-bar').hidden=!wide;
-  $('#meeting-filter-panel').hidden=wide&&!meetingCalendarFiltersOpen;
+  $(wide?'#meeting-calendar-view-controls':'#meeting-list-view-controls').append($('.meeting-view-switch'));
+  $('#meeting-list-toolbar').hidden=wide;
+  $(wide?'#meeting-filter-panel':'#meeting-list-sort').append($('.meeting-sort-control'));
+  $('#meeting-calendar-filter-bar').hidden=false;
+  $('#meeting-filter-panel').hidden=!meetingCalendarFiltersOpen;
   const filterLabels=[['meeting-search','Search'],['meeting-type-filter','Type'],['meeting-player-filter','Attendee'],['meeting-start','From'],['meeting-end','Through']].flatMap(([id,label])=>{
     const field=$(`#${id}`);if(!field.value)return [];const value=field.tagName==='SELECT'?field.selectedOptions[0]?.textContent:field.value;return [{id,label:`${label}: ${value}`}];
   });
   $('#meeting-calendar-filter-toggle').textContent=`Filters${filterLabels.length?` · ${filterLabels.length}`:''}`;
   $('#meeting-calendar-filter-toggle').setAttribute('aria-expanded',String(meetingCalendarFiltersOpen));
   $('#meeting-calendar-filter-chips').innerHTML=filterLabels.length?filterLabels.map(filter=>`<button type="button" data-clear-meeting-filter="${filter.id}" aria-label="Remove ${escape(filter.label)}">${escape(filter.label)} <span aria-hidden="true">×</span></button>`).join(''):'<span>All meeting types · All players</span>';
+  document.querySelectorAll('[data-calendar-type]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.calendarType===$('#meeting-type-filter').value)));
   document.querySelectorAll('[data-meeting-view]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.meetingView===meetingCalendarView)));
-  $('#library-all-count').textContent = meetings.length;
-  $('#library-upcoming-count').textContent = meetings.filter(m => m.date >= today()).length;
-  $('#library-past-count').textContent = meetings.filter(m => m.date < today()).length;
   const start = $('#meeting-start').value, end = $('#meeting-end').value;
-  const filtered = filterMeetings(meetings, demo.players, {search:$('#meeting-search').value, type:$('#meeting-type-filter').value, player:$('#meeting-player-filter').value, start, end, period:$('#meeting-period').value, sort:$('#meeting-sort').value, today:today()});
+  const filtered = filterMeetings(meetings, demo.players, {search:$('#meeting-search').value, type:$('#meeting-type-filter').value, player:$('#meeting-player-filter').value, start, end, sort:$('#meeting-sort').value, today:today()});
   $('#meeting-results').textContent = start && end && start > end ? 'From must be on or before Through.' : `${filtered.length} of ${meetings.length} saved meetings`;
   renderMeetingCalendar(filtered);
   if(meetingCalendarView!=='list')renderWideMeetingCalendar(filtered);
   const dated = meetingCalendarDate ? activityForDate(filtered,meetingCalendarDate).meetings : filtered;
   if (!(start && end && start > end)) $('#meeting-results').textContent = `${meetingCalendarView==='list'?dated.length:filtered.length} of ${meetings.length} saved meetings`;
   $('#meeting-selected-day').hidden = !meetingCalendarDate;
-  $('#meeting-selected-date').textContent = meetingCalendarDate ? `Selected date · ${new Date(`${meetingCalendarDate}T12:00:00`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}` : '';
+  $('#meeting-selected-date').textContent = meetingCalendarDate ? `${new Date(`${meetingCalendarDate}T12:00:00`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}` : '';
   $('#meeting-list').innerHTML = meetingListMarkup(dated,demo.players,today());
-  document.querySelectorAll('[data-meeting-period]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.meetingPeriod === $('#meeting-period').value)));
   const meeting = meetings.find(m => m.id === selectedMeetingId);
   const expanded = [...$('#meeting-detail').querySelectorAll('details')].map(el => el.open);
   $('#meeting-detail').innerHTML = meeting ? meetingDetailMarkup(meeting,demo.players,meetingLibrarySensitive,(i,m,sensitive) => recordMarkup(i,m,sensitive,'meeting-detail-record')) : '';
@@ -397,15 +422,15 @@ $('#meeting-calendar').addEventListener('click', e => {
 $('#meeting-clear-date').addEventListener('click', () => { meetingCalendarDate = null; renderMeetingLibrary(); $('#meetings-title').focus({preventScroll:true}); });
 function renderWideMeetingCalendar(filtered) {
   const source=meetingCalendarSource(filtered),week=meetingCalendarView==='week';
-  const days=calendarDays(meetingCalendarMonth,week?'week':'month',meetingWeekAnchor);
+  const days=calendarDays(meetingCalendarMonth,meetingCalendarView,meetingWeekAnchor);
   const dateLabel=date=>new Date(`${date}T12:00:00`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-  $('#meeting-wide-title').textContent=week?`${dateLabel(days[0])} – ${dateLabel(days[6])}`:new Date(`${meetingCalendarMonth}-01T12:00:00`).toLocaleDateString('en-US',{month:'long',year:'numeric'});
-  $('#meeting-wide-jump').value=meetingCalendarMonth;
-  $('#meeting-large-grid').innerHTML=meetingCalendarMarkup(source,{month:meetingCalendarMonth,today:today(),selectedDate:meetingCalendarDate,view:week?'week':'month',anchor:meetingWeekAnchor});
+  $('#meeting-wide-title').textContent=week?`${dateLabel(days[0])} – ${dateLabel(days[6])}`:meetingCalendarView==='day'?dateLabel(meetingWeekAnchor):meetingCalendarView==='year'?meetingCalendarMonth.slice(0,4):new Date(`${meetingCalendarMonth}-01T12:00:00`).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  $('#meeting-show-deadlines').checked=meetingShowDeadlines;
+  $('#meeting-large-grid').innerHTML=meetingCalendarMarkup(source,{month:meetingCalendarMonth,today:today(),selectedDate:meetingCalendarDate,view:meetingCalendarView,anchor:meetingWeekAnchor,showDeadlines:meetingShowDeadlines});
 }
 function changeMeetingPeriod(offset) {
-  if(meetingCalendarView==='week') {meetingWeekAnchor=shiftCalendarDay(meetingWeekAnchor,offset*7);meetingCalendarMonth=meetingWeekAnchor.slice(0,7);}
-  else {const [year,month]=meetingCalendarMonth.split('-').map(Number),next=new Date(year,month-1+offset,1);meetingCalendarMonth=`${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,'0')}`;meetingWeekAnchor=`${meetingCalendarMonth}-01`;}
+  if(['week','day'].includes(meetingCalendarView)) {meetingWeekAnchor=shiftCalendarDay(meetingWeekAnchor,offset*(meetingCalendarView==='week'?7:1));meetingCalendarMonth=meetingWeekAnchor.slice(0,7);}
+  else {meetingWeekAnchor=addMonths(`${meetingCalendarMonth}-01`,offset*(meetingCalendarView==='year'?12:1));meetingCalendarMonth=meetingWeekAnchor.slice(0,7);}
   meetingCalendarDate=null;renderMeetingLibrary();
 }
 $('#meeting-calendar-filter-toggle').addEventListener('click',()=>{meetingCalendarFiltersOpen=!meetingCalendarFiltersOpen;renderMeetingLibrary();});
@@ -413,18 +438,27 @@ $('#meeting-calendar-filter-chips').addEventListener('click',event=>{const chip=
 $('.meeting-view-switch').addEventListener('click',event=>{
   const button=event.target.closest('[data-meeting-view]');if(!button)return;
   meetingCalendarView=button.dataset.meetingView; meetingCalendarFiltersOpen=false;
-  if(meetingCalendarView==='week')meetingWeekAnchor=meetingCalendarDate||(meetingWeekAnchor.slice(0,7)===meetingCalendarMonth?meetingWeekAnchor:`${meetingCalendarMonth}-01`);
+  if(['week','day'].includes(meetingCalendarView))meetingWeekAnchor=meetingCalendarDate||(meetingWeekAnchor.slice(0,7)===meetingCalendarMonth?meetingWeekAnchor:`${meetingCalendarMonth}-01`);
   renderMeetingLibrary();
 });
 $('#meeting-wide-prev').addEventListener('click',()=>changeMeetingPeriod(-1));$('#meeting-wide-next').addEventListener('click',()=>changeMeetingPeriod(1));
 $('#meeting-wide-today').addEventListener('click',()=>{meetingCalendarMonth=today().slice(0,7);meetingWeekAnchor=today();meetingCalendarDate=today();renderMeetingLibrary();});
-$('#meeting-wide-jump').addEventListener('change',event=>{if(!/^\d{4}-\d{2}$/.test(event.target.value))return;meetingCalendarMonth=event.target.value;meetingWeekAnchor=`${meetingCalendarMonth}-01`;meetingCalendarDate=null;renderMeetingLibrary();});
+$('#meeting-wide-picker').addEventListener('click',event=>openMeetingDatePicker(event.currentTarget,meetingWeekAnchor,today(),date=>{
+  meetingCalendarMonth=date.slice(0,7);meetingWeekAnchor=date;meetingCalendarDate=date;
+  if(meetingCalendarView==='year')meetingCalendarView='month';renderMeetingLibrary();
+}));
+$('#meeting-show-deadlines').addEventListener('change',event=>{meetingShowDeadlines=event.target.checked;renderMeetingLibrary();});
 $('#meeting-large-grid').addEventListener('click',event=>{
   if(event.target.closest('[data-open-meeting]'))return;
+  const monthButton=event.target.closest('[data-calendar-month]');
+  if(monthButton){meetingCalendarMonth=monthButton.dataset.calendarMonth;meetingWeekAnchor=`${meetingCalendarMonth}-01`;meetingCalendarDate=null;meetingCalendarView='month';renderMeetingLibrary();$('#meeting-wide-picker').focus({preventScroll:true});return;}
   const day=event.target.closest('[data-large-calendar-date]'),cell=event.target.closest('[data-large-calendar-cell]');
   if(!day&&!cell)return;
-  meetingCalendarDate=day?.dataset.largeCalendarDate||cell.dataset.largeCalendarCell;meetingWeekAnchor=meetingCalendarDate;
+  meetingCalendarDate=day?.dataset.largeCalendarDate||cell.dataset.largeCalendarCell;meetingWeekAnchor=meetingCalendarDate;meetingCalendarMonth=meetingCalendarDate.slice(0,7);
+  const yearDrilldown=meetingCalendarView==='year';
+  if(yearDrilldown)meetingCalendarView='day';
   renderMeetingLibrary();
+  if(yearDrilldown){$('#meeting-wide-picker').focus({preventScroll:true});return;}
   if(event.target.closest('.meeting-calendar-more,.meeting-calendar-due'))$('#meeting-calendar-activities').scrollIntoView({block:'nearest',behavior:'smooth'});
   if(event.detail===0)[...$('#meeting-large-grid').querySelectorAll('[data-large-calendar-date]')].find(el=>el.dataset.largeCalendarDate===meetingCalendarDate)?.focus({preventScroll:true});
 });
@@ -440,13 +474,17 @@ $('#meeting-back').addEventListener('click', () => {
   (button || $('#meetings-title')).focus();
 });
 $('#meeting-show-sensitive').addEventListener('change', e => { meetingLibrarySensitive = e.target.checked; renderMeetingLibrary(); });
-$('.library-periods').addEventListener('click', e => { const button = e.target.closest('[data-meeting-period]'); if (button) { $('#meeting-period').value = button.dataset.meetingPeriod; renderMeetingLibrary(); } });
 $('#meeting-search').addEventListener('input', renderMeetingLibrary);
+$('.meeting-type-chips').addEventListener('click',event=>{
+  const chip=event.target.closest('[data-calendar-type]');if(!chip)return;
+  $('#meeting-type-filter').value=chip.dataset.calendarType;renderMeetingLibrary();chip.focus({preventScroll:true});
+});
+$('#header-ask').addEventListener('click',()=>askPanel.isOpen?askPanel.close():askPanel.open());
 for (const id of ['meeting-type-filter','meeting-player-filter','meeting-start','meeting-end','meeting-sort']) $(`#${id}`).addEventListener('change', renderMeetingLibrary);
 function resetMeetingFilters() {
   meetingCalendarDate = null;
   for (const id of ['meeting-search','meeting-type-filter','meeting-player-filter','meeting-start','meeting-end']) $(`#${id}`).value = '';
-  $('#meeting-sort').value = 'recent'; $('#meeting-period').value = 'all';
+  $('#meeting-sort').value = 'recent';
 }
 $('#meeting-reset').addEventListener('click', () => { resetMeetingFilters(); renderMeetingLibrary(); });
 function actionBoardOptions() {
@@ -514,8 +552,11 @@ function renderActionBoard(actions = items().filter(i => i.kind === 'action')) {
   document.querySelectorAll('[data-action-status]').forEach(button => { const active = button.dataset.actionStatus === options.status; button.classList.toggle('active',active); button.setAttribute('aria-pressed',String(active)); });
 }
 function switchView(next) {
+  askPanel.cancelVoice();
   if (next !== 'meetings') noteDictation.cancel();
   view = next;
+  $('#page-title').textContent = ({desk:'Overview','meeting-library':'Meetings',meetings:'New meeting',players:'Players',tasks:'Actions',strategy:'Strategy',assistant:'Coach assistant'})[next] || 'Falcon Follow-up';
+  $('#page-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   if (next === 'strategy') strategyRoom.show();
   document.querySelectorAll('.view').forEach(el => el.hidden = el.id !== view);
   document.querySelectorAll('[data-view]').forEach(el => { const active = el.dataset.view === view || el.closest('nav') && view === 'meetings' && el.dataset.view === 'meeting-library'; el.classList.toggle('active', Boolean(active)); if (active) el.setAttribute('aria-current','page'); else el.removeAttribute('aria-current'); });
@@ -951,6 +992,19 @@ async function initializeNotebook() {
     const missingKey = mode === 'live' && !result.status.aivana_configured;
     notify(result.migrationError || (missingKey ? 'Notebook loaded. Configure backend/.env before live extraction; Demo needs no Aivana key.' : 'Notebook connected. Demo and Live share the same saved records.'), Boolean(result.migrationError || missingKey));
   } catch (error) { notify(error.message, true); }
-  finally { busy = false; $('#mode').disabled = false; render(); }
+  finally {
+    busy = false; $('#mode').disabled = false; render();
+    let settings = {};
+    try { settings = readTourSettings(window.localStorage); } catch { /* Storage may be disabled. */ }
+    if (connected && !welcomeTourShown && !tourActive() && shouldStart(settings, 'welcome')) runWelcomeTour();
+  }
 }
+let welcomeTourShown = false;
+function runWelcomeTour() {
+  welcomeTourShown = true;
+  startTour('welcome', {onEnd: how => {
+    try { rememberTour(window.localStorage, 'welcome', how); } catch { /* Storage may be disabled. */ }
+  }});
+}
+$('#replay-tour').addEventListener('click', runWelcomeTour);
 initializeNotebook();

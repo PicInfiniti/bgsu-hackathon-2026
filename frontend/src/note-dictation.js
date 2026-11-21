@@ -20,7 +20,7 @@ const errorMessages = {
   'language-not-supported':'English speech recognition is unavailable in this browser.',
 };
 
-export function mountNoteDictation({textarea, button, status, preview, form, review, canStart = () => true, onStateChange = () => {}, environment = globalThis}) {
+export function mountNoteDictation({textarea, button, status, preview, form, review, canStart = () => true, onStateChange = () => {}, environment = globalThis, subject = 'note', reviewHint = 'Review and edit the added text before extracting or saving.'}) {
   const Recognition = environment.SpeechRecognition || environment.webkitSpeechRecognition;
   let session = null, stopping = false, disposed = false;
   const supported = Boolean(Recognition) && environment.isSecureContext !== false;
@@ -49,7 +49,7 @@ export function mountNoteDictation({textarea, button, status, preview, form, rev
   }
   function start() {
     if (!supported || disposed || !canStart() || textarea.disabled) return;
-    if (textarea.value.length >= (textarea.maxLength > 0 ? textarea.maxLength : 12000)) { say('The note is at its character limit. Edit it before adding more text.',true); return; }
+    if (textarea.value.length >= (textarea.maxLength > 0 ? textarea.maxLength : 12000)) { say(`The ${subject} is at its character limit. Edit it before adding more text.`,true); return; }
     let recognition;
     try { recognition = new Recognition(); }
     catch { say('Speech recognition could not start in this browser. You can still type or paste notes.',true); return; }
@@ -72,7 +72,7 @@ export function mountNoteDictation({textarea, button, status, preview, form, rev
           textarea.dispatchEvent(new environment.Event('input',{bubbles:true}));
         }
         if (addition.truncated) {
-          finish('The note reached its character limit. Dictation stopped; review the final sentence.',true);
+          finish(`The ${subject} reached its character limit. Dictation stopped; review the final sentence.`,true);
           try { recognition.abort(); } catch { /* Already stopped. */ }
           return;
         }
@@ -87,7 +87,7 @@ export function mountNoteDictation({textarea, button, status, preview, form, rev
     };
     recognition.onend = () => {
       if (session !== current) return;
-      finish(current.added ? 'Dictation stopped. Review and edit the added text before extracting or saving.' : 'Dictation ended without finalized text. Try again, or type your notes.');
+      finish(current.added ? `Dictation stopped. ${reviewHint}` : `Dictation ended without finalized text. Try again, or type your ${subject}.`);
     };
     say('Requesting microphone access…'); update();
     try { recognition.start(); }
@@ -105,7 +105,7 @@ export function mountNoteDictation({textarea, button, status, preview, form, rev
   form.addEventListener('input',contextInput);
   environment.document?.addEventListener('visibilitychange',pageHidden);
   environment.addEventListener?.('pagehide',cancel);
-  say(supported ? 'Speak in English. Finalized text is added to your note.' : 'Voice to text is unavailable in this browser. You can still type or paste notes.');
+  say(supported ? `Speak in English. Finalized text is added to your ${subject}.` : 'Voice to text is unavailable in this browser. You can still type or paste text.');
   update();
   return {get active() { return Boolean(session); }, cancel, stop, destroy() {
     cancel(); disposed = true;

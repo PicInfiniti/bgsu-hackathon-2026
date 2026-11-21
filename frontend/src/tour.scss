@@ -1,0 +1,17 @@
+// Nonblocking highlighted tooltips adapted from coach-dashboard-redesign.
+.tour-pop { position: fixed; z-index: 210; box-sizing: border-box; max-height: calc(100dvh - 24px); overflow-y: auto; background: #fffdf9; border: 2px solid #e77726; border-radius: 14px; box-shadow: 0 12px 32px #4f2c1d40; padding: 16px; color: #583821; font-size: .88rem; font-family: inherit;
+  h3 { font-size: 1.08rem; margin: 0 0 8px; color: #583821; }
+  p { margin: 0 0 14px; line-height: 1.6; }
+  .tour-count { margin: 0 0 6px; font-size: .69rem; color: #9b7555; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+  .tour-actions { display: flex; gap: 7px; align-items: center; >span { flex: 1; } }
+  button { padding: 7px 11px; border: 1px solid #decbb2; border-radius: 7px; font: inherit; font-size: .76rem; font-weight: 650; cursor: pointer;
+    &:disabled { opacity: .45; cursor: default; }
+    &:focus-visible { outline: 2px solid #8c4e24; outline-offset: 2px; }
+    &.primary { background: #e77726; color: #27190f; border-color: #e77726; }
+    &.secondary { color: #725239; background: #fff9f1; }
+    &.text-button { border-color: transparent; background: transparent; padding-left: 0; color: #94613b; }
+  }
+}
+.tour-target { outline: 3px solid #e77726 !important; outline-offset: 3px; border-radius: 8px; }
+.workspace-app .tour-replay { display: inline-flex; align-items: center; gap: 6px; padding: 9px 13px; font-size: .8rem; }
+@media (prefers-reduced-motion: reduce) { .tour-target { scroll-behavior: auto; } }

@@ -1,0 +1,35 @@
+// Compact page-aware header adapted from coach-dashboard-redesign.
+.workspace-app {
+  .status-toast { top: auto; bottom: 22px; right: 24px; max-width: min(420px,calc(100vw - 32px)); }
+  .topbar { position: sticky; top: 0; z-index: 35; padding: 16px 28px; min-height: 96px; background: #fcf8f1f5; backdrop-filter: blur(14px); letter-spacing: normal;
+    h1 { margin: 0; font-size: 1.65rem; line-height: 1.2; &::after { display: none; } }
+    .header-context { min-width: 0; }
+    .header-eyebrow { display: block; margin: 0 0 4px; color: #ac7650; font-size: .59rem; font-weight: 750; letter-spacing: .13em; }
+    #page-date { display: block; margin: 6px 0 0; font-size: .74rem; color: #927b66; line-height: 1.3; }
+    .header-actions { display: flex; flex-wrap: wrap; justify-content: end; gap: 10px; }
+    .mode-control { display: flex; gap: 6px; font-size: .7rem; color: #9b846c; select { min-width: 155px; width: auto; margin: 0; font-size: .74rem; padding: 9px 24px 9px 10px; } }
+    #new-meeting { padding: 10px 14px; gap: 6px; font-size: .8rem; background: #fff8ee; color: #795333; border-color: #ddc6aa; box-shadow: none;
+      &:hover:not(:disabled) { background: #f1e5d3; border-color: #c8ab87; }
+      .ui-icon { width: 18px; height: 18px; }
+    }
+    .profile-link { padding-left: 12px; .ui-icon { width: 23px; height: 23px; } }
+  }
+  .header-ask { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #f0b48c; border-radius: 999px; padding: 9px 13px; color: #69452e; background: linear-gradient(135deg,#fffdf9,#fff0e1); font-size: .78rem; font-weight: 750; box-shadow: 0 2px 6px #fd500010; &:hover { background: #ffe9d6; } }
+  .shell>main { padding-top: 24px; }
+}
+@media (max-width:1200px) { .workspace-app .topbar { padding-inline: 22px; .mode-control { font-size: 0; } .header-ask>span:last-child { display: none; } .header-ask { font-size: 1rem; } } }
+@media (max-width:900px) { .workspace-app .topbar { h1 { font-size: 1.4rem; } .header-actions { gap: 7px; } } }
+@media (max-width:680px) { .workspace-app {
+  .status-toast { top: auto; bottom: 16px; right: 16px; }
+  .topbar { flex-wrap: wrap; padding: 14px 16px; gap: 12px;
+    .header-context { flex: 1; }
+    .header-eyebrow { font-size: .54rem; }
+    #page-date { font-size: .67rem; }
+    .header-actions { width: 100%; justify-content: start; }
+    .mode-control { margin-right: auto; select { min-width: 145px; max-width: 180px; font-size: .7rem; } }
+    #new-meeting { width: 36px; height: 36px; padding: 8px; font-size: 0; gap: 0; }
+    .tour-replay { height: 36px; padding: 8px 10px; span { display: none; } }
+    .header-ask { height: 36px; padding: 7px 10px; }
+  }
+  .shell>main { padding-top: 20px; }
+} }

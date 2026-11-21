@@ -20,3 +20,9 @@ const groupHtml = assistantAnswerMarkup({...result, scope:'group', player_ids:['
 assert.ok(groupHtml.includes('Avery &lt;test&gt;'));
 assert.ok(groupHtml.includes('1 of 2 selected players'));
 assert.ok(groupHtml.includes('absence from this answer does not mean no history'));
+
+const firstChat = assistantAnswerMarkup(result,{sourcePrefix:'ask-source-1'});
+const secondChat = assistantAnswerMarkup(result,{sourcePrefix:'ask-source-2'});
+assert.ok(firstChat.includes('id="ask-source-1-S1"'));
+assert.ok(secondChat.includes('id="ask-source-2-S1"'));
+assert.ok(!firstChat.includes('id="assistant-source-S1"'));
