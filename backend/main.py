@@ -13,6 +13,7 @@ load_environment()
 app = FastAPI(title='Falcon Follow-up prototype')
 db_path = Path(os.environ.get('COACH_DB_PATH', Path(__file__).with_name('coach.sqlite3')))
 store = Store(db_path)
+store.seed_pack()
 
 
 @app.get('/api/health')
@@ -44,6 +45,14 @@ def extract(body: dict):
 def save(body: dict):
     try:
         return store.save(body)
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from None
+
+
+@app.post('/api/meetings/import')
+def import_browser_history(body: dict):
+    try:
+        return {'imported': store.import_reviewed(body.get('meetings'))}
     except ValueError as error:
         raise HTTPException(422, str(error)) from None
 

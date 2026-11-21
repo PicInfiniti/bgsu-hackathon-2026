@@ -24,7 +24,7 @@ def valid_date(value):
     return value
 
 
-def validate_meeting(raw, require_items=False):
+def validate_meeting(raw, require_items=False, historical=False):
     if not isinstance(raw, dict):
         raise ValueError('Meeting must be an object.')
     result = {key: text(raw.get(key), key, limit) for key, limit in [('title', 160), ('note', 12000)]}
@@ -41,7 +41,7 @@ def validate_meeting(raw, require_items=False):
         raise ValueError('Individual meetings require exactly one attendee.')
     if result['meeting_type'] == 'group' and len(attendees) < 2:
         raise ValueError('Group meetings require at least two attendees.')
-    if result['meeting_type'] == 'team' and set(attendees) != PLAYERS:
+    if result['meeting_type'] == 'team' and not historical and set(attendees) != PLAYERS:
         raise ValueError('Team meetings require the full demo roster.')
     result['attendees'] = attendees
     if require_items:
@@ -101,6 +101,38 @@ class Store:
         with self.connect() as db:
             db.execute('INSERT INTO meetings VALUES (?, ?)', (meeting['id'], json.dumps(meeting)))
         return meeting
+
+    def import_reviewed(self, records):
+        """Preserve approved browser history, IDs and statuses; SQLite wins conflicts."""
+        if not isinstance(records, list) or len(records) > 500:
+            raise ValueError('Import up to 500 reviewed meetings at a time.')
+        restored = []
+        for raw in records:
+            meeting = validate_meeting(raw, require_items=True, historical=True)
+            if meeting['origin'] != 'demo':
+                raise ValueError('Browser migration accepts reviewed demo records only.')
+            meeting['id'] = text(raw.get('id'), 'meeting id', 100)
+            item_ids = set()
+            for item, original in zip(meeting['items'], raw['items']):
+                item['id'] = text(original.get('id'), 'item id', 100)
+                if item['id'] in item_ids:
+                    raise ValueError('Item IDs must be unique within a meeting.')
+                item_ids.add(item['id'])
+                completed = original.get('completed', False)
+                if not isinstance(completed, bool) or (item['kind'] != 'action' and completed):
+                    raise ValueError('Only action records may be completed, using a boolean.')
+                item['completed'] = completed
+            restored.append(meeting)
+        # Validate everything first so malformed input cannot cause a partial import.
+        with self.connect() as db:
+            for meeting in restored:
+                db.execute('INSERT OR IGNORE INTO meetings VALUES (?, ?)',
+                           (meeting['id'], json.dumps(meeting)))
+            return db.total_changes
+
+    def seed_pack(self):
+        """Install the two pre-reviewed practice examples once, never overwrite edits."""
+        return self.import_reviewed(DEMO['meetings'])
 
     def complete(self, meeting_id, item_id, completed):
         if not isinstance(completed, bool):

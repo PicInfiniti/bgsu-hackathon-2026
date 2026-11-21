@@ -69,8 +69,10 @@ def main():
                     raise RuntimeError('Backend startup timed out.')
                 health = request('/api/health')
                 assert health == {'ok': True, 'aivana_configured': args.live}, health
-                assert request('/api/meetings') == []
                 demo = json.loads((ROOT / 'data/demo.json').read_text())
+                seeded = request('/api/meetings')
+                assert {m['id'] for m in seeded} == {m['id'] for m in demo['meetings']}
+                assert all(m['approved'] and m['origin'] == 'demo' for m in seeded)
                 meeting = copy.deepcopy(demo['samples'][0])
                 result = request('/api/extract', {**meeting, 'mode': 'demo'})
                 assert result['origin'] == 'demo' and result['items']
@@ -80,12 +82,13 @@ def main():
                 meeting['items'] = result['items']
                 meeting['approved'] = False
                 request('/api/meetings', meeting, expected=422)
-                assert request('/api/meetings') == []
+                assert request('/api/meetings') == seeded
                 # Only the prepared, explicitly approved fixture is saved. AI output
                 # remains unsaved pending a coach's review.
                 meeting.update(approved=True, origin='demo')
                 saved = request('/api/meetings', meeting, expected=201)
-                assert request('/api/meetings')[0]['id'] == saved['id']
+                assert any(m['id'] == saved['id'] for m in request('/api/meetings'))
+                assert len(request('/api/meetings')) == len(seeded) + 1
                 action = next(item for item in saved['items'] if item['kind'] == 'action')
                 path = f"/api/meetings/{saved['id']}/items/{action['id']}"
                 for completed in (True, False):
@@ -100,7 +103,7 @@ def main():
                 print('Calling real Aivana structured extraction (one request)...', flush=True)
                 live = request('/api/extract', {**meeting, 'mode': 'live'})
                 assert live['origin'] == 'aivana' and live['items']
-                assert len(request('/api/meetings')) == 1, 'Extraction must not save records.'
+                assert len(request('/api/meetings')) == len(seeded) + 1, 'Extraction must not save records.'
                 print(f"PASS: real structured extraction; {len(live['items'])} server-validated items. Unsaved output for coach review:", flush=True)
                 print(json.dumps(live['items'], indent=2), flush=True)
                 print('Calling real Aivana preparation stream from the approved demo fixture (one request)...', flush=True)
