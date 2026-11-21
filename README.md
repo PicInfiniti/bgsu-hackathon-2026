@@ -13,7 +13,7 @@ npm ci
 npm run dev
 ```
 
-Open **http://127.0.0.1:5174/login**. Use **`demo` for the coach ID and `demo` for the password** to open Demo extraction. The login field accepts a coach ID as well as an email. To use Aivana, choose **Open live workspace** or open **http://127.0.0.1:5174/workspace?mode=live**. The signup preview is at **http://127.0.0.1:5174/signup**. Both modes require FastAPI on port 8001; Vite serves the frontend on 5174. Switch the **Extraction** selector to change the extractor without replacing your records. The selected mode remains in the URL after reload.
+Open **http://127.0.0.1:5174/login**. Use **`demo` for the coach ID and `demo` for the password** to open Demo extraction. The login field accepts a coach ID as well as an email. After signing in, select **Live · Aivana** to use Aivana. You can also open **http://127.0.0.1:5174/workspace?mode=live**. The signup preview is at **http://127.0.0.1:5174/signup**. Both modes require FastAPI on port 8001; Vite serves the frontend on 5174. Switch the **Extraction** selector to change the extractor without replacing your records. The selected mode remains in the URL after reload.
 
 The frontend follows a warm notebook design with BGSU orange and brown: notebook navigation, a ruled meeting editor, a calendar based on saved meeting/action dates, and a follow-up sidebar. Login and signup use matching paper panels and notebook artwork.
 

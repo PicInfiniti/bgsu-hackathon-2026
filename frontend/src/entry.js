@@ -45,8 +45,6 @@ if (route === '/workspace') {
             <button class="primary auth-submit" type="submit">${signup ? 'Create coach account' : 'Sign in'}</button>
             <div id="auth-feedback" class="auth-feedback" role="status" hidden></div>
           </form>
-          <div class="auth-divider"><span>TAKE A LOOK FIRST</span></div>
-          <a class="auth-demo" href="/workspace?mode=live">Open live workspace</a>
           <p class="auth-demo-caption">Demo login: ID demo · Password demo. Both modes use the same notebook.</p>
           <p class="auth-preview"><strong>Local prototype</strong> · Demo credentials open sample extraction. Account creation is a preview; credentials are never saved or sent. Both modes require the local backend.</p>
         </div>
@@ -71,7 +69,7 @@ if (route === '/workspace') {
     }
     const feedback = document.querySelector('#auth-feedback');
     feedback.hidden = false;
-    feedback.textContent = signup ? 'Your form is ready for review. Account creation is not available in this design preview. Sign in with demo / demo, or open the live workspace below.' : 'For Demo, use demo as both the coach ID and password. Other accounts are not connected; you can open the live workspace below.';
+    feedback.textContent = signup ? 'Your form is ready for review. Account creation is not available in this design preview. Sign in with demo / demo, then choose Live extraction in the workspace.' : 'For Demo, use demo as both the coach ID and password. Other accounts are not connected. After demo login, choose Live extraction in the workspace.';
     password.value = '';
   });
 }
