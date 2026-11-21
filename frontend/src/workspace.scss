@@ -517,6 +517,54 @@ $paper: #fcf8f1;
 }
 @media (max-width:680px) { .workspace-app .player-history-main .timeline-meeting-card.compact-meeting>details>summary { grid-template-columns: auto 1fr; .timeline-action-status { grid-column: 2; grid-row: 1; justify-self: end; } strong { grid-column: 1/-1; grid-row: 2; } time { grid-column: 1; grid-row: 3; } small { grid-column: 2; grid-row: 3; } .timeline-expand-hint { grid-column: 1/-1; grid-row: 4; } } }
 
+// Keep the conversation trail aligned as individual meeting cards expand.
+.workspace-app .player-history-main #timeline {
+  display: grid;
+  gap: 10px;
+  padding-left: 28px;
+  margin-top: 14px;
+
+  >.timeline-meeting-card.compact-meeting {
+    --timeline-dot: #80684b;
+    --timeline-border-width: 1px;
+    position: relative;
+    margin: 0;
+    overflow: visible;
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: calc(-21px - var(--timeline-border-width));
+      top: 26px;
+      width: 2px;
+      height: calc(100% + 12px);
+      background: #dfcdb5;
+      pointer-events: none;
+    }
+    &::after {
+      content: '';
+      position: absolute;
+      left: calc(-26px - var(--timeline-border-width));
+      top: 20px;
+      width: 12px;
+      height: 12px;
+      box-sizing: border-box;
+      border: 3px solid #fffaf2;
+      border-radius: 50%;
+      background: var(--timeline-dot);
+      box-shadow: 0 0 0 1px var(--timeline-dot);
+      pointer-events: none;
+    }
+    &:last-child::before { display: none; }
+    &.group-meeting-card { --timeline-dot: #2f6f99; }
+    &.team-meeting-card { --timeline-dot: #44775a; }
+    &.has-open-actions { --timeline-border-width: 4px; }
+    &.has-overdue-actions { --timeline-border-width: 4px; }
+    &.has-completed-actions { --timeline-border-width: 4px; }
+  }
+  >.empty { margin-left: -28px; }
+}
+
 .workspace-app {
   .library-heading-actions { display: flex; align-items: center; flex-wrap: wrap; justify-content: end; gap: 14px; }
   .meeting-view-switch { display: inline-flex; padding: 3px; gap: 3px; border: 1px solid #ddcdb8; border-radius: 8px; background: #f0e7da;
@@ -556,3 +604,22 @@ $paper: #fcf8f1;
 }
 
 .workspace-app .library-calendar-rail .calendar-day.is-active-week:not(.today):not(.selected-day) { background: #f0e2cf; color: #775334; }
+
+// Upcoming conversations glow in their calendar meeting-type color.
+.workspace-app .player-history-main #timeline >.timeline-meeting-card.compact-meeting {
+  &.is-today-meeting::after,
+  &.is-upcoming-meeting::after {
+    color: var(--timeline-dot);
+    box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 10%, transparent), 0 0 12px 3px color-mix(in srgb, currentColor 40%, transparent);
+    animation: conversation-dot-glow 4.5s cubic-bezier(.45, 0, .55, 1) infinite;
+  }
+}
+@keyframes conversation-dot-glow {
+  0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 6%, transparent), 0 0 12px 3px color-mix(in srgb, currentColor 22%, transparent); }
+  50% { box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 14%, transparent), 0 0 12px 3px color-mix(in srgb, currentColor 55%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workspace-app .player-history-main #timeline >.timeline-meeting-card.compact-meeting {
+    &.is-today-meeting::after, &.is-upcoming-meeting::after { animation: none; }
+  }
+}
