@@ -1,0 +1,327 @@
+{
+  "date": "2026-11-20",
+  "data": "Original team-authored synthetic practice pack; not organizer data",
+  "scope": "Spot checks only; prompts changed between runs. See qa-2026-11-20.md.",
+  "runs": {
+    "review": [
+      {
+        "case": "group",
+        "items": [
+          {
+            "player_id": "p02",
+            "kind": "action",
+            "text": "Review the defensive rotation clips",
+            "skill": "defensive rotation",
+            "quote": "Review the defensive rotation clips by 2026-11-22.",
+            "due_date": "2026-11-22"
+          },
+          {
+            "player_id": "p04",
+            "kind": "action",
+            "text": "Call out every screen",
+            "skill": "screening",
+            "quote": "Call out every screen during the next practice.",
+            "due_date": null
+          },
+          {
+            "player_id": "p02",
+            "kind": "improvement",
+            "text": "Your communication improved in the second half",
+            "skill": "communication",
+            "quote": "Your communication improved in the second half.",
+            "due_date": null
+          },
+          {
+            "player_id": "p04",
+            "kind": "improvement",
+            "text": "Your communication improved in the second half",
+            "skill": "communication",
+            "quote": "Your communication improved in the second half.",
+            "due_date": null
+          }
+        ]
+      },
+      {
+        "case": "team",
+        "items": [
+          {
+            "player_id": "p02",
+            "kind": "action",
+            "text": "Review two defensive rotation clips",
+            "skill": "defensive rotation",
+            "quote": "Jordan Ellis: Review two defensive rotation clips by 2026-11-19.",
+            "due_date": "2026-11-19"
+          },
+          {
+            "player_id": "p04",
+            "kind": "praise",
+            "text": "Your screen calls were clear in the final drill",
+            "skill": "screen calls",
+            "quote": "Casey Lane: Your screen calls were clear in the final drill.",
+            "due_date": null
+          },
+          {
+            "player_id": "p03",
+            "kind": "improvement",
+            "text": "Work on keeping your eyes up when receiving the outlet pass",
+            "skill": "receiving outlet pass",
+            "quote": "Morgan Reed: Work on keeping your eyes up when receiving the outlet pass.",
+            "due_date": null
+          }
+        ]
+      },
+      {
+        "case": "ambiguous-date",
+        "error": "skill must contain 1\u2013100 characters."
+      },
+      {
+        "case": "no-deadline",
+        "items": [
+          {
+            "player_id": "p11",
+            "kind": "action",
+            "text": "Practice ten bounce passes to a moving partner.",
+            "skill": "Passing",
+            "quote": "Practice ten bounce passes to a moving partner.",
+            "due_date": null
+          },
+          {
+            "player_id": "p11",
+            "kind": "improvement",
+            "text": "Work on planting your outside foot before changing direction.",
+            "skill": "Footwork",
+            "quote": "Work on planting your outside foot before changing direction.",
+            "due_date": null
+          }
+        ]
+      },
+      {
+        "case": "non-attendee",
+        "items": [
+          {
+            "player_id": "p06",
+            "kind": "action",
+            "text": "Review the passing clips",
+            "skill": "passing",
+            "quote": "Review the passing clips by 2026-11-22.",
+            "due_date": "2026-11-22"
+          }
+        ]
+      }
+    ],
+    "recheck": [
+      {
+        "case": "group",
+        "items": [
+          {
+            "player_id": "p02",
+            "kind": "action",
+            "text": "Review the defensive rotation clips",
+            "skill": "Defensive rotation",
+            "quote": "Review the defensive rotation clips by 2026-11-22.",
+            "due_date": "2026-11-22"
+          },
+          {
+            "player_id": "p04",
+            "kind": "action",
+            "text": "Call out every screen",
+            "skill": "Screen calls",
+            "quote": "Call out every screen during the next practice.",
+            "due_date": null
+          },
+          {
+            "player_id": "p02",
+            "kind": "praise",
+            "text": "Your communication improved in the second half",
+            "skill": "Communication",
+            "quote": "Your communication improved in the second half.",
+            "due_date": null
+          },
+          {
+            "player_id": "p04",
+            "kind": "praise",
+            "text": "Your communication improved in the second half",
+            "skill": "Communication",
+            "quote": "Your communication improved in the second half.",
+            "due_date": null
+          }
+        ]
+      },
+      {
+        "case": "ambiguous-date",
+        "items": [
+          {
+            "player_id": "p10",
+            "kind": "action",
+            "text": "Send your rebounding drill notes",
+            "skill": "rebounding",
+            "quote": "Send your rebounding drill notes sometime next week.",
+            "due_date": null
+          }
+        ]
+      }
+    ],
+    "final": [
+      {
+        "case": "team",
+        "items": [
+          {
+            "player_id": "p02",
+            "kind": "action",
+            "text": "Review defensive rotation clips",
+            "skill": "Defensive rotation",
+            "quote": "Review two defensive rotation clips by 2026-11-19.",
+            "due_date": "2026-11-19"
+          },
+          {
+            "player_id": "p04",
+            "kind": "praise",
+            "text": "Clear screen calls",
+            "skill": "Screen calls",
+            "quote": "Your screen calls were clear in the final drill.",
+            "due_date": null
+          },
+          {
+            "player_id": "p03",
+            "kind": "improvement",
+            "text": "Keep eyes up when receiving outlet pass",
+            "skill": "Receiving outlet pass",
+            "quote": "Work on keeping your eyes up when receiving the outlet pass.",
+            "due_date": null
+          }
+        ]
+      },
+      {
+        "case": "no-deadline",
+        "items": [
+          {
+            "player_id": "p11",
+            "kind": "action",
+            "text": "Practice ten bounce passes to a moving partner.",
+            "skill": "Bounce passes",
+            "quote": "Practice ten bounce passes to a moving partner.",
+            "due_date": null
+          },
+          {
+            "player_id": "p11",
+            "kind": "improvement",
+            "text": "Work on planting your outside foot before changing direction.",
+            "skill": "Footwork",
+            "quote": "Work on planting your outside foot before changing direction.",
+            "due_date": null
+          }
+        ]
+      },
+      {
+        "case": "non-attendee",
+        "items": [
+          {
+            "player_id": "p06",
+            "kind": "action",
+            "text": "Review the passing clips",
+            "skill": "passing",
+            "quote": "Taylor Hayes: Review the passing clips by 2026-11-22.",
+            "due_date": "2026-11-22"
+          }
+        ]
+      },
+      {
+        "case": "custom",
+        "items": [
+          {
+            "player_id": "p02",
+            "kind": "action",
+            "text": "Send two defensive rotation clips",
+            "skill": "Defensive rotation",
+            "quote": "Send two defensive rotation clips by 2026-11-24.",
+            "due_date": "2026-11-24"
+          },
+          {
+            "player_id": "p04",
+            "kind": "praise",
+            "text": "Your screen calls were clear today",
+            "skill": "Screen calls",
+            "quote": "Your screen calls were clear today.",
+            "due_date": null
+          },
+          {
+            "player_id": "p04",
+            "kind": "improvement",
+            "text": "Work on calling screens earlier",
+            "skill": "Screen calls",
+            "quote": "Work on calling screens earlier.",
+            "due_date": null
+          }
+        ]
+      }
+    ],
+    "details": [
+      {
+        "case": "group",
+        "items": [
+          {
+            "player_id": "p02",
+            "kind": "action",
+            "text": "Review the defensive rotation clips",
+            "skill": "Defensive rotation",
+            "quote": "Jordan: Review the defensive rotation clips by 2026-11-22.",
+            "due_date": "2026-11-22"
+          },
+          {
+            "player_id": "p04",
+            "kind": "action",
+            "text": "Call out every screen during the next practice",
+            "skill": "Screening awareness",
+            "quote": "Casey: Call out every screen during the next practice.",
+            "due_date": null
+          },
+          {
+            "player_id": "p02",
+            "kind": "praise",
+            "text": "Your communication improved in the second half",
+            "skill": "Communication",
+            "quote": "Both players: Your communication improved in the second half.",
+            "due_date": null
+          },
+          {
+            "player_id": "p04",
+            "kind": "praise",
+            "text": "Your communication improved in the second half",
+            "skill": "Communication",
+            "quote": "Both players: Your communication improved in the second half.",
+            "due_date": null
+          }
+        ]
+      },
+      {
+        "case": "team",
+        "items": [
+          {
+            "player_id": "p02",
+            "kind": "action",
+            "text": "Review two defensive rotation clips",
+            "skill": "Defensive rotation",
+            "quote": "Review two defensive rotation clips by 2026-11-19.",
+            "due_date": "2026-11-19"
+          },
+          {
+            "player_id": "p04",
+            "kind": "praise",
+            "text": "Your screen calls were clear in the final drill.",
+            "skill": "Screen calls",
+            "quote": "Your screen calls were clear in the final drill.",
+            "due_date": null
+          },
+          {
+            "player_id": "p03",
+            "kind": "improvement",
+            "text": "Work on keeping your eyes up when receiving the outlet pass.",
+            "skill": "Outlet pass reception",
+            "quote": "Work on keeping your eyes up when receiving the outlet pass.",
+            "due_date": null
+          }
+        ]
+      }
+    ]
+  }
+}

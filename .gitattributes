@@ -1,0 +1,2 @@
+# Preserve organizer PDFs verbatim; do not treat their internal bytes as text.
+*.pdf binary
