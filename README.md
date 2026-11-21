@@ -70,7 +70,9 @@ The backend loads `backend/.env`; exported variables take precedence. Restart af
 4. **Follow up.** Open a player's compact timeline or Actions. Complete/reopen assignments, inspect source notes, and identify open or overdue work. Shared assignments retain independent player completion controls.
 5. **Prepare or ask.** Choose a saved/custom preparation target, date, focus and source conversations. Or ask the assistant about an individual, selected group or full team and follow its dated sources.
 
-**Meetings** offers Month, Week and List views, type-colored meeting chips, due-action chips and filters. A small calendar/day agenda stays available in all three modes. Saved future dates are notebook entries; they do not send invitations or schedule timed appointments.
+**Meetings** uses the calendar design adapted from `coach-dashboard-redesign`: compact Monday-first Month/Week views, Day and Year views, a year/month/day picker, and a deadline visibility toggle. Month remains the default; List, type-colored meeting chips, filters and the small calendar/day agenda stay available. Search/Filters sit on the left and type chips on the right; a selected date appears beside the saved-meeting count. Year dates open Day, and year month headings open Month. List uses compact meeting rows, the same collapsed Filters control, and a toolbar with view switches and sorting. Saved future dates are notebook entries; they do not send invitations or schedule timed appointments.
+
+**Header and help.** The header shows the current page, date, Demo/Live mode and an **Ask Aivana** button. Ask opens a side chat with Individual/Group/Team selection, cited answers and timeline links. The chat’s Voice to text button appends finalized speech to your question; stop and review it before pressing Send. Browser speech support and microphone permission are required. Questions are independent; the drawer does not change records. A first-visit welcome tour introduces the workspace; closing or finishing it is remembered in this browser. Use **Tour** to replay it. Notifications appear at the bottom right.
 
 **Players** provides a searchable position/group roster and compact history. Meeting rows show action counts with orange open, red overdue and green completed-only borders. **Overview → Players to check in with** computes recency in code, with meeting-type and 7/14/30/60/90-day controls. Future dates do not count as completed check-ins.
 
@@ -249,7 +251,7 @@ The [official brief](sources/2026_BGSU_Hackathon_Project_Briefs.pdf), page 3, de
 | Aivana use | 20 | JSON Schema, filtered source-cited answers, streamed preparation and bounded context/output. |
 | Depth | 15 | All three Level 2 options; Level 3 calendar export, voice dictation and a known-answer benchmark, subject to verification/evaluation limits above. |
 | Reliability/data handling | 15 | Bad-input checks, bounded correction, visible API failures, quote/roster validation and approval audit. |
-| Usability | 10 | Source-backed review, searchable roster/actions, compact history and Month/Week/List calendars. |
+| Usability | 10 | Source-backed review, searchable roster/actions, compact history and Month/Week/Day/Year/List calendars. |
 | Demo/documentation | 10 | Setup instructions, explicit limitations, verification evidence and a timed demo. |
 
 Submission requires a repository accessible to judges, a README, synthetic application data, no committed credentials, and a working 3–5 minute presentation. Official submission deadline: **November 21, 2026, 5 PM America/New_York**; presentations begin at **5:30 PM**. Local commits alone do not establish publication, judge access or submission.
