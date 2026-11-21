@@ -40,7 +40,7 @@ const icon = (name) => {
   const paths = {
     chat: '<path d="M21 11a8 8 0 0 1-8 8H7l-4 3V11a9 9 0 0 1 18 0Z"/><path d="M7 10h10M7 14h6"/>',
     team: '<circle cx="12" cy="7" r="3"/><path d="M7 21v-3a5 5 0 0 1 10 0v3M4 6a3 3 0 0 0 0 6M20 6a3 3 0 0 1 0 6M2 20v-3a4 4 0 0 1 3-4M22 20v-3a4 4 0 0 0-3-4"/>',
-    football: '<path d="M3 21C1 11 11 1 21 3c2 10-8 20-18 18Z"/><path d="m8 16 8-8M9 11l4 4M12 8l4 4"/>',
+    football: '<path d="M2 12C6.5 3 17.5 3 22 12c-4.5 9-15.5 9-20 0Z" fill="currentColor" fill-opacity=".08"/><path d="M6 6.9a11 11 0 0 1 0 10.2M18 6.9a11 11 0 0 0 0 10.2"/><path d="M9 12h6m-5-1.6v3.2m2-3.2v3.2m2-3.2v3.2" stroke-width="1.4"/>',
     home: '<path d="m3 10 9-7 9 7v10H3z"/><path d="M9 20v-7h6v7"/>',
     note: '<rect x="5" y="3" width="15" height="18" rx="2"/><path d="M9 8h7M9 12h7M9 16h4M3 7h4M3 12h4M3 17h4"/>',
     people: '<circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6M18 15a5 5 0 0 1 3 5"/>',
