@@ -12,12 +12,15 @@ if (route === '/workspace') {
       <section class="auth-story" aria-label="Falcon Follow-up">
         <a class="brand auth-brand" href="/login" aria-label="Falcon Follow-up home"><span class="brand-mark">F<span>·</span></span><span>FALCON<small>FOLLOW-UP</small></span></a>
         <div class="auth-story-content">
-          <p class="auth-kicker">FOR THE COACH BEHIND THE TEAM</p>
-          <h1>Great coaching.<br>Lasting <em>impact.</em></h1>
-          <p class="auth-story-intro">Every conversation is a chance to move a player forward. Make sure the next step never gets lost.</p>
-          <div class="playbook-art" aria-hidden="true">
-            <svg class="court-lines" viewBox="0 0 500 250" fill="none"><rect x="35" y="20" width="430" height="210" rx="5"/><path d="M250 20v210M35 75h70v100H35m430-100h-70v100h70"/><circle cx="250" cy="125" r="44"/><path class="play-path" d="M122 183c50 0 38-101 95-101s59 86 109 61l39-28m-18-4 21 2-8 20"/><circle class="play-player" cx="122" cy="183" r="12"/><path class="play-cross" d="m315 54 15 15m0-15-15 15m-144 90 15 15m0-15-15 15"/></svg>
-            <div class="auth-note"><span class="note-check">✓</span><div><span class="note-overline">THE NEXT CONVERSATION STARTS HERE</span><strong>Less lost in the notes.<br>More follow-through.</strong></div></div>
+          <p class="auth-kicker">THE COACH’S NOTEBOOK</p>
+          <h1>Every conversation.<br>A little more<br><em>follow-through.</em></h1>
+          <p class="auth-story-intro">Keep the notes, the next steps, and the bigger picture together. A calmer space for the coach behind the team.</p>
+          <div class="auth-notebook" aria-hidden="true">
+            <div class="book-spine"><i></i><i></i><i></i><i></i></div>
+            <div class="book-topline"><span>FALCON FOLLOW-UP</span><span>COACH'S NOTES</span></div>
+            <h3>Small notes.<br>Lasting progress.</h3>
+            <div class="book-lines"><span class="book-tag">NEXT STEP</span><p>Review the defensive rotation clips.</p><span class="book-tag praise-tag">WORTH RECOGNIZING</span><p>Clear communication in the second half.</p></div>
+            <div class="book-bottom"><span>Keep the context.</span><span>✓ Follow up with purpose.</span></div>
           </div>
           <div class="auth-benefits"><span>Keep the context</span><span>Build a clear plan</span><span>Follow up with purpose</span></div>
         </div>
@@ -26,6 +29,7 @@ if (route === '/workspace') {
       <main class="auth-main">
         <div class="auth-topline"><span>${signup ? 'Already have an account?' : 'New to Falcon Follow-up?'}</span><a href="${signup ? '/login' : '/signup'}">${signup ? 'Sign in' : 'Create an account'}</a></div>
         <div class="auth-form-wrap">
+          <nav class="auth-tabs" aria-label="Coach access"><a href="/login" ${!signup ? 'aria-current="page"' : ''}>Sign in</a><a href="/signup" ${signup ? 'aria-current="page"' : ''}>Create an account</a></nav>
           <div class="auth-form-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 4h10a2 2 0 0 1 2 2v14H5V6a2 2 0 0 1 2-2Z"/><path d="M9 3h6v4H9zM8 12h8m-8 4h5"/></svg></div>
           <p class="auth-kicker">YOUR COACHING WORKSPACE</p>
           <h2>${signup ? 'Start your next chapter.' : 'Welcome back, Coach.'}</h2>
@@ -36,7 +40,7 @@ if (route === '/workspace') {
             ${signup ? '<label for="coach-team">Team or program <span class="auth-optional">(optional)</span></label><input id="coach-team" name="team" autocomplete="organization" placeholder="Your team or program" maxlength="100">' : ''}
             <label for="coach-password">Password</label>
             <div class="auth-password"><input id="coach-password" name="password" type="password" autocomplete="${signup ? 'new-password' : 'current-password'}" ${signup ? 'minlength="12"' : ''} placeholder="${signup ? 'Create a password' : 'Enter your password'}" required aria-describedby="password-help"><button id="toggle-password" type="button" aria-controls="coach-password" aria-label="Show password" aria-pressed="false">Show</button></div>
-            <p id="password-help" class="auth-input-help">${signup ? 'Use at least 12 characters.' : 'Use your coach account password.'}</p>
+            <p id="password-help" class="auth-input-help">${signup ? 'Use at least 12 sample characters for this preview.' : 'Design preview — use sample details only.'}</p>
             <button class="primary auth-submit" type="submit">${signup ? 'Create coach account' : 'Sign in'}</button>
             <div id="auth-feedback" class="auth-feedback" role="status" hidden></div>
           </form>

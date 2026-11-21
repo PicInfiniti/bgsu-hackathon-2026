@@ -1,4 +1,5 @@
 import './styles.scss';
+import './workspace.scss';
 import demo from '../../data/demo.json';
 import { extractDemo } from './demo-extraction.js';
 
@@ -18,43 +19,74 @@ const overdue = (x) => x.kind === 'action' && !x.completed && x.due_date && x.du
 const items = () => meetings.flatMap(m => m.items.map(i => ({...i, meeting:m})));
 const persist = () => { try { localStorage.setItem(key, JSON.stringify(meetings)); } catch { notify('Browser storage is full or unavailable. These changes will not survive a reload.', true); } };
 
+const icon = (name) => {
+  const paths = {
+    home: '<path d="m3 10 9-7 9 7v10H3z"/><path d="M9 20v-7h6v7"/>',
+    note: '<rect x="5" y="3" width="15" height="18" rx="2"/><path d="M9 8h7M9 12h7M9 16h4M3 7h4M3 12h4M3 17h4"/>',
+    people: '<circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6M18 15a5 5 0 0 1 3 5"/>',
+    check: '<rect x="3" y="3" width="18" height="18" rx="3"/><path d="m7 12 3 3 7-7"/>',
+    calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 11h18"/>',
+    plus: '<path d="M12 4v16M4 12h16"/>',
+    chevron: '<path d="m9 5 7 7-7 7"/>',
+    user: '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="9" r="3"/><path d="M5 19a7 7 0 0 1 14 0"/>',
+  };
+  return `<svg class="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.note}</svg>`;
+};
+document.querySelector('#app').classList.add('workspace-app');
 document.querySelector('#app').innerHTML = `
   <aside class="sidebar">
-    <a class="brand" href="#"><span class="brand-mark">F<span>·</span></span><span>FALCON<small>FOLLOW-UP</small></span></a>
-    <div class="workspace-label">COACHING WORKSPACE</div>
+    <a class="brand" href="/workspace"><span class="brand-mark">F<span>·</span></span><span>Falcon<small>Follow-up</small></span></a>
+    <div class="workspace-label">THE COACH'S NOTEBOOK</div>
     <nav aria-label="Main navigation">
-      <button data-view="desk" class="active"><span aria-hidden="true">▤</span> Meeting desk</button>
-      <button data-view="players"><span aria-hidden="true">◉</span> Player timelines</button>
-      <button data-view="tasks"><span aria-hidden="true">☑</span> Action board <b id="nav-count"></b></button>
+      <button data-view="desk" class="active">${icon('home')} Overview</button>
+      <button data-view="players">${icon('people')} Players</button>
+      <button data-view="tasks">${icon('check')} Actions <b id="nav-count"></b></button>
     </nav>
+    <div class="sidebar-note">A good conversation<br>is just the beginning.<span>Make the follow-up count.</span></div>
     <div class="sidebar-bottom"><span class="team-avatar">pi</span><div>picInfiniti<small>Coach Meeting Tracker</small></div></div>
   </aside>
   <div class="shell">
-    <header class="topbar"><span>ATHLETICS / <strong>COACH MEETINGS</strong></span><label class="mode-control">Workspace <select id="mode"><option value="demo">Demo · no API needed</option><option value="live">Live · local backend</option></select></label></header>
+    <header class="topbar"><div><h1>Your coaching workspace</h1><p>A place for every conversation. A plan for what comes next.</p></div><div class="header-actions"><button class="primary" id="new-meeting">${icon('plus')} New meeting</button><a class="profile-link" href="/login" aria-label="Open coach sign-in preview">${icon('user')}</a></div></header>
     <main>
-      <div class="page-heading"><div><p class="eyebrow">LESS LOST IN THE NOTES. MORE FOLLOW-THROUGH.</p><h1>Good conversations.<br><span>Clear next steps.</span></h1><p class="intro">Turn the meeting into a plan. Keep the context, review the details,<br class="desktop"> and give every player a clear next step.</p></div><div class="heading-stamp"><span>COACH'S<br>PLAYBOOK</span><svg viewBox="0 0 100 70" aria-hidden="true"><path d="M12 56L38 15l22 41M26 36h25M70 16v40M61 25l9-9 9 9"/><circle cx="82" cy="52" r="7"/></svg></div></div>
+      <div class="workspace-toolbar"><span class="workspace-date">${icon('note')} Your notebook, at a glance</span><label class="mode-control">Workspace <select id="mode"><option value="demo">Demo · no API needed</option><option value="live">Live · local backend</option></select></label></div>
       <div id="mode-note" class="notice"></div>
       <div id="message" role="status" aria-live="polite" hidden></div>
-      <section class="stats" aria-label="Workspace summary"><a href="#recent-heading" data-stat="meetings"><span>Saved meetings</span><strong id="meeting-count">0</strong><small>Reviewed conversations</small></a><a href="#tasks" data-stat="open"><span>Open actions</span><strong id="open-count">0</strong><small>Clear next steps for your team</small></a><a href="#tasks" data-stat="overdue" class="urgent"><span>Needs follow-up</span><strong id="overdue-count">0</strong><small id="clock-note"></small></a><a href="#players" data-stat="players"><span>Players reached</span><strong id="players-count">0</strong><small>Of ${demo.players.length} fictional roster members</small></a></section>
       <section id="desk" class="view">
-        <div class="section-heading"><div><p class="eyebrow">CAPTURE & CLARIFY</p><h2>The meeting desk</h2></div><label class="sample-control">Try a meeting <select id="sample">${demo.samples.map(s => `<option value="${s.id}">${escape(s.label)}</option>`).join('')}</select></label></div>
-        <div class="desk-grid">
-          <form id="meeting-form" class="panel note-panel">
-            <div class="panel-heading"><span class="step">01</span><div><h3>Start with the conversation</h3><p>The original note stays with every record.</p></div></div>
-            <label>Meeting title<input id="title" maxlength="160" required></label>
-            <div class="form-row"><label>Date<input id="date" type="date" required></label><label>Meeting type<select id="meeting-type"><option value="individual">Individual</option><option value="group">Group</option><option value="team">Full team</option></select></label></div>
-            <fieldset><legend>Attendees</legend><div id="attendees" class="attendees"></div></fieldset>
-            <label>Meeting notes<textarea id="note" rows="7" maxlength="12000" required></textarea></label>
-            <p class="field-help">Synthetic notes only. Capture what was said; avoid assumptions about character or attitude. For live team extraction, use a short section with only a few assignments. Keep the meeting date, attendees, and attribution context with each section; review and save each separately. If extraction is cut short, shorten the section and retry.</p>
-            <button class="primary full" id="extract" type="submit">Extract sample records</button>
-          </form>
-          <section class="panel review-panel"><div class="panel-heading"><span class="step">02</span><div><h3>Review before it becomes a record</h3><p>You make the final call on every detail.</p></div></div><div id="review"></div></section>
+        <div class="notebook-layout">
+          <aside class="notebook-rail" aria-label="Notebook navigation">
+            <div class="section-heading"><h2>My notebooks</h2><button class="icon-button" data-new-meeting aria-label="Start a new meeting">${icon('plus')}</button></div>
+            <div class="notebook-list">
+              <button class="notebook-card selected" data-view="desk">${icon('note')}<span><strong>Meeting notes</strong><small>Capture & review</small></span>${icon('chevron')}</button>
+              <button class="notebook-card" data-view="players">${icon('people')}<span><strong>Player records</strong><small>${demo.players.length} fictional players</small></span>${icon('chevron')}</button>
+              <button class="notebook-card" data-view="tasks">${icon('check')}<span><strong>Follow-up actions</strong><small>Keep the next step clear</small></span>${icon('chevron')}</button>
+            </div>
+            <div id="recent-heading" class="section-heading recent-heading"><h2>Recent conversations</h2></div><div id="recent" class="recent-list"></div>
+            <button class="rail-link" data-view="players">Browse player timelines</button>
+          </aside>
+          <div class="meeting-notebook">
+            <div class="notebook-tabs" aria-label="Meeting workflow"><a href="#meeting-form" class="selected">${icon('note')} Meeting note</a><a href="#review-panel">${icon('check')} Review & approve</a></div>
+            <div class="notebook-caption">${icon('people')} Coach-reviewed notes. Context that stays with the player.</div>
+            <form id="meeting-form" class="panel note-panel">
+              <label class="title-label"><span>Meeting title</span><input id="title" maxlength="160" placeholder="Give this conversation a title" required></label>
+              <div class="form-row meeting-meta"><label>Date<input id="date" type="date" required></label><label>Meeting type<select id="meeting-type"><option value="individual">Individual</option><option value="group">Group</option><option value="team">Full team</option></select></label></div>
+              <label class="sample-control">Start with a sample<select id="sample">${demo.samples.map(s => `<option value="${s.id}">${escape(s.label)}</option>`).join('')}</select></label>
+              <details class="attendee-picker"><summary id="attendee-summary">Meeting attendees</summary><fieldset><legend class="sr-only">Attendees</legend><div id="attendees" class="attendees"></div></fieldset></details>
+              <label class="note-label">The conversation<textarea id="note" rows="8" maxlength="12000" placeholder="What did you discuss? Add the player's name, feedback, next steps, and any deadlines…" required></textarea></label>
+              <details class="writing-help"><summary>Tips for a useful meeting note</summary><p>Synthetic notes only. Record what the coach said; avoid assumptions about character or attitude. For long team notes, extract short sections with a few assignments each. Keep the date, attendees, and attribution context; review and save each section separately. Shorten truncated extractions before retrying.</p></details>
+              <div class="editor-footer"><span>${icon('note')} Original notes stay attached.</span><button class="primary" id="extract" type="submit">Extract sample records</button></div>
+            </form>
+            <section id="review-panel" class="panel review-panel"><div class="panel-heading">${icon('check')}<div><h3>A second look, before you save.</h3><p>Check the player, the meaning, and the next step.</p></div></div><div id="review"></div></section>
+          </div>
+          <aside class="planning-rail" aria-label="Calendar and follow-up overview">
+            <section class="calendar-panel panel"><div class="calendar-heading"><h2 id="calendar-title"></h2><div><button class="icon-button" id="calendar-prev" aria-label="Previous month">${icon('chevron')}</button><button class="icon-button" id="calendar-next" aria-label="Next month">${icon('chevron')}</button></div></div><p class="calendar-caption">Saved conversations & action deadlines</p><div class="calendar-grid" id="calendar"></div><div class="calendar-key"><span>Meeting</span><span>Action due</span></div></section>
+            <section class="followup-panel panel"><div class="section-heading"><h2>On your radar</h2>${icon('check')}</div><div id="radar-list"></div><button class="rail-link" data-view="tasks">View all actions</button></section>
+            <section class="stats" aria-label="Workspace summary"><a href="#recent-heading" data-stat="meetings"><strong id="meeting-count">0</strong><span>Saved meetings</span><small>Reviewed conversations</small></a><a href="#tasks" data-stat="open"><strong id="open-count">0</strong><span>Open actions</span><small>Ready to follow up</small></a><a href="#tasks" data-stat="overdue" class="urgent"><strong id="overdue-count">0</strong><span>Needs follow-up</span><small id="clock-note"></small></a><a href="#players" data-stat="players"><strong id="players-count">0</strong><span>Players reached</span><small>Of ${demo.players.length} fictional players</small></a></section>
+          </aside>
         </div>
-        <div id="recent-heading" class="section-heading recent-heading"><div><p class="eyebrow">THE RUNNING RECORD</p><h2>Recent conversations</h2></div><span class="muted">Newest meeting first</span></div><div id="recent" class="recent-list"></div>
       </section>
-      <section id="players" class="view" hidden><div class="section-heading"><div><p class="eyebrow">CONTEXT THAT STAYS WITH THE PLAYER</p><h2>Player timelines</h2></div></div><div class="player-layout"><div class="panel roster" id="roster"></div><div class="panel"><div id="player-heading"></div><div id="timeline"></div><div class="prep-box"><h3>Prepare for the next conversation</h3><p>Build a brief from this player's approved records.</p><button id="prep" class="secondary">Build preparation brief</button><pre id="prep-text" aria-live="polite"></pre></div></div></div></section>
-      <section id="tasks" class="view" hidden><div class="section-heading"><div><p class="eyebrow">MAKE THE FOLLOW-UP HAPPEN</p><h2>Action board</h2></div><label>Show <select id="task-filter"><option value="open">Open actions</option><option value="overdue">Overdue</option><option value="done">Completed</option><option value="all">All actions</option></select></label></div><div id="task-list"></div></section>
-      <footer><span>FALCON FOLLOW-UP <b> / </b> picInfiniti</span><span>Original fictional demo data · Separate from Falcon Away</span></footer>
+      <section id="players" class="view" hidden><div class="section-heading"><div><p class="eyebrow">THE PLAYER NOTEBOOK</p><h2>Player timelines</h2></div></div><div class="player-layout"><div class="panel roster" id="roster"></div><div class="panel"><div id="player-heading"></div><div id="timeline"></div><div class="prep-box"><h3>Prepare for the next conversation</h3><p>Build a brief from this player's approved records.</p><button id="prep" class="secondary">Build preparation brief</button><pre id="prep-text" aria-live="polite"></pre></div></div></div></section>
+      <section id="tasks" class="view" hidden><div class="section-heading"><div><p class="eyebrow">A LITTLE FOLLOW-THROUGH</p><h2>Action board</h2></div><label>Show <select id="task-filter"><option value="open">Open actions</option><option value="overdue">Overdue</option><option value="done">Completed</option><option value="all">All actions</option></select></label></div><div id="task-list"></div></section>
+      <footer><span>FALCON FOLLOW-UP <b> / </b> picInfiniti</span><span>Every conversation deserves a next step. · Synthetic data only</span></footer>
     </main>
   </div>`;
 
@@ -71,6 +103,7 @@ async function api(path, body, method = 'POST') {
 }
 function capture() {
   current = {title:$('#title').value.trim(), date:$('#date').value, meeting_type:$('#meeting-type').value, attendees:[...document.querySelectorAll('[name="attendee"]:checked')].map(x => x.value), note:$('#note').value.trim()};
+  updateAttendeeSummary();
   return clone(current);
 }
 function validMeeting(m) {
@@ -79,17 +112,22 @@ function validMeeting(m) {
   if (m.meeting_type === 'group' && m.attendees.length < 2) throw Error('A group meeting needs at least two attendees.');
   if (m.meeting_type === 'team' && m.attendees.length !== demo.players.length) throw Error('Select the full fictional roster for a team meeting.');
 }
+function updateAttendeeSummary() {
+  const selected = [...document.querySelectorAll('[name="attendee"]:checked')].map(el => name(el.value));
+  $('#attendee-summary').textContent = `Attendees · ${selected.length ? selected.length <= 2 ? selected.join(', ') : `${selected.length} players selected` : 'Choose players'}`;
+}
 function loadSample(id) {
   current = clone(demo.samples.find(x => x.id === id)); draft = [];
   $('#title').value = current.title; $('#date').value = current.date; $('#meeting-type').value = current.meeting_type; $('#note').value = current.note;
   $('#attendees').innerHTML = demo.players.map(p => `<label class="attendee"><input name="attendee" type="checkbox" value="${p.id}" ${current.attendees.includes(p.id) ? 'checked' : ''}><span>${escape(p.name.split(' ')[0])}</span></label>`).join('');
+  updateAttendeeSummary();
   renderReview();
 }
 function invalidate() { draft = []; renderReview(); }
 function renderReview() {
   const review = $('#review');
   if (!draft.length) {
-    review.innerHTML = `<div class="empty-review"><div class="paper-icon" aria-hidden="true">✓</div><h3>A little clarity goes a long way.</h3><p>Extract the note to review action items,<br>praise, and areas for improvement.</p><div class="legend"><span>Action items</span><span>Praise</span><span>Improvement</span></div></div>`;
+    review.innerHTML = `<div class="empty-review"><div class="paper-icon" aria-hidden="true">✓</div><h3>A little clarity goes a long way.</h3><p>Extract your meeting note, then review the actions,<br>praise, and areas for improvement here.</p><div class="legend"><span>Action items</span><span>Praise</span><span>Improvement</span></div></div>`;
     return;
   }
   review.innerHTML = `<div class="review-summary"><strong>${draft.length} records to review</strong><span>${origin === 'demo' ? 'Sample fixture · not AI output' : 'Aivana extraction · check every item'}</span></div><div class="draft-list">${draft.map((i,n) => `
@@ -108,10 +146,11 @@ function render() {
   $('#meeting-count').textContent = meetings.length; $('#open-count').textContent = open.length; $('#overdue-count').textContent = open.filter(overdue).length;
   $('#players-count').textContent = new Set(meetings.flatMap(m => m.attendees)).size; $('#nav-count').textContent = open.length;
   $('#clock-note').textContent = `As of ${today()}${mode === 'demo' ? ' · demo clock' : ''}`;
-  $('#mode-note').textContent = mode === 'demo' ? 'DEMO WORKSPACE · Original fictional records. Sample extraction uses prepared fixtures, not AI. Changes stay in this browser. Dates use November 20, 2026 for repeatable comparison.' : 'LIVE WORKSPACE · Uses your local backend and Aivana account. Only approved records are saved to SQLite. Synthetic notes only.';
+  $('#mode-note').textContent = mode === 'demo' ? 'Demo notebook · Fictional players and prepared sample extractions, not AI. Saved in this browser. Demo date: November 20, 2026.' : 'LIVE WORKSPACE · Uses your local backend and Aivana account. Only approved records are saved to SQLite. Synthetic notes only.';
   $('#extract').textContent = mode === 'demo' ? 'Extract sample records' : 'Extract with Aivana';
-  $('#recent').innerHTML = [...meetings].sort((a,b) => b.date.localeCompare(a.date)).map(m => `<button class="meeting-row" data-open-player="${escape(m.attendees[0])}"><span class="meeting-date"><b>${escape(m.date.slice(8))}</b>${escape(m.date.slice(0,7))}</span><span class="meeting-title"><strong>${escape(m.title)}</strong><small>${escape(m.meeting_type)} · ${m.attendees.length} attendee${m.attendees.length === 1 ? '':'s'} · ${m.items.length} records</small></span><span class="badge">${m.origin === 'demo' ? 'Demo fixture' : 'Reviewed'}</span></button>`).join('') || '<div class="panel empty">No meetings yet. Save your first reviewed extraction.</div>';
+  $('#recent').innerHTML = [...meetings].sort((a,b) => b.date.localeCompare(a.date)).map(m => `<button class="meeting-row" data-open-player="${escape(m.attendees[0])}"><span class="meeting-date">${icon('note')}</span><span class="meeting-title"><strong>${escape(m.title)}</strong><small>${escape(m.date)} · ${m.items.length} records</small></span><span class="badge">${m.origin === 'demo' ? 'Demo fixture' : 'Reviewed'}</span></button>`).join('') || '<div class="panel empty">No meetings yet. Save your first reviewed extraction.</div>';
   $('#roster').innerHTML = `<p class="eyebrow">FICTIONAL TEAM ROSTER</p>${demo.players.map(p => `<button data-player="${p.id}" class="player-row ${p.id === selectedPlayer ? 'selected':''}"><span class="avatar">${p.number}</span><span><strong>${escape(p.name)}</strong><small>${escape(p.position)}</small></span></button>`).join('')}`;
+  renderPlanning();
   const p = player(selectedPlayer);
   $('#player-heading').innerHTML = `<div class="player-profile"><span class="avatar large">${p.number}</span><div><p class="eyebrow">${escape(p.position)}</p><h2>${escape(p.name)}</h2><p>Approved feedback and follow-up, in context.</p></div></div>`;
   const history = all.filter(i => i.player_id === selectedPlayer).sort((a,b) => b.meeting.date.localeCompare(a.meeting.date));
@@ -126,6 +165,55 @@ function switchView(next) {
   document.querySelectorAll('[data-view]').forEach(el => { el.classList.toggle('active', el.dataset.view === view); if (el.dataset.view === view) el.setAttribute('aria-current','page'); else el.removeAttribute('aria-current'); });
 }
 function cancelPrep() { prepSource?.close(); prepSource = null; $('#prep').disabled = false; $('#prep-text').textContent = ''; }
+
+let calendarMonth = today().slice(0, 7);
+function renderPlanning() {
+  const [year, month] = calendarMonth.split('-').map(Number);
+  const start = new Date(year, month - 1, 1).getDay();
+  const days = new Date(year, month, 0).getDate();
+  $('#calendar-title').textContent = new Date(year, month - 1, 1).toLocaleDateString('en-US', {month:'long', year:'numeric'});
+  const meetingDates = new Set(meetings.map(m => m.date));
+  const deadlines = new Set(items().filter(i => i.kind === 'action' && !i.completed && i.due_date).map(i => i.due_date));
+  $('#calendar').innerHTML = ['Su','Mo','Tu','We','Th','Fr','Sa'].map(day => `<span class="weekday">${day}</span>`).join('') + '<span aria-hidden="true"></span>'.repeat(start) + Array.from({length:days}, (_, i) => {
+    const date = `${calendarMonth}-${String(i+1).padStart(2,'0')}`;
+    const hasMeeting = meetingDates.has(date), hasDeadline = deadlines.has(date);
+    return `<button type="button" class="calendar-day ${date === today() ? 'today' : ''} ${hasMeeting ? 'has-meeting' : ''} ${hasDeadline ? 'has-deadline' : ''}" data-calendar-date="${date}" ${date === today() ? 'aria-current="date"' : ''} aria-label="${date}${hasMeeting ? ', saved meeting' : ''}${hasDeadline ? ', action due' : ''}">${i+1}<span class="day-markers" aria-hidden="true">${hasMeeting ? '<i></i>' : ''}${hasDeadline ? '<i class="deadline-dot"></i>' : ''}</span></button>`;
+  }).join('');
+  const pending = items().filter(i => i.kind === 'action' && !i.completed).sort((a,b) => (a.due_date || '9999').localeCompare(b.due_date || '9999')).slice(0,3);
+  $('#radar-list').innerHTML = pending.map(i => `<button class="radar-item" data-player="${escape(i.player_id)}">${icon(overdue(i) ? 'check' : 'people')}<span><strong>${escape(name(i.player_id))}</strong><small>${escape(i.text)}</small><em>${i.due_date ? `Due ${escape(i.due_date)}${overdue(i) ? ' · Overdue' : ''}` : 'No deadline set'}</em></span>${icon('chevron')}</button>`).join('') || '<p class="radar-empty">All caught up. New approved actions will appear here.</p>';
+}
+function newMeeting() {
+  if (busy) return;
+  current = {title:'', date:today(), meeting_type:'individual', attendees:[], note:''};
+  draft = []; $('#title').value = ''; $('#date').value = current.date; $('#meeting-type').value = 'individual'; $('#note').value = '';
+  $('#sample').selectedIndex = -1;
+  document.querySelectorAll('[name="attendee"]').forEach(el => el.checked = false);
+  updateAttendeeSummary(); $('.attendee-picker').open = true;
+  renderReview(); switchView('desk'); $('#title').focus();
+  notify('New meeting ready. Choose attendees and add your synthetic notes. Use live mode to extract custom notes.');
+}
+$('#new-meeting').addEventListener('click', newMeeting);
+$('[data-new-meeting]').addEventListener('click', newMeeting);
+for (const [id, offset] of [['calendar-prev', -1], ['calendar-next', 1]]) {
+  $(`#${id}`).addEventListener('click', () => {
+    const [year, month] = calendarMonth.split('-').map(Number);
+    const next = new Date(year, month - 1 + offset, 1);
+    calendarMonth = `${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,'0')}`;
+    renderPlanning();
+  });
+}
+$('#calendar').addEventListener('click', e => {
+  const day = e.target.closest('[data-calendar-date]');
+  if (!day) return;
+  const date = day.dataset.calendarDate;
+  const pending = items().filter(i => i.kind === 'action' && !i.completed && i.due_date === date);
+  const saved = meetings.filter(m => m.date === date);
+  notify(`${date}: ${saved.length} saved meeting${saved.length === 1 ? '' : 's'} and ${pending.length} open action${pending.length === 1 ? '' : 's'} due.`);
+  if (pending.length || saved.length) {
+    selectedPlayer = pending[0]?.player_id || saved[0].attendees[0];
+    cancelPrep(); render(); switchView('players');
+  }
+});
 
 $('#sample').addEventListener('change', e => { loadSample(e.target.value); notify('Sample loaded. Extract it to review the records.'); });
 $('#meeting-form').addEventListener('input', () => { if (!busy) { capture(); invalidate(); } });

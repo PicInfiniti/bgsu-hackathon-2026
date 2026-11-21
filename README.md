@@ -15,6 +15,8 @@ npm run dev
 
 Open **http://127.0.0.1:5174** for the coach login design. The signup design is at **http://127.0.0.1:5174/signup**; choose **Explore the demo workspace** or open **http://127.0.0.1:5174/workspace** for the tracker. This is a separate port from Project B. No backend, key, account, or payment is needed in demo mode.
 
+The frontend follows a warm notebook design with BGSU orange and brown: notebook navigation, a ruled meeting editor, a calendar based on saved meeting/action dates, and a follow-up sidebar. Login and signup use matching paper panels and notebook artwork.
+
 Login and signup are responsive design previews, with required-field/email validation, password visibility controls, and a 12-character minimum for the signup password. They do not authenticate, create accounts, store credentials, or send form data. The workspace remains directly accessible. Production build verified; browser visual and interaction checks remain unverified.
 
 1. Start with the one-on-one sample, or select the group/team example.
