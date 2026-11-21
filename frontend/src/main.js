@@ -59,7 +59,7 @@ document.querySelector('#app').innerHTML = `
   </aside>
   <div class="shell">
     <header class="topbar"><div><h1>Your football workspace</h1><p>A place for every conversation. A plan for what comes next.</p></div><div class="header-actions"><button class="primary" id="new-meeting">${icon('plus')} New meeting</button><a class="profile-link" href="/login" aria-label="Open coach sign-in preview">${icon('user')}</a></div></header>
-    <div id="status-toast" class="status-toast" role="status" aria-live="polite" hidden><span class="toast-icon">${icon('check')}</span><span id="status-toast-text"></span><button class="icon-button" id="close-status-toast" aria-label="Dismiss notification">×</button></div>
+    <div id="status-toast" class="status-toast" role="status" aria-live="polite" hidden><span id="status-toast-text"></span><button class="icon-button" id="close-status-toast" aria-label="Dismiss notification">×</button></div>
     <main>
       <div class="workspace-toolbar"><span class="workspace-date">${icon('football')} Football · Your coaching notebook</span><label class="mode-control">Extraction <select id="mode"><option value="demo">Demo · prepared samples</option><option value="live">Live · Aivana</option></select></label></div>
       <div id="message" role="status" aria-live="polite" hidden></div>
