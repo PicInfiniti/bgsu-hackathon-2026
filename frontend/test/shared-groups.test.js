@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { groupRecords, meetingTypeLabel } from '../src/shared-groups.js';
+import { groupRecords, meetingTypeLabel, meetingReviewFrame } from '../src/shared-groups.js';
 import { actionRows } from '../src/action-board-view.js';
 
 const meeting = {id:'m1',title:'Line <review>',meeting_type:'group',date:'2026-11-20',note:'Both players: Complete drill.'};
@@ -20,7 +20,7 @@ assert.equal(actionRows(duplicates,duplicates,players,options).count,2);
 const {rows,count}=actionRows(records,records,players,options);
 assert.equal(count,1);
 assert.ok(rows.includes('1 / 2 completed'));
-assert.ok(rows.includes('Group meeting · Line &lt;review&gt;'));
+assert.ok(rows.includes('Group meeting') && rows.includes('Line &lt;review&gt;'));
 assert.ok(rows.includes('data-item="i1"'));
 assert.ok(rows.includes('data-item="i2"'));
 assert.ok(rows.includes('Reopen'));
@@ -31,6 +31,30 @@ assert.ok(filtered.rows.includes('1 / 2 completed'));
 assert.ok(!filtered.rows.includes('data-item="i2"'));
 const lone={...base,display_group:undefined};
 const single=actionRows([lone],[lone],players,options);
-assert.ok(single.rows.includes('Group meeting · Line &lt;review&gt;'));
+assert.ok(single.rows.includes('Group meeting') && rows.includes('Line &lt;review&gt;'));
 assert.ok(!single.rows.includes('shared-action-members'));
 assert.equal(meetingTypeLabel('team'),'Full team meeting');
+const frame=meetingReviewFrame('<article>Individual task editor</article>',{...meeting,attendees:['p1','p2']},players);
+assert.ok(frame.includes('group-scope-card'));
+assert.ok(frame.includes('Group meeting'));
+assert.ok(frame.includes('Blair · Reese'));
+assert.ok(frame.includes('Individual task editor'));
+assert.ok(frame.includes('Line &lt;review&gt;'));
+const teamFrame=meetingReviewFrame('<article>Shared feedback</article>',{...meeting,meeting_type:'team',attendees:['p1','p2']},players);
+assert.ok(teamFrame.includes('team-scope-card'));
+assert.ok(teamFrame.includes('Full team meeting'));
+assert.equal(meetingReviewFrame('Individual editor',{meeting_type:'individual'},players),'Individual editor');
+const otherMeeting={...meeting,id:'m2',meeting_type:'team',title:'Whole team',attendees:['p1','p2']};
+otherMeeting.items=[];
+const distinct=[{...base,display_group:undefined,text:'Blair: Practice footwork.'},
+  {...base,id:'team-action',meeting:otherMeeting,display_group:undefined,text:'Review walkthrough.'},
+  {...base,id:'i3',display_group:undefined,player_id:'p2',text:'Review blocking.'}];
+const meetingSections=actionRows(distinct,distinct,players,options);
+assert.equal(meetingSections.meetingCount,2);
+assert.equal(meetingSections.count,3);
+assert.equal((meetingSections.rows.match(/class="action-meeting-card /g)||[]).length,2);
+assert.ok(meetingSections.rows.includes('group-action-meeting'));
+assert.ok(meetingSections.rows.includes('team-action-meeting'));
+assert.ok(meetingSections.rows.indexOf('data-item="i3"') < meetingSections.rows.indexOf('team-action-meeting'));
+assert.ok(meetingSections.rows.includes('<h4>Practice footwork.</h4>'));
+assert.ok(actionRows([],[],players,options).rows.includes('No assignments match'));

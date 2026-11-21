@@ -8,12 +8,14 @@ import { summarizePlayers, filterPlayers } from './player-directory.js';
 import categories from '../../data/categories.json';
 import { appliesTo, reviewIssues, reviewPriority, highlightSource } from './review-state.js';
 import { meetingTypeForAttendees } from './meeting-input.js';
-import { activityForDate } from './calendar-activity.js';
+import { activityForDate, calendarGrid, calendarMeetings, playerCalendarMeetings } from './calendar-activity.js';
 import { upcomingActions } from './upcoming.js';
 import { filterActions } from './action-board.js';
 import { assistantAnswerMarkup } from './assistant-view.js';
-import { groupRecords, meetingTypeLabel } from './shared-groups.js';
+import { groupRecords, meetingTypeLabel, meetingReviewFrame } from './shared-groups.js';
 import { actionRows } from './action-board-view.js';
+import { noteOnlyReview } from './note-only.js';
+import { playerMeetingHistory } from './timeline-view.js';
 
 const $ = (s) => document.querySelector(s);
 const escape = (s = '') => String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -22,13 +24,14 @@ let meetings = [];
 let mode = workspaceMode(window.location.search), view = 'desk', draft = [], origin = 'demo', selectedPlayer = 'p01', busy = false, connected = false, prepSource = null;
 let current = clone(demo.samples[0]);
 let playerDetailOpen = false, playerUnitFilter = 'all';
-let extractionId = null, extractionWarnings = [], highlightedDraft = 0;
+let extractionId = null, extractionWarnings = [], highlightedDraft = 0, reviewingNoteOnly = false;
 let statusTimer = null;
 let assistantResult = null, assistantPending = false, assistantRevision = 0, assistantActionCategory = '';
 const player = (id) => demo.players.find(p => p.id === id);
 const name = (id) => player(id)?.name ?? 'Unknown player';
 const positionLabel = (p) => p.position_label ? `${p.position} · ${p.position_label}` : p.position;
 const today = () => new Date().toLocaleDateString('en-CA');
+let playerCalendarMonth = today().slice(0,7), playerCalendarDate = today();
 const overdue = (x) => x.kind === 'action' && !x.completed && x.due_date && x.due_date < today();
 const items = () => meetings.flatMap(m => m.items.map(i => ({...i, meeting:m})));
 
@@ -81,7 +84,7 @@ document.querySelector('#app').innerHTML = `
           <section class="panel overview-types"><div class="section-heading"><h2>Your conversations</h2><span class="muted">All saved meetings</span></div><div id="overview-meeting-types"></div></section>
         </div><aside class="overview-aside">
 
-            <section class="calendar-panel panel"><div class="calendar-heading"><h2 id="calendar-title"></h2><div><button class="icon-button" id="calendar-prev" aria-label="Previous month">${icon('chevron')}</button><button class="icon-button" id="calendar-next" aria-label="Next month">${icon('chevron')}</button></div></div><p class="calendar-caption">Saved conversations & action deadlines</p><div class="calendar-grid" id="calendar"></div><div class="calendar-key"><span>Meeting</span><span>Action due</span></div><div id="calendar-activities" class="calendar-activities" aria-live="polite" hidden></div></section>
+            <section class="calendar-panel panel"><div class="calendar-heading"><h2 id="calendar-title"></h2><div><button class="icon-button" id="calendar-prev" aria-label="Previous month">${icon('chevron')}</button><button class="icon-button" id="calendar-next" aria-label="Next month">${icon('chevron')}</button></div></div><p class="calendar-caption">Saved conversations & action deadlines</p><div class="calendar-grid" id="calendar"></div><div class="calendar-key overview-calendar-key"><span>Meeting</span><span class="deadline-dot">Action due</span></div><div id="calendar-activities" class="calendar-activities" aria-live="polite" hidden></div></section>
 
             <section class="followup-panel panel"><div class="section-heading"><h2>Needs follow-up</h2>${icon('check')}</div><div id="radar-list"></div><button class="rail-link" data-stat="overdue">Review overdue actions</button></section>
         </aside></div>
@@ -107,18 +110,18 @@ document.querySelector('#app').innerHTML = `
             <aside class="player-summary-rail"><section class="player-snapshot panel"><h3>Player snapshot</h3><div id="player-snapshot"></div></section><section class="unit-summary panel"><h3>Team units</h3><dl id="player-unit-summary"></dl></section></aside>
           </div>
         </div>
-        <div id="player-detail" hidden><button class="secondary back-to-roster" id="back-to-roster">Back to players</button><div class="panel player-detail-panel"><div id="player-heading"></div><label class="sensitive-toggle"><input id="show-sensitive" type="checkbox"> Show sensitive records</label><div id="timeline"></div><div class="prep-box"><h3>Prepare for the next conversation</h3><p>Build a brief from this player's approved records.</p><button id="prep" class="secondary">Build preparation brief</button><div id="prep-text" class="prep-content" aria-live="polite"></div></div></div></div>
+        <div id="player-detail" hidden><button class="secondary back-to-roster" id="back-to-roster">← Back to players</button><div id="player-heading" class="player-history-profile"></div><div class="player-history-layout"><div class="player-history-main"><div id="player-history-stats" class="player-history-stats"></div><div class="player-history-toolbar"><h3>Conversation history</h3><label class="sensitive-toggle"><input id="show-sensitive" type="checkbox"> Show sensitive records</label></div><div id="timeline"></div><section class="prep-box panel"><p class="eyebrow">BEFORE THE NEXT CHECK-IN</p><h3>Prepare for your next conversation</h3><p>A brief from this player's approved, non-sensitive records.</p><button id="prep" class="secondary">Build preparation brief</button><div id="prep-text" class="prep-content" aria-live="polite"></div></section></div><aside class="player-calendar-rail"><section class="calendar-panel panel"><p class="eyebrow">THIS PLAYER'S NOTEBOOK</p><div class="calendar-heading"><h3 id="player-calendar-title"></h3><div><button class="icon-button" id="player-calendar-prev" aria-label="Previous player calendar month">${icon('chevron')}</button><button class="icon-button" id="player-calendar-next" aria-label="Next player calendar month">${icon('chevron')}</button></div></div><label class="action-calendar-filter"><span class="sr-only">Player calendar meeting type</span><select id="player-calendar-type"><option value="">All meeting types</option><option value="individual">Individual</option><option value="group">Group</option><option value="team">Full team</option></select></label><div id="player-calendar" class="calendar-grid"></div><div class="calendar-key"><span class="meeting-individual">Individual</span><span class="meeting-group">Group</span><span class="meeting-team">Full team</span><span class="deadline-dot">Action due</span></div><div id="player-calendar-activities" class="calendar-activities" aria-live="polite"></div></section></aside></div></div>
+
       </section>
       <section id="tasks" class="view" hidden>
-        <div class="section-heading action-heading"><div><p class="eyebrow">A LITTLE FOLLOW-THROUGH</p><h2>Action board</h2><p class="action-caption">Find a follow-up. Open its title for the source and details.</p></div><label>Status<select id="task-filter"><option value="open">Open actions</option><option value="overdue">Overdue</option><option value="done">Completed</option><option value="all">All actions</option></select></label></div>
-        <button class="secondary assistant-action-entry" id="ask-actions" type="button">${icon('chat')} Ask about these actions</button><div class="panel action-board"><div class="action-filters">
-          <label>Search<input id="task-search" type="search" placeholder="Action, player, jersey, or category"></label>
-          <label>Player<select id="task-player"><option value="">All players</option>${demo.players.map(p => `<option value="${escape(p.id)}">#${p.number} ${escape(p.name)}</option>`).join('')}</select></label>
-          <label>Category<select id="task-category"><option value="">All categories</option></select></label>
-          <label>Sort by<select id="task-sort"><option value="due">Deadline · earliest first</option><option value="player">Player name</option><option value="recent">Newest meeting</option></select></label>
-        </div><div class="action-results-bar"><p id="task-results" role="status"></p><button id="reset-task-filters" class="rail-link" type="button">Reset filters</button></div>
-        <div class="action-table-wrap"><table class="action-table"><thead><tr><th scope="col">Action / source</th><th scope="col">Player</th><th scope="col">Category</th><th scope="col">Deadline</th><th scope="col">Status</th><th scope="col">Update</th></tr></thead><tbody id="task-list"></tbody></table></div></div>
-        <label class="sensitive-toggle"><input id="show-sensitive-actions" type="checkbox"> Show sensitive actions</label><p id="task-hidden-note" class="sensitive-notice" hidden></p>
+        <div class="section-heading action-heading"><div><p class="eyebrow">KEEP THE NEXT STEP IN SIGHT</p><h2>Follow-ups</h2><p class="action-caption">Find the meeting. Check the task. Keep the conversation moving.</p></div><button class="secondary assistant-action-entry" id="ask-actions" type="button">${icon('chat')} Ask assistant</button></div>
+        <div class="action-followup-layout"><div class="action-followup-main">
+        <select id="task-filter" hidden aria-label="Action status"><option value="open">Open actions</option><option value="overdue">Overdue</option><option value="done">Completed</option><option value="all">All actions</option></select>
+        <div class="action-status-tabs" aria-label="Filter assignment status"><button type="button" data-action-status="open">Open</button><button type="button" data-action-status="overdue">Overdue</button><button type="button" data-action-status="done">Completed</button><button type="button" data-action-status="all">All</button></div>
+        <div class="action-tools"><label class="action-quick-search"><span class="sr-only">Search assignments</span><input id="task-search" type="search" placeholder="Search assignments or players…"></label><label><span class="sr-only">Filter by player</span><select id="task-player"><option value="">All players</option>${demo.players.map(p => `<option value="${escape(p.id)}">#${p.number} ${escape(p.name)}</option>`).join('')}</select></label><details class="action-more-filters"><summary>More filters</summary><div><label>Category<select id="task-category"><option value="">All categories</option></select></label><label>Sort meetings by<select id="task-sort"><option value="due">Next deadline</option><option value="player">Player name</option><option value="recent">Newest meeting</option></select></label></div></details></div>
+        <div class="action-results-bar"><p id="task-results" role="status"></p><button id="reset-task-filters" class="rail-link" type="button">Reset filters</button></div><div id="task-list" class="action-meeting-grid"></div>
+        <label class="sensitive-toggle"><input id="show-sensitive-actions" type="checkbox" aria-describedby="task-hidden-note"> Show sensitive actions <span id="sensitive-action-count"></span></label><p id="task-hidden-note" class="sensitive-notice" role="status" hidden></p>
+        </div><aside class="action-calendar-rail"><section class="calendar-panel panel"><div class="calendar-heading"><h3 id="action-calendar-title"></h3><div><button class="icon-button" id="action-calendar-prev" aria-label="Previous action calendar month">${icon('chevron')}</button><button class="icon-button" id="action-calendar-next" aria-label="Next action calendar month">${icon('chevron')}</button></div></div><p class="calendar-caption">Meetings & action deadlines</p><label class="action-calendar-filter"><span class="sr-only">Calendar meeting type</span><select id="action-calendar-type"><option value="">All meeting types</option><option value="individual">Individual</option><option value="group">Group</option><option value="team">Full team</option></select></label><div id="action-calendar" class="calendar-grid"></div><div class="calendar-key"><span class="meeting-individual">Individual</span><span class="meeting-group">Group</span><span class="meeting-team">Full team</span><span class="deadline-dot">Action due</span></div><div id="action-calendar-activities" class="calendar-activities" aria-live="polite"></div></section></aside></div>
       </section>
       <section id="assistant" class="view" hidden>
         <div class="section-heading assistant-heading"><div><p class="eyebrow">BEFORE THE NEXT CONVERSATION</p><h2 id="assistant-title" tabindex="-1">AI Assistant</h2><p>Ask about a player. Bring their documented feedback into your next meeting.</p></div><span class="assistant-scope">${icon('chat')} Your approved notebook</span></div>
@@ -182,19 +185,21 @@ function updateAttendeeSummary() {
   $('#attendee-summary').textContent = `Attendees · ${selected.length ? selected.length <= 2 ? selected.join(', ') : `${selected.length} players selected` : 'Choose players'}`;
 }
 function loadSample(id) {
+  reviewingNoteOnly = false;
   current = clone(demo.samples.find(x => x.id === id)); draft = []; extractionId = null; extractionWarnings = [];
   $('#title').value = current.title; $('#date').value = current.date; $('#meeting-type').value = current.meeting_type; $('#note').value = current.note;
   $('#attendees').innerHTML = demo.players.map(p => `<label class="attendee"><input name="attendee" type="checkbox" value="${p.id}" ${current.attendees.includes(p.id) ? 'checked' : ''}><span>${escape(p.name.split(' ')[0])}</span></label>`).join('');
   updateAttendeeSummary();
   renderReview();
 }
-function invalidate() { draft = []; extractionId = null; extractionWarnings = []; renderReview(); }
+function invalidate() { reviewingNoteOnly = false; draft = []; extractionId = null; extractionWarnings = []; renderReview(); }
 function optionList(values, selected) { return values.map(v => `<option value="${escape(v)}" ${v === selected ? 'selected' : ''}>${escape(v)}</option>`).join(''); }
 function renderReview() {
   const review = $('#review');
+  if (reviewingNoteOnly) { review.innerHTML = meetingReviewFrame(noteOnlyReview(current, demo.players), current, demo.players); return; }
   const warnings = extractionWarnings.length ? `<div class="extraction-warnings" role="status"><strong>Extraction notes</strong><ul>${extractionWarnings.map(w => `<li>${escape(w)}</li>`).join('')}</ul></div>` : '';
   if (!draft.length) {
-    review.innerHTML = `${warnings}<div class="empty-review"><h3>A little clarity goes a long way.</h3><p>Extract your meeting note, then check each record.<br>You can also add a record manually.</p></div><button class="secondary full" data-add-record type="button">Add record manually</button>`;
+    review.innerHTML = `${warnings}<div class="empty-review"><h3>A little clarity goes a long way.</h3><p>Keep a team speech, encouragement, or any conversation as an original note. Extract records only when you want feedback or tasks to track.</p></div><button class="primary full" data-review-note-only type="button">Review & save original note</button><button class="secondary full" data-add-record type="button">Add record manually</button>`;
     return;
   }
   const blocked = draft.some(i => reviewIssues(i, current).length);
@@ -203,7 +208,7 @@ function renderReview() {
   const cards = draft.map((i,n) => {
     const issues = reviewIssues(i,current);
     const shared = i.scope === 'team' && i.player_ids?.length && i.kind !== 'action';
-    return `<article class="draft-item confidence-${i.confidence || 'medium'}"><p class="record-origin">${escape(meetingTypeLabel(current.meeting_type))} · ${escape(current.title)}</p><div class="draft-flags"><span class="confidence-badge ${i.confidence || 'medium'}">${escape(i.confidence || 'medium')} confidence</span>${!i.player_id && !shared ? '<span class="badge overdue">Unmatched player</span>' : ''}${i.sensitive ? '<span class="badge sensitive">Sensitive topic</span>' : ''}${i.group_record_id ? '<span class="badge">Shared instruction</span>' : ''}</div><div class="form-row"><label>Player<select data-index="${n}" data-field="player_id"><option value="" ${!i.player_id && !shared ? 'selected' : ''}>Choose attendee…</option>${current.meeting_type === 'team' && i.kind !== 'action' ? `<option value="__team__" ${shared ? 'selected' : ''}>Whole team feedback</option>` : ''}${current.attendees.map(id => `<option value="${id}" ${id === i.player_id ? 'selected' : ''}>${escape(name(id))}</option>`).join('')}</select></label><label>Record type<select data-index="${n}" data-field="kind">${optionList(['action','praise','improvement','observation'], i.kind)}</select></label></div><label>Meeting topic<select data-index="${n}" data-field="topic">${optionList(categories.topics,i.topic)}</select></label><label>Coach's record<textarea rows="2" data-index="${n}" data-field="text" maxlength="1000">${escape(i.text)}</textarea></label><div class="form-row"><label>Football skill<select data-index="${n}" data-field="skill">${optionList(categories.skills,i.skill)}</select></label><label>Due date <small>(actions only)</small><input type="date" data-index="${n}" data-field="due_date" value="${escape(i.due_date || '')}" ${i.kind !== 'action' ? 'disabled' : ''}></label></div>${i.deadline_text ? `<p class="deadline-evidence">Original deadline: “${escape(i.deadline_text)}” · ${i.due_date ? `Resolved: ${escape(i.due_date)}` : 'No definite date — coach review needed'}</p>` : ''}<label>Verbatim source quote<textarea rows="2" data-index="${n}" data-field="quote" maxlength="2000">${escape(i.quote)}</textarea></label><button class="text-button" data-highlight="${n}" type="button">Highlight in original note</button>${i.mention ? `<p class="match-evidence">Mention: ${escape(i.mention)} · ${escape(i.match_method || 'unmatched')}</p>` : ''}${i.warnings?.length ? `<details class="draft-extraction-notes"><summary>Extraction notes</summary><ul>${i.warnings.map(w => `<li>${escape(w)}</li>`).join('')}</ul></details>` : ''}<div class="record-issues" data-issues="${n}">${issues.map(issue => `<p>${escape(issue)}</p>`).join('')}</div><button class="text-button remove" data-remove="${n}" type="button">Remove record</button></article>`;
+    return `<article class="draft-item confidence-${i.confidence || 'medium'}"><p class="record-origin">${escape(meetingTypeLabel(current.meeting_type))} · ${escape(current.title)}</p><div class="draft-flags"><span class="confidence-badge ${i.confidence || 'medium'}">${escape(i.confidence || 'medium')} confidence</span>${!i.player_id && !shared ? '<span class="badge overdue">Unmatched player</span>' : ''}${i.sensitive ? '<span class="badge sensitive">Sensitive topic</span>' : ''}${i.group_record_id ? '<span class="badge">Shared instruction</span>' : ''}</div><div class="form-row"><label>Player<select data-index="${n}" data-field="player_id"><option value="" ${!i.player_id && !shared ? 'selected' : ''}>Choose attendee…</option>${current.meeting_type === 'team' && i.kind !== 'action' ? `<option value="__team__" ${shared ? 'selected' : ''}>Whole team feedback</option>` : ''}${current.attendees.map(id => `<option value="${id}" ${id === i.player_id ? 'selected' : ''}>${escape(name(id))}</option>`).join('')}</select></label><label>Record type<select data-index="${n}" data-field="kind">${optionList(['action','praise','improvement','observation'], i.kind)}</select></label></div><label>Meeting topic<select data-index="${n}" data-field="topic">${optionList(categories.topics,i.topic)}</select></label><label>Coach's record<textarea rows="2" data-index="${n}" data-field="text" maxlength="1000">${escape(i.text)}</textarea></label><div class="form-row"><label>Football skill<select data-index="${n}" data-field="skill">${optionList(categories.skills,i.skill)}</select></label><label>Due date <small>(actions only)</small><input type="date" data-index="${n}" data-field="due_date" value="${escape(i.due_date || '')}" ${i.kind !== 'action' ? 'disabled' : ''}></label></div>${i.deadline_text ? `<p class="deadline-evidence">Original deadline: “${escape(i.deadline_text)}” · ${i.due_date ? `Resolved: ${escape(i.due_date)}` : 'No definite date — coach review needed'}</p>` : ''}<label>Verbatim source quote<textarea rows="2" data-index="${n}" data-field="quote" maxlength="2000">${escape(i.quote)}</textarea></label><button class="text-button" data-highlight="${n}" type="button">Highlight in original note</button>${i.mention ? `<p class="match-evidence">${i.match_method === 'individual_context' ? 'Individual meeting context' : 'Mention'}: ${escape(i.mention)} · ${escape((i.match_method || 'unmatched').replaceAll('_',' '))}</p>` : ''}${i.warnings?.length ? `<details class="draft-extraction-notes"><summary>Extraction notes</summary><ul>${i.warnings.map(w => `<li>${escape(w)}</li>`).join('')}</ul></details>` : ''}<div class="record-issues" data-issues="${n}">${issues.map(issue => `<p>${escape(issue)}</p>`).join('')}</div><button class="text-button remove" data-remove="${n}" type="button">Remove record</button></article>`;
   });
   const groups = groupRecords(draft);
   const reviewCards = groups.map(group => {
@@ -211,9 +216,9 @@ function renderReview() {
     const i = group.item, key = `${i.display_group.id}-${i.player_id}`;
     const issues = group.members.some(item => reviewIssues(item,current).length);
     const warnings = group.members.filter(item => item.confidence === 'low' || item.warnings?.length).length;
-    return `<article class="shared-review-card"><div class="shared-card-heading"><div><span class="record-origin">${escape(meetingTypeLabel(current.meeting_type))}</span><h3>Shared ${escape(i.kind)} · ${escape(group.label)}</h3></div><span class="badge">${group.members.length} players</span></div><div class="draft-flags">${warnings ? `<span class="badge overdue">${warnings} player record${warnings === 1 ? '' : 's'} need warning review</span>` : ''}${i.sensitive ? '<span class="badge sensitive">Sensitive topic</span>' : ''}</div><p class="shared-player-names">${group.members.map(item => escape(name(item.player_id))).join(' · ')}</p><p class="shared-record-text">${escape(i.text)}</p><p class="shared-record-meta">${escape(i.skill)}${i.topic ? ` · ${escape(i.topic)}` : ''}${i.due_date ? ` · Due ${escape(i.due_date)}` : ''}</p><blockquote>${escape(i.quote)}</blockquote><button class="text-button" type="button" data-highlight="${group.indexes[0]}">Highlight in original note</button><p class="shared-review-hint">One shared statement, ${group.members.length} player records. Expand to review confidence, warnings, or change an individual player's version.</p><details data-review-group="${escape(key)}" ${issues || warnings || expanded.has(key) ? 'open' : ''}><summary>Review / edit each player${issues ? ' · Corrections required' : ''}</summary>${group.indexes.map(n => cards[n]).join('')}<button class="secondary compact" type="button" data-regroup-review>Update shared cards</button></details></article>`;
+    return `<article class="shared-review-card"><div class="shared-card-heading"><div><span class="record-origin">${escape(meetingTypeLabel(current.meeting_type))}</span><h3>Shared ${escape(i.kind)} · ${escape(group.label)}</h3></div><span class="badge">${group.members.length} players</span></div><div class="draft-flags">${warnings ? `<span class="badge overdue">${warnings} player record${warnings === 1 ? '' : 's'} need warning review</span>` : ''}${i.sensitive ? '<span class="badge sensitive">Sensitive topic</span>' : ''}</div><p class="shared-player-names">${group.members.map(item => escape(name(item.player_id))).join(' · ')}</p><p class="shared-record-text">${escape(i.text)}</p><p class="shared-record-meta">${i.match_method === 'selected_attendees' ? `Interpreted “${escape(i.mention)}” as the selected attendees above. Confirm these players before approval.<br>` : ''}${escape(i.skill)}${i.topic ? ` · ${escape(i.topic)}` : ''}${i.due_date ? ` · Due ${escape(i.due_date)}` : ''}</p><blockquote>${escape(i.quote)}</blockquote><button class="text-button" type="button" data-highlight="${group.indexes[0]}">Highlight in original note</button><p class="shared-review-hint">One shared statement, ${group.members.length} player records. Expand to review confidence, warnings, or change an individual player's version.</p><details data-review-group="${escape(key)}" ${issues || warnings || expanded.has(key) ? 'open' : ''}><summary>Review / edit each player${issues ? ' · Corrections required' : ''}</summary>${group.indexes.map(n => cards[n]).join('')}<button class="secondary compact" type="button" data-regroup-review>Update shared cards</button></details></article>`;
   }).join('');
-  review.innerHTML = `${warnings}<div class="review-summary"><strong>${groups.length} card${groups.length === 1 ? '' : 's'} · ${draft.length} player records to review</strong><span>${origin === 'demo' ? 'Prepared samples · not AI' : origin === 'manual' ? 'Manual records' : 'Aivana drafts · verify all fields'}</span></div><div class="review-source-preview"><strong>Original note · highlighted evidence</strong><div id="highlighted-source">${highlightSource(current.note, draft[highlightedDraft]?.quote)}</div></div><div class="draft-list">${reviewCards}</div><button class="secondary full" data-add-record type="button">Add another record</button><div class="review-footer"><label class="approval"><input id="approved" type="checkbox" ${blocked ? 'disabled' : ''}>I reviewed the player, meaning, source, deadline, and warnings for every record.</label><button id="save" class="primary full" disabled>Approve & save meeting</button></div>`;
+  review.innerHTML = `${warnings}<div class="review-summary"><strong>${current.meeting_type === 'individual' ? `${groups.length} review card${groups.length === 1 ? '' : 's'}` : escape(meetingTypeLabel(current.meeting_type))} · ${draft.length} records to review</strong><span>${origin === 'demo' ? 'Prepared samples · not AI' : origin === 'manual' ? 'Manual records' : 'Aivana drafts · verify all fields'}</span></div><div class="review-source-preview"><strong>Original note · highlighted evidence</strong><div id="highlighted-source">${highlightSource(current.note, draft[highlightedDraft]?.quote)}</div></div><div class="draft-list">${meetingReviewFrame(reviewCards,current,demo.players)}</div><button class="secondary full" data-add-record type="button">Add another record</button><div class="review-footer"><label class="approval"><input id="approved" type="checkbox" ${blocked ? 'disabled' : ''}>I reviewed the player, meaning, source, deadline, and warnings for every record.</label><button id="save" class="primary full" disabled>Approve & save meeting</button></div>`;
 }
 function updateReviewReadiness() {
   draft.forEach((item,n) => { const el = $(`[data-issues="${n}"]`); if (el) el.innerHTML = reviewIssues(item,current).map(issue => `<p>${escape(issue)}</p>`).join(''); });
@@ -240,6 +245,7 @@ function renderPlayerDirectory() {
   $('#player-detail').hidden = !playerDetailOpen;
 }
 function openPlayerTimeline(id) {
+  playerCalendarMonth = today().slice(0,7); playerCalendarDate = today(); $('#player-calendar-type').value = '';
   if (id !== selectedPlayer) $('#show-sensitive').checked = false;
   selectedPlayer = id; playerDetailOpen = true; cancelPrep(); render(); switchView('players');
   $('#player-heading').tabIndex = -1; $('#player-heading').focus({preventScroll:true});
@@ -266,20 +272,22 @@ function render() {
   $('#clock-note').textContent = `As of ${today()}`;
   $('#extract').textContent = mode === 'demo' ? 'Extract sample records' : 'Extract with Aivana';
   $('#extract').disabled = busy || !connected;
-  $('#recent').innerHTML = [...meetings].sort((a,b) => b.date.localeCompare(a.date)).slice(0,5).map(m => `<button class="meeting-row" data-open-player="${escape(m.attendees[0])}"><span class="meeting-date">${icon('note')}</span><span class="meeting-title"><strong>${escape(m.title)}</strong><small>${escape(m.date)} · ${m.items.length} records</small></span><span class="badge">${m.origin === 'demo' ? 'Demo fixture' : 'Reviewed'}</span></button>`).join('') || '<div class="panel empty">No meetings yet. Save your first reviewed extraction.</div>';
+  $('#recent').innerHTML = [...meetings].sort((a,b) => b.date.localeCompare(a.date)).slice(0,5).map(m => `<button class="meeting-row" data-open-player="${escape(m.attendees[0])}"><span class="meeting-date">${icon('note')}</span><span class="meeting-title"><strong>${escape(m.title)}</strong><small>${escape(m.date)} · ${m.note_only ? 'Original note' : `${m.items.length} records`}</small></span><span class="badge">${m.origin === 'demo' ? 'Demo fixture' : 'Reviewed'}</span></button>`).join('') || '<div class="panel empty">No meetings yet. Save your first reviewed extraction.</div>';
   renderPlayerDirectory();
   renderPlanning();
   renderOverview();
   const p = player(selectedPlayer);
-  $('#player-heading').innerHTML = `<div class="player-profile"><span class="avatar large">${p.number}</span><div><p class="eyebrow">${escape(positionLabel(p))}</p><h2>${escape(p.name)}</h2><p>Approved feedback and follow-up, in context.</p><button class="secondary compact" type="button" data-ask-player="${p.id}">${icon('chat')} Ask about this player</button></div></div>`;
-  const playerRecords = all.filter(i => appliesTo(i, selectedPlayer));
-  const hiddenCount = playerRecords.filter(i => i.sensitive && !$('#show-sensitive').checked).length;
-  const history = playerRecords.filter(i => !i.sensitive || $('#show-sensitive').checked).sort((a,b) => b.meeting.date.localeCompare(a.meeting.date));
-  $('#timeline').innerHTML = (hiddenCount ? `<p class="sensitive-notice">${hiddenCount} sensitive record${hiddenCount === 1 ? '' : 's'} hidden.</p>` : '') + (history.map(i => recordMarkup(i,i.meeting,$('#show-sensitive').checked)).join('') || (hiddenCount ? '<div class="empty">Enable sensitive records above to review the hidden entries.</div>' : '<div class="empty">No reviewed records yet. Save a meeting for this player to start their timeline.</div>'));
+  const playerMeetings = meetings.filter(m => m.attendees.includes(selectedPlayer));
+  const playerActions = all.filter(i => appliesTo(i,selectedPlayer) && i.kind === 'action');
+  $('#player-heading').innerHTML = `<div class="player-profile"><span class="avatar large">${p.number}</span><div><p class="eyebrow">${escape(positionLabel(p))}</p><h2>${escape(p.name)}</h2><p>Every conversation. Every next step.</p></div><button class="secondary" type="button" data-ask-player="${p.id}">${icon('chat')} Ask about this player</button></div>`;
+  $('#player-history-stats').innerHTML = `<div><strong>${playerMeetings.length}</strong><span>Saved meetings</span></div><div><strong>${playerActions.filter(i => !i.completed).length}</strong><span>Open actions</span></div><div class="${playerActions.some(overdue)?'is-overdue':''}"><strong>${playerActions.filter(overdue).length}</strong><span>Overdue</span></div>`;
+  $('#timeline').innerHTML = playerMeetingHistory(meetings,selectedPlayer,demo.players,$('#show-sensitive').checked,recordMarkup);
+  renderPlayerCalendar();
   renderActionBoard(actions);
 
 }
 function renderActionBoard(actions = items().filter(i => i.kind === 'action')) {
+  renderActionCalendar();
   const categorySelect = $('#task-category'), selectedCategory = categorySelect.value;
   const available = actions.filter(i => !i.sensitive || $('#show-sensitive-actions').checked);
   const categoryNames = [...new Set(available.flatMap(i => [i.skill, i.topic]).filter(Boolean))].sort();
@@ -287,14 +295,23 @@ function renderActionBoard(actions = items().filter(i => i.kind === 'action')) {
   categorySelect.value = categoryNames.includes(selectedCategory) ? selectedCategory : '';
   const options = {status: $('#task-filter').value, search: $('#task-search').value, player: $('#task-player').value, category: categorySelect.value, sort: $('#task-sort').value, showSensitive: $('#show-sensitive-actions').checked, today: today()};
   const filtered = filterActions(actions, demo.players, options);
-  const hiddenActions = filterActions(actions, demo.players, {...options, showSensitive:true}).filter(i => i.sensitive && !options.showSensitive).length;
-  $('#task-hidden-note').hidden = !hiddenActions;
-  $('#task-hidden-note').textContent = `${hiddenActions} sensitive action${hiddenActions === 1 ? '' : 's'} hidden in this view.`;
-  const expanded = new Set([...$('#task-list').querySelectorAll('[data-action-key]')].filter(row => row.querySelector('details')?.open).map(row => row.dataset.actionKey));
-  const {rows, count} = actionRows(filtered, available, demo.players, {today:today(), busy, showSensitive:options.showSensitive});
-  $('#task-results').textContent = `${count} assignment${count === 1 ? '' : 's'} shown · ${filtered.length} matching player action${filtered.length === 1 ? '' : 's'} · ${available.filter(i => !i.completed).length} open · ${available.filter(overdue).length} overdue`;
+  const sensitiveTotal = actions.filter(i => i.sensitive).length;
+  const matchingSensitive = filterActions(actions, demo.players, {...options, showSensitive:true}).filter(i => i.sensitive).length;
+  $('#sensitive-action-count').textContent = `(${sensitiveTotal} saved)`;
+  $('#task-hidden-note').hidden = !options.showSensitive && !matchingSensitive;
+  $('#task-hidden-note').textContent = options.showSensitive
+    ? !sensitiveTotal ? 'There are no sensitive actions in your saved meetings.'
+      : matchingSensitive ? `Showing ${matchingSensitive} sensitive action${matchingSensitive === 1 ? '' : 's'} matching your filters.`
+      : `${sensitiveTotal} sensitive action${sensitiveTotal === 1 ? ' is' : 's are'} saved, but none match your current filters.`
+    : `${matchingSensitive} sensitive action${matchingSensitive === 1 ? '' : 's'} hidden in this view.`;
+  const expandedMeetings = new Set([...$('#task-list').querySelectorAll('[data-meeting-card]')].filter(card => card.querySelector('[data-meeting-expansion]')?.open).map(card => card.dataset.meetingCard));
+  const expandedTasks = new Map([...$('#task-list').querySelectorAll('[data-action-key]')].map(task => [task.dataset.actionKey,[...task.querySelectorAll('details')].map(d => d.open)]));
+  const {rows, count, meetingCount} = actionRows(filtered, available, demo.players, {today:today(), busy, showSensitive:options.showSensitive});
+  $('#task-results').textContent = `${meetingCount} meeting${meetingCount === 1 ? '' : 's'} · ${count} assignment${count === 1 ? '' : 's'}`;
   $('#task-list').innerHTML = rows;
-  $('#task-list').querySelectorAll('[data-action-key]').forEach(row => { if (expanded.has(row.dataset.actionKey)) row.querySelector('details').open = true; });
+  $('#task-list').querySelectorAll('[data-meeting-card]').forEach(card => { if (expandedMeetings.has(card.dataset.meetingCard)) card.querySelector('[data-meeting-expansion]').open = true; });
+  $('#task-list').querySelectorAll('[data-action-key]').forEach(task => { const states = expandedTasks.get(task.dataset.actionKey); if (states) task.querySelectorAll('details').forEach((detail,n) => detail.open = states[n] || false); });
+  document.querySelectorAll('[data-action-status]').forEach(button => { const active = button.dataset.actionStatus === options.status; button.classList.toggle('active',active); button.setAttribute('aria-pressed',String(active)); });
 }
 function switchView(next) {
   view = next;
@@ -304,6 +321,7 @@ function switchView(next) {
 function cancelPrep() { prepSource?.close(); prepSource = null; $('#prep').disabled = false; $('#prep-text').textContent = ''; }
 
 let calendarMonth = today().slice(0, 7), selectedCalendarDate = null;
+let actionCalendarMonth = today().slice(0,7), actionCalendarDate = today();
 function renderOverview() {
   $('#overview-recent-count').textContent = meetings.length ? `Latest ${Math.min(meetings.length,5)} of ${meetings.length} saved` : 'Your approved notes appear here';
   const individual = new Set(meetings.filter(m => m.meeting_type === 'individual').flatMap(m => m.attendees));
@@ -312,24 +330,47 @@ function renderOverview() {
   $('#overview-checkins').innerHTML = `<div class="checkin-summary"><strong>${reached}<span> / ${demo.players.length}</span></strong><p>players have a saved one-on-one conversation.</p></div><progress max="${demo.players.length}" value="${reached}" aria-label="Players with a saved individual meeting">${reached} of ${demo.players.length}</progress><p class="checkin-remaining">${remaining} player${remaining === 1 ? '' : 's'} without a saved individual check-in. Group and team meetings are counted separately.</p>`;
   $('#overview-meeting-types').innerHTML = [['individual','One-on-one'],['group','Group'],['team','Full team']].map(([type,label]) => `<button data-view="meetings"><span>${icon(type === 'individual' ? 'user' : 'people')}${label}</span><strong>${meetings.filter(m => m.meeting_type === type).length}</strong></button>`).join('');
 }
+function renderPlayerCalendar() {
+  const source = calendarMeetings(playerCalendarMeetings(meetings,selectedPlayer),$('#player-calendar-type').value);
+  const [year,month] = playerCalendarMonth.split('-').map(Number);
+  $('#player-calendar-title').textContent = new Date(year,month-1,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  $('#player-calendar').innerHTML = calendarGrid(source,playerCalendarMonth,today(),playerCalendarDate,true);
+  const activity = activityForDate(source,playerCalendarDate);
+  const label = new Date(`${playerCalendarDate}T12:00:00`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  $('#player-calendar-activities').innerHTML = `<h3>${label}</h3><h4>Meetings · ${activity.meetings.length}</h4>${activity.meetings.map(m => `<button class="player-calendar-meeting" type="button" data-player-meeting="${escape(m.id)}"><strong>${escape(m.title)}</strong><small>${escape(meetingTypeLabel(m.meeting_type))}</small></button>`).join('') || '<p class="date-empty">No meetings on this date.</p>'}<h4>Actions due · ${activity.actions.length}</h4>${activity.actions.map(i => `<p class="player-calendar-due"><strong>${escape(i.text)}</strong><small>${i.completed?'Completed':overdue(i)?'Overdue':'Open'} · ${escape(i.meeting.title)}</small></p>`).join('') || '<p class="date-empty">No visible actions due on this date.</p>'}${activity.hiddenActionCount ? `<p class="date-empty">${activity.hiddenActionCount} sensitive actions hidden.</p>` : ''}`;
+}
+for (const [id,offset] of [['player-calendar-prev',-1],['player-calendar-next',1]]) {
+  $(`#${id}`).addEventListener('click', () => { const [year,month] = playerCalendarMonth.split('-').map(Number); const next = new Date(year,month-1+offset,1); playerCalendarMonth = `${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,'0')}`; playerCalendarDate = `${playerCalendarMonth}-01`; renderPlayerCalendar(); });
+}
+$('#player-calendar-type').addEventListener('change',renderPlayerCalendar);
+$('#player-calendar').addEventListener('click',e => { const day = e.target.closest('[data-calendar-date]'); if (!day) return; playerCalendarDate = day.dataset.calendarDate; renderPlayerCalendar(); if (e.detail===0) $('#player-calendar').querySelector(`[data-calendar-date="${playerCalendarDate}"]`)?.focus({preventScroll:true}); });
+$('#player-calendar-activities').addEventListener('click',e => { const target = e.target.closest('[data-player-meeting]'); if (!target) return; const meeting = document.getElementById(`timeline-meeting-${target.dataset.playerMeeting}`); if (meeting) { meeting.focus({preventScroll:true}); meeting.scrollIntoView({block:'start',behavior:'smooth'}); } });
+function renderActionCalendar() {
+  const source = calendarMeetings(meetings,$('#action-calendar-type').value);
+  const [year,month] = actionCalendarMonth.split('-').map(Number);
+  $('#action-calendar-title').textContent = new Date(year,month-1,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  $('#action-calendar').innerHTML = calendarGrid(source,actionCalendarMonth,today(),actionCalendarDate,true);
+  const activity = activityForDate(source,actionCalendarDate);
+  const label = new Date(`${actionCalendarDate}T12:00:00`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  const meetingRows = activity.meetings.map(m => `<details class="date-meeting"><summary><strong>${escape(m.title)}</strong><small>${escape(meetingTypeLabel(m.meeting_type))} · ${m.attendees.length} attendees</small></summary>${m.items.some(i => i.sensitive) ? '<p>Full note contains sensitive content. Review it in the player timeline with sensitive records enabled.</p>' : `<p>${escape(m.note)}</p>`}</details>`).join('');
+  const actions = groupRecords(activity.actions).map(group => { const i = group.item; return `<button type="button" class="date-action" data-player="${escape(i.player_id)}"><span><strong>${group.shared ? `${escape(group.label)} · ${group.allMembers.length} players` : escape(name(i.player_id))}</strong><small>${escape(i.text)}</small></span><em class="${i.completed?'done':overdue(i)?'late':''}">${i.completed?'Complete':overdue(i)?'Overdue':'Open'}</em></button>`; }).join('');
+  $('#action-calendar-activities').innerHTML = `<h3>${label}</h3><h4>Meetings · ${activity.meetings.length}</h4>${meetingRows || '<p class="date-empty">No meetings of this type on this date.</p>'}<h4>Assignments due</h4>${actions || '<p class="date-empty">No visible assignments due on this date.</p>'}${activity.hiddenActionCount ? `<p class="date-empty">${activity.hiddenActionCount} sensitive actions hidden.</p>` : ''}`;
+}
+for (const [id,offset] of [['action-calendar-prev',-1],['action-calendar-next',1]]) {
+  $(`#${id}`).addEventListener('click', () => { const [year,month] = actionCalendarMonth.split('-').map(Number); const next = new Date(year,month-1+offset,1); actionCalendarMonth = `${next.getFullYear()}-${String(next.getMonth()+1).padStart(2,'0')}`; actionCalendarDate = `${actionCalendarMonth}-01`; renderActionCalendar(); });
+}
+$('#action-calendar-type').addEventListener('change',renderActionCalendar);
+$('#action-calendar').addEventListener('click', e => { const day = e.target.closest('[data-calendar-date]'); if (!day) return; actionCalendarDate = day.dataset.calendarDate; renderActionCalendar(); if (e.detail===0) $('#action-calendar').querySelector(`[data-calendar-date="${actionCalendarDate}"]`)?.focus({preventScroll:true}); });
 function renderPlanning() {
   const [year, month] = calendarMonth.split('-').map(Number);
-  const start = new Date(year, month - 1, 1).getDay();
-  const days = new Date(year, month, 0).getDate();
-  $('#calendar-title').textContent = new Date(year, month - 1, 1).toLocaleDateString('en-US', {month:'long', year:'numeric'});
-  const meetingDates = new Set(meetings.map(m => m.date));
-  const deadlines = new Set(items().filter(i => i.kind === 'action' && !i.completed && i.due_date).map(i => i.due_date));
-  $('#calendar').innerHTML = ['Su','Mo','Tu','We','Th','Fr','Sa'].map(day => `<span class="weekday">${day}</span>`).join('') + '<span aria-hidden="true"></span>'.repeat(start) + Array.from({length:days}, (_, i) => {
-    const date = `${calendarMonth}-${String(i+1).padStart(2,'0')}`;
-    const hasMeeting = meetingDates.has(date), hasDeadline = deadlines.has(date);
-    return `<button type="button" class="calendar-day ${date === today() ? 'today' : ''} ${date === selectedCalendarDate ? 'selected-day' : ''} ${hasMeeting ? 'has-meeting' : ''} ${hasDeadline ? 'has-deadline' : ''}" data-calendar-date="${date}" aria-pressed="${date === selectedCalendarDate}" ${date === today() ? 'aria-current="date"' : ''} aria-label="${date}${hasMeeting ? ', saved meeting' : ''}${hasDeadline ? ', action due' : ''}">${i+1}<span class="day-markers" aria-hidden="true">${hasMeeting ? '<i></i>' : ''}${hasDeadline ? '<i class="deadline-dot"></i>' : ''}</span></button>`;
-  }).join('');
+  $('#calendar-title').textContent = new Date(year,month-1,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  $('#calendar').innerHTML = calendarGrid(meetings,calendarMonth,today(),selectedCalendarDate);
   const agenda = $('#calendar-activities');
   agenda.hidden = !selectedCalendarDate;
   if (selectedCalendarDate) {
     const activity = activityForDate(meetings,selectedCalendarDate);
     const label = new Date(`${selectedCalendarDate}T12:00:00`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
-    const meetingRows = activity.meetings.map(m => `<details class="date-meeting"><summary><strong>${escape(m.title)}</strong><small>${escape(m.meeting_type)} · ${m.attendees.length} attendees · ${m.items.length} records</small></summary>${m.items.some(i => i.sensitive) ? '<p>Full note contains sensitive content. Open the player timeline and enable sensitive records to review it.</p>' : `<p>${escape(m.note)}</p>`}</details>`).join('');
+    const meetingRows = activity.meetings.map(m => `<details class="date-meeting"><summary><strong>${escape(m.title)}</strong><small>${escape(meetingTypeLabel(m.meeting_type))} · ${m.attendees.length} attendees · ${m.note_only ? 'Original note' : `${m.items.length} records`}</small></summary>${m.items.some(i => i.sensitive) ? '<p>Full note contains sensitive content. Open the player timeline and enable sensitive records to review it.</p>' : `<p>${escape(m.note)}</p>`}</details>`).join('');
     const actionRows = activity.actions.map(i => `<button class="date-action" data-player="${escape(i.player_id)}"><span><strong>${escape(name(i.player_id))}</strong><small>${escape(i.text)}</small></span><em class="${i.completed ? 'done' : overdue(i) ? 'late' : ''}">${i.completed ? 'Complete' : overdue(i) ? 'Overdue' : 'Open'}</em></button>`).join('');
     agenda.innerHTML = `<div class="date-agenda-heading"><h3>${label}</h3><button class="icon-button" data-clear-calendar aria-label="Close date activities">×</button></div>${meetingRows ? `<h4>Meetings · ${activity.meetings.length}</h4>${meetingRows}` : '<p class="date-empty">No meetings saved on this date.</p>'}${actionRows ? `<h4>Actions due · ${activity.actions.length}</h4>${actionRows}` : '<p class="date-empty">No visible actions due on this date.</p>'}${activity.hiddenActionCount ? `<p class="date-empty">${activity.hiddenActionCount} sensitive action${activity.hiddenActionCount === 1 ? '' : 's'} hidden. Review them in the action board.</p>` : ''}`;
   }
@@ -340,6 +381,7 @@ function renderPlanning() {
 }
 function newMeeting() {
   if (busy) return;
+  reviewingNoteOnly = false;
   current = {title:'', date:today(), meeting_type:'individual', attendees:[], note:''};
   draft = []; extractionId = null; extractionWarnings = []; $('#title').value = ''; $('#date').value = current.date; $('#meeting-type').value = 'individual'; $('#note').value = '';
   $('#sample').selectedIndex = -1;
@@ -387,9 +429,10 @@ $('#meeting-form').addEventListener('submit', async e => {
     const meeting = capture(); validMeeting(meeting); busy = true; $('#extract').disabled = true; $('#extract').textContent = 'Extracting…'; notify('');
     $('#meeting-form').querySelectorAll('input,select,textarea').forEach(el => el.disabled = true); $('#sample').disabled = true; $('#mode').disabled = true;
     const result = await api('/extract', {...meeting,mode});
+    reviewingNoteOnly = false;
     draft = result.items.sort((a,b) => reviewPriority(a)-reviewPriority(b)); origin = result.origin;
     extractionId = result.extraction_id; extractionWarnings = result.warnings || []; highlightedDraft = 0;
-    renderReview(); notify(draft.length ? 'Review every extracted record before saving.' : 'No records were extracted. Revise the note and try again.');
+    renderReview(); notify(draft.length ? 'Review every extracted record before saving.' : 'No feedback or tasks were found. You can review and save the original meeting note.');
   } catch (error) { notify(error.message, true); }
   finally { busy = false; $('#meeting-form').querySelectorAll('input,select,textarea').forEach(el => el.disabled = false); $('#sample').disabled = false; $('#mode').disabled = false; $('#extract').disabled = false; render(); }
 });
@@ -410,6 +453,12 @@ $('#review').addEventListener('input', e => {
   }
 });
 $('#review').addEventListener('click', async e => {
+  if (e.target.closest('[data-review-note-only]') && !busy) {
+    try { capture(); validMeeting(current); } catch (error) { notify(error.message,true); return; }
+    if (!extractionId) origin = 'manual';
+    reviewingNoteOnly = true; renderReview(); return;
+  }
+  if (e.target.closest('[data-cancel-note-only]')) { reviewingNoteOnly = false; renderReview(); return; }
   if (e.target.closest('[data-regroup-review]')) { renderReview(); return; }
   const add = e.target.closest('[data-add-record]');
   if (add && !busy) {
@@ -426,11 +475,11 @@ $('#review').addEventListener('click', async e => {
   try {
     validMeeting(current);
     if (draft.some(i => reviewIssues(i,current).length)) throw Error('Correct the highlighted record issues before approval.');
-    const body = {...clone(current), approved:true, origin, extraction_id:extractionId, items:clone(draft)};
+    const body = {...clone(current), approved:true, origin, extraction_id:extractionId, items:clone(draft), ...(reviewingNoteOnly ? {note_only:true} : {})};
     busy = true; e.target.disabled = true;
     const meeting = await api('/meetings',body);
     meetings.unshift(meeting); clearAssistant();
-    draft = []; extractionId = null; extractionWarnings = []; renderReview(); cancelPrep(); render(); notify('Meeting approved and saved. Its records are now in player timelines and the action board.');
+    reviewingNoteOnly = false; draft = []; extractionId = null; extractionWarnings = []; renderReview(); cancelPrep(); render(); notify(meeting.note_only ? 'Meeting note saved. The original conversation is now in each attendee’s timeline.' : 'Meeting approved and saved. Its records are now in player timelines and the action board.');
   } catch (error) { notify(error.message,true); if ($('#save')) $('#save').disabled = false; }
   finally { busy = false; $('#extract').disabled = !connected; renderActionBoard(); }
 });
@@ -456,8 +505,6 @@ document.addEventListener('click', async e => {
   if (targetPlayer) openPlayerTimeline(targetPlayer.dataset.player || targetPlayer.dataset.openPlayer);
   const selectedRow = e.target.closest('[data-select-player]');
   if (selectedRow && !targetPlayer) { selectedPlayer = selectedRow.dataset.selectPlayer; cancelPrep(); render(); if (e.detail === 0) $(`.table-player[data-select-player="${selectedPlayer}"]`)?.focus({preventScroll:true}); }
-  const expandAction = e.target.closest('[data-expand-action]');
-  if (expandAction) { const details = expandAction.closest('tr').querySelector('details'); details.open = !details.open; if (details.open) details.querySelector('.shared-action-members')?.scrollIntoView({block:'nearest',behavior:'smooth'}); }
   const action = e.target.closest('[data-item]');
   if (action && !busy) {
     try {
@@ -470,6 +517,19 @@ document.addEventListener('click', async e => {
     finally { busy = false; $('#extract').disabled = !connected; renderActionBoard(); }
   }
 });
+document.addEventListener('click', e => {
+  const filters = $('.action-more-filters');
+  if (filters.open && !filters.contains(e.target)) filters.open = false;
+});
+document.addEventListener('keydown', e => {
+  const filters = $('.action-more-filters');
+  if (e.key === 'Escape' && filters.open) {
+    const focusWasInside = filters.contains(document.activeElement);
+    filters.open = false;
+    if (focusWasInside) filters.querySelector('summary').focus();
+  }
+});
+$('.action-status-tabs').addEventListener('click', e => { const button = e.target.closest('[data-action-status]'); if (button) { $('#task-filter').value = button.dataset.actionStatus; renderActionBoard(); } });
 $('#task-filter').addEventListener('change', () => renderActionBoard());
 $('#task-search').addEventListener('input', () => renderActionBoard());
 ['#task-player','#task-category','#task-sort'].forEach(id => $(id).addEventListener('change', () => renderActionBoard()));
@@ -478,7 +538,7 @@ $('#show-sensitive').addEventListener('change',render);
 $('#show-sensitive-actions').addEventListener('change',render);
 $('#mode').addEventListener('change', e => {
   if (busy) { e.target.value = mode; return; }
-  mode = e.target.value;
+  mode = e.target.value; reviewingNoteOnly = false;
   clearAssistant();
   const url = new URL(window.location.href); url.searchParams.set('mode', mode);
   window.history.replaceState(null, '', url);

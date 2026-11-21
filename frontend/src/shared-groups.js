@@ -1,4 +1,5 @@
 // Grouping is a presentation over independently editable/completable records.
+import { escapeText as esc } from './review-state.js';
 const signature = item => JSON.stringify(['kind','text','skill','topic','quote','due_date','deadline_text','sensitive'].map(k => item[k] ?? null));
 const key = item => item.display_group && item.display_group.player_ids.includes(item.player_id)
   ? JSON.stringify([item.meeting?.id ?? '', item.display_group.id, signature(item)]) : null;
@@ -23,3 +24,9 @@ export function groupRecords(records, allRecords = records) {
 }
 
 export const meetingTypeLabel = type => ({individual:'Individual meeting', group:'Group meeting', team:'Full team meeting'}[type] || 'Meeting');
+
+export function meetingReviewFrame(content, meeting, players) {
+  if (meeting.meeting_type === 'individual') return content;
+  const names = meeting.attendees.map(id => players.find(p => p.id === id)?.name || 'Unknown player');
+  return `<section class="meeting-scope-card ${meeting.meeting_type === 'team' ? 'team-scope-card' : 'group-scope-card'}"><header><span class="badge">${esc(meetingTypeLabel(meeting.meeting_type))}</span><h3>${esc(meeting.title)}</h3><p>${meeting.attendees.length} selected players · ${esc(meeting.date)}</p>${names.length > 5 ? `<details><summary>View all selected players</summary><p>${names.map(esc).join(' · ')}</p></details>` : `<p class="shared-player-names">${names.map(esc).join(' · ')}</p>`}<p class="shared-review-hint">Shared statements stay together below. Player-specific feedback and tasks remain independently editable.</p></header>${content}</section>`;
+}

@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import { noteOnlyReview, noteOnlyHistory, noteOnlyTimelineCard } from '../src/note-only.js';
+import { summarizePlayers } from '../src/player-directory.js';
+import { activityForDate } from '../src/calendar-activity.js';
+
+const players = [{id:'p1',name:'Jordan <Ellis>',position_group:'DB'},{id:'p2',name:'Sage',position_group:'QB'}];
+const meeting = {id:'n1',title:'Encouragement <team>',note:'Keep going <script>alert(1)</script>.',date:'2026-11-21',meeting_type:'group',attendees:['p1','p2'],items:[],note_only:true};
+const review = noteOnlyReview(meeting,players);
+assert.ok(review.includes('id="approved"'));
+assert.ok(review.includes('id="save" class="primary full" disabled'));
+assert.ok(review.includes('No tasks or player feedback are required'));
+assert.ok(review.includes('Jordan &lt;Ellis&gt;'));
+assert.ok(!review.includes('<script>'));
+assert.ok(review.includes('&lt;script&gt;'));
+const history=noteOnlyHistory([meeting,{...meeting,id:'n2',attendees:['p2']},{...meeting,id:'n3',note_only:false}], 'p1');
+assert.deepEqual(history.map(m => m.id),['n1']);
+const card=noteOnlyTimelineCard(meeting);
+assert.ok(card.includes('Group meeting · 2026-11-21 · 2 attendees'));
+assert.ok(card.includes('Read original meeting note'));
+assert.ok(!card.includes('<script>'));
+const summary=summarizePlayers(players,[meeting],'2026-11-21');
+assert.equal(summary[0].meetingCount,1);
+assert.equal(summary[0].openCount,0);
+assert.equal(summary[0].latest,undefined);
+const calendar=activityForDate([meeting],meeting.date);
+assert.equal(calendar.meetings.length,1);
+assert.equal(calendar.actions.length,0);
