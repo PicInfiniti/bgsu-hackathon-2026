@@ -45,7 +45,6 @@ if (route === '/workspace') {
             <button class="primary auth-submit" type="submit">${signup ? 'Create coach account' : 'Sign in'}</button>
             <div id="auth-feedback" class="auth-feedback" role="status" hidden></div>
           </form>
-          <p class="auth-demo-caption">Demo login: ID demo · Password demo. Both modes use the same notebook.</p>
           <p class="auth-preview"><strong>Local prototype</strong> · Demo credentials open sample extraction. Account creation is a preview; credentials are never saved or sent. Both modes require the local backend.</p>
         </div>
         <footer class="auth-footer"><span>Falcon Follow-up</span><span>A clearer plan for every player.</span></footer>
