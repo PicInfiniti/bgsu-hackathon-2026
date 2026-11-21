@@ -11,3 +11,13 @@ build/
 .DS_Store
 .pytest_cache/
 *.egg-info/
+
+# Local credentials and runtime data
+aivana.api
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+
+# Organizer participant lists contain real names and contact information.
+sources/*Team_Roster*.pdf
