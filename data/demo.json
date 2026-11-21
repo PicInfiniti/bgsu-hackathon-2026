@@ -2,6 +2,7 @@
   "provenance": "Original fictional football Project A practice data created by picInfiniti. Not supplied or endorsed by the organizers. Names and events are invented; any resemblance is coincidental.",
   "sport": "Football",
   "pack_version": 2,
+  "pack_revision": 3,
   "reference_date": "2026-11-20",
   "players": [
     {
@@ -926,6 +927,332 @@
           "due_date": "2026-11-21"
         }
       ]
+    },
+    {
+      "id": "shared-group-action",
+      "label": "Group · offensive line shared drill",
+      "title": "Offensive line · shared pass-protection assignment",
+      "date": "2026-11-21",
+      "meeting_type": "group",
+      "attendees": [
+        "p12",
+        "p13",
+        "p14"
+      ],
+      "note": "All offensive linemen: Complete the pass-protection footwork drill by 2026-11-24.",
+      "items": [
+        {
+          "player_id": "p12",
+          "kind": "action",
+          "text": "Complete the pass-protection footwork drill.",
+          "skill": "Footwork & Agility",
+          "quote": "All offensive linemen: Complete the pass-protection footwork drill by 2026-11-24.",
+          "due_date": "2026-11-24"
+        },
+        {
+          "player_id": "p13",
+          "kind": "action",
+          "text": "Complete the pass-protection footwork drill.",
+          "skill": "Footwork & Agility",
+          "quote": "All offensive linemen: Complete the pass-protection footwork drill by 2026-11-24.",
+          "due_date": "2026-11-24"
+        },
+        {
+          "player_id": "p14",
+          "kind": "action",
+          "text": "Complete the pass-protection footwork drill.",
+          "skill": "Footwork & Agility",
+          "quote": "All offensive linemen: Complete the pass-protection footwork drill by 2026-11-24.",
+          "due_date": "2026-11-24"
+        }
+      ]
+    },
+    {
+      "id": "shared-team-action",
+      "label": "Full team · shared walkthrough assignment",
+      "title": "Full team · shared walkthrough assignment",
+      "date": "2026-11-21",
+      "meeting_type": "team",
+      "attendees": [
+        "p01",
+        "p02",
+        "p03",
+        "p04",
+        "p05",
+        "p06",
+        "p07",
+        "p08",
+        "p09",
+        "p10",
+        "p11",
+        "p12",
+        "p13",
+        "p14",
+        "p15",
+        "p16",
+        "p17",
+        "p18",
+        "p19",
+        "p20",
+        "p21",
+        "p22",
+        "p23",
+        "p24",
+        "p25"
+      ],
+      "note": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+      "items": [
+        {
+          "player_id": "p01",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p02",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p03",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p04",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p05",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p06",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p07",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p08",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p09",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p10",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p11",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p12",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p13",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p14",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p15",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p16",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p17",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p18",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p19",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p20",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p21",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p22",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p23",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p24",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p25",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25"
+        }
+      ]
+    },
+    {
+      "id": "group-encouragement",
+      "label": "Group · encouragement only, no tasks",
+      "title": "Offensive line · encouragement conversation",
+      "date": "2026-11-21",
+      "meeting_type": "group",
+      "attendees": [
+        "p12",
+        "p13",
+        "p14"
+      ],
+      "note": "To everyone here: I believe in your ability to keep learning. Support one another and keep going. This conversation is encouragement, with no assigned follow-up tasks.",
+      "items": []
+    },
+    {
+      "id": "team-encouragement",
+      "label": "Full team · encouragement speech, no tasks",
+      "title": "Full team · encouragement speech",
+      "date": "2026-11-21",
+      "meeting_type": "team",
+      "attendees": [
+        "p01",
+        "p02",
+        "p03",
+        "p04",
+        "p05",
+        "p06",
+        "p07",
+        "p08",
+        "p09",
+        "p10",
+        "p11",
+        "p12",
+        "p13",
+        "p14",
+        "p15",
+        "p16",
+        "p17",
+        "p18",
+        "p19",
+        "p20",
+        "p21",
+        "p22",
+        "p23",
+        "p24",
+        "p25"
+      ],
+      "note": "Whole team: Every practice is another opportunity to learn together. I believe in what we can build together. This speech is encouragement, with no assigned follow-up tasks.",
+      "items": []
     }
   ],
   "meetings": [
@@ -1051,6 +1378,394 @@
       "id": "m-football-v2-1",
       "approved": true,
       "origin": "demo"
+    },
+    {
+      "title": "Offensive line · shared pass-protection assignment",
+      "date": "2026-11-21",
+      "meeting_type": "group",
+      "attendees": [
+        "p12",
+        "p13",
+        "p14"
+      ],
+      "note": "All offensive linemen: Complete the pass-protection footwork drill by 2026-11-24.",
+      "items": [
+        {
+          "player_id": "p12",
+          "kind": "action",
+          "text": "Complete the pass-protection footwork drill.",
+          "skill": "Footwork & Agility",
+          "quote": "All offensive linemen: Complete the pass-protection footwork drill by 2026-11-24.",
+          "due_date": "2026-11-24",
+          "id": "i-football-v2-shared-group-action-0",
+          "completed": false
+        },
+        {
+          "player_id": "p13",
+          "kind": "action",
+          "text": "Complete the pass-protection footwork drill.",
+          "skill": "Footwork & Agility",
+          "quote": "All offensive linemen: Complete the pass-protection footwork drill by 2026-11-24.",
+          "due_date": "2026-11-24",
+          "id": "i-football-v2-shared-group-action-1",
+          "completed": false
+        },
+        {
+          "player_id": "p14",
+          "kind": "action",
+          "text": "Complete the pass-protection footwork drill.",
+          "skill": "Footwork & Agility",
+          "quote": "All offensive linemen: Complete the pass-protection footwork drill by 2026-11-24.",
+          "due_date": "2026-11-24",
+          "id": "i-football-v2-shared-group-action-2",
+          "completed": false
+        }
+      ],
+      "id": "m-football-v2-shared-group-action",
+      "approved": true,
+      "origin": "demo"
+    },
+    {
+      "title": "Full team · shared walkthrough assignment",
+      "date": "2026-11-21",
+      "meeting_type": "team",
+      "attendees": [
+        "p01",
+        "p02",
+        "p03",
+        "p04",
+        "p05",
+        "p06",
+        "p07",
+        "p08",
+        "p09",
+        "p10",
+        "p11",
+        "p12",
+        "p13",
+        "p14",
+        "p15",
+        "p16",
+        "p17",
+        "p18",
+        "p19",
+        "p20",
+        "p21",
+        "p22",
+        "p23",
+        "p24",
+        "p25"
+      ],
+      "note": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+      "items": [
+        {
+          "player_id": "p01",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-0",
+          "completed": false
+        },
+        {
+          "player_id": "p02",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-1",
+          "completed": false
+        },
+        {
+          "player_id": "p03",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-2",
+          "completed": false
+        },
+        {
+          "player_id": "p04",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-3",
+          "completed": false
+        },
+        {
+          "player_id": "p05",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-4",
+          "completed": false
+        },
+        {
+          "player_id": "p06",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-5",
+          "completed": false
+        },
+        {
+          "player_id": "p07",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-6",
+          "completed": false
+        },
+        {
+          "player_id": "p08",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-7",
+          "completed": false
+        },
+        {
+          "player_id": "p09",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-8",
+          "completed": false
+        },
+        {
+          "player_id": "p10",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-9",
+          "completed": false
+        },
+        {
+          "player_id": "p11",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-10",
+          "completed": false
+        },
+        {
+          "player_id": "p12",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-11",
+          "completed": false
+        },
+        {
+          "player_id": "p13",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-12",
+          "completed": false
+        },
+        {
+          "player_id": "p14",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-13",
+          "completed": false
+        },
+        {
+          "player_id": "p15",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-14",
+          "completed": false
+        },
+        {
+          "player_id": "p16",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-15",
+          "completed": false
+        },
+        {
+          "player_id": "p17",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-16",
+          "completed": false
+        },
+        {
+          "player_id": "p18",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-17",
+          "completed": false
+        },
+        {
+          "player_id": "p19",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-18",
+          "completed": false
+        },
+        {
+          "player_id": "p20",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-19",
+          "completed": false
+        },
+        {
+          "player_id": "p21",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-20",
+          "completed": false
+        },
+        {
+          "player_id": "p22",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-21",
+          "completed": false
+        },
+        {
+          "player_id": "p23",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-22",
+          "completed": false
+        },
+        {
+          "player_id": "p24",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-23",
+          "completed": false
+        },
+        {
+          "player_id": "p25",
+          "kind": "action",
+          "text": "Review the three-play walkthrough sheet.",
+          "skill": "Decision-Making",
+          "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+          "due_date": "2026-11-25",
+          "id": "i-football-v2-shared-team-action-24",
+          "completed": false
+        }
+      ],
+      "id": "m-football-v2-shared-team-action",
+      "approved": true,
+      "origin": "demo"
+    },
+    {
+      "title": "Offensive line · encouragement conversation",
+      "date": "2026-11-21",
+      "meeting_type": "group",
+      "attendees": [
+        "p12",
+        "p13",
+        "p14"
+      ],
+      "note": "To everyone here: I believe in your ability to keep learning. Support one another and keep going. This conversation is encouragement, with no assigned follow-up tasks.",
+      "items": [],
+      "id": "m-football-v2-group-encouragement",
+      "approved": true,
+      "origin": "demo",
+      "note_only": true
+    },
+    {
+      "title": "Full team · encouragement speech",
+      "date": "2026-11-21",
+      "meeting_type": "team",
+      "attendees": [
+        "p01",
+        "p02",
+        "p03",
+        "p04",
+        "p05",
+        "p06",
+        "p07",
+        "p08",
+        "p09",
+        "p10",
+        "p11",
+        "p12",
+        "p13",
+        "p14",
+        "p15",
+        "p16",
+        "p17",
+        "p18",
+        "p19",
+        "p20",
+        "p21",
+        "p22",
+        "p23",
+        "p24",
+        "p25"
+      ],
+      "note": "Whole team: Every practice is another opportunity to learn together. I believe in what we can build together. This speech is encouragement, with no assigned follow-up tasks.",
+      "items": [],
+      "id": "m-football-v2-team-encouragement",
+      "approved": true,
+      "origin": "demo",
+      "note_only": true
     }
   ]
 }

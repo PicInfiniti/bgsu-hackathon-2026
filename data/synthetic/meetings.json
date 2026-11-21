@@ -274,5 +274,125 @@
       "output-budget-stress",
       "football"
     ]
+  },
+  {
+    "id": "shared-group-action",
+    "label": "Group · offensive line shared drill",
+    "title": "Offensive line · shared pass-protection assignment",
+    "date": "2026-11-21",
+    "meeting_type": "group",
+    "attendees": [
+      "p12",
+      "p13",
+      "p14"
+    ],
+    "note": "All offensive linemen: Complete the pass-protection footwork drill by 2026-11-24.",
+    "tags": [
+      "football",
+      "group",
+      "shared-assignment",
+      "meeting-context"
+    ]
+  },
+  {
+    "id": "shared-team-action",
+    "label": "Full team · shared walkthrough assignment",
+    "title": "Full team · shared walkthrough assignment",
+    "date": "2026-11-21",
+    "meeting_type": "team",
+    "attendees": [
+      "p01",
+      "p02",
+      "p03",
+      "p04",
+      "p05",
+      "p06",
+      "p07",
+      "p08",
+      "p09",
+      "p10",
+      "p11",
+      "p12",
+      "p13",
+      "p14",
+      "p15",
+      "p16",
+      "p17",
+      "p18",
+      "p19",
+      "p20",
+      "p21",
+      "p22",
+      "p23",
+      "p24",
+      "p25"
+    ],
+    "note": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+    "tags": [
+      "football",
+      "team",
+      "shared-assignment",
+      "meeting-context"
+    ]
+  },
+  {
+    "id": "group-encouragement",
+    "label": "Group · encouragement only, no tasks",
+    "title": "Offensive line · encouragement conversation",
+    "date": "2026-11-21",
+    "meeting_type": "group",
+    "attendees": [
+      "p12",
+      "p13",
+      "p14"
+    ],
+    "note": "To everyone here: I believe in your ability to keep learning. Support one another and keep going. This conversation is encouragement, with no assigned follow-up tasks.",
+    "tags": [
+      "football",
+      "group",
+      "encouragement",
+      "meeting-context"
+    ]
+  },
+  {
+    "id": "team-encouragement",
+    "label": "Full team · encouragement speech, no tasks",
+    "title": "Full team · encouragement speech",
+    "date": "2026-11-21",
+    "meeting_type": "team",
+    "attendees": [
+      "p01",
+      "p02",
+      "p03",
+      "p04",
+      "p05",
+      "p06",
+      "p07",
+      "p08",
+      "p09",
+      "p10",
+      "p11",
+      "p12",
+      "p13",
+      "p14",
+      "p15",
+      "p16",
+      "p17",
+      "p18",
+      "p19",
+      "p20",
+      "p21",
+      "p22",
+      "p23",
+      "p24",
+      "p25"
+    ],
+    "note": "Whole team: Every practice is another opportunity to learn together. I believe in what we can build together. This speech is encouragement, with no assigned follow-up tasks.",
+    "tags": [
+      "football",
+      "team",
+      "encouragement",
+      "meeting-context"
+    ]
   }
 ]

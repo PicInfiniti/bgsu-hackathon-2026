@@ -4,8 +4,8 @@
   "reference_date": "2026-11-20",
   "sport": "Football",
   "player_count": 25,
-  "meeting_count": 14,
-  "expected_record_count": 57,
+  "meeting_count": 18,
+  "expected_record_count": 85,
   "files": {
     "roster": "roster.json",
     "meetings": "meetings.json",
@@ -16,6 +16,16 @@
     "Skill labels and faithful paraphrases can vary; compare meaning as well as exact fields.",
     "The all-player broadcast is an output-budget stress case.",
     "No real accounts, contact details, medical records, or credentials.",
-    "Version 1 basketball live spot checks do not establish football extraction accuracy. No live football benchmark has been run."
+    "Version 1 basketball live spot checks do not establish football extraction accuracy. No live football benchmark has been run.",
+    "Revision 3 adds original shared group/team assignments and note-only encouragement examples; these are not organizer data or measured AI accuracy results."
+  ],
+  "revision": 3,
+  "seed_sample_ids": [
+    "group",
+    "team",
+    "shared-group-action",
+    "shared-team-action",
+    "group-encouragement",
+    "team-encouragement"
   ]
 }

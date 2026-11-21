@@ -25,17 +25,22 @@ def build():
         samples.append(sample)
     meetings = []
     seed_namespace = f"{manifest['sport'].lower()}-v{manifest['version']}"
-    for index, sample_id in enumerate(('group', 'team')):
+    for sample_id in manifest.get('seed_sample_ids', ['group', 'team']):
         sample = next(s for s in samples if s['id'] == sample_id)
         meeting = {key: copy.deepcopy(sample[key]) for key in ('title', 'date', 'meeting_type', 'attendees', 'note', 'items')}
-        meeting.update(id=f'm-{seed_namespace}-{index}', approved=True, origin='demo')
+        # Keep the original two seed IDs; additions use stable scenario IDs.
+        seed_id = {'group':'0', 'team':'1'}.get(sample_id, sample_id)
+        meeting.update(id=f'm-{seed_namespace}-{seed_id}', approved=True, origin='demo')
+        if not meeting['items']:
+            meeting['note_only'] = True
         for item_index, item in enumerate(meeting['items']):
-            item.update(id=f'i-{seed_namespace}-{index}-{item_index}', completed=False)
+            item.update(id=f'i-{seed_namespace}-{seed_id}-{item_index}', completed=False)
         meetings.append(meeting)
     return {
         'provenance': manifest['provenance'],
         'sport': manifest['sport'],
         'pack_version': manifest['version'],
+        'pack_revision': manifest.get('revision', 0),
         'reference_date': manifest['reference_date'],
         'players': roster,
         'samples': samples,

@@ -523,5 +523,247 @@
       }
     ],
     "review_guidance": "Expect 25 per-player actions. This may exceed the 2048-token live output cap. It is an intentional stress case, not a verified live demo; truncation must be rejected."
+  },
+  "shared-group-action": {
+    "items": [
+      {
+        "player_id": "p12",
+        "kind": "action",
+        "text": "Complete the pass-protection footwork drill.",
+        "skill": "Footwork & Agility",
+        "quote": "All offensive linemen: Complete the pass-protection footwork drill by 2026-11-24.",
+        "due_date": "2026-11-24"
+      },
+      {
+        "player_id": "p13",
+        "kind": "action",
+        "text": "Complete the pass-protection footwork drill.",
+        "skill": "Footwork & Agility",
+        "quote": "All offensive linemen: Complete the pass-protection footwork drill by 2026-11-24.",
+        "due_date": "2026-11-24"
+      },
+      {
+        "player_id": "p14",
+        "kind": "action",
+        "text": "Complete the pass-protection footwork drill.",
+        "skill": "Footwork & Agility",
+        "quote": "All offensive linemen: Complete the pass-protection footwork drill by 2026-11-24.",
+        "due_date": "2026-11-24"
+      }
+    ],
+    "review_guidance": "One shared assignment with independent completion per selected attendee."
+  },
+  "shared-team-action": {
+    "items": [
+      {
+        "player_id": "p01",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      },
+      {
+        "player_id": "p02",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      },
+      {
+        "player_id": "p03",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      },
+      {
+        "player_id": "p04",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      },
+      {
+        "player_id": "p05",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      },
+      {
+        "player_id": "p06",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      },
+      {
+        "player_id": "p07",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      },
+      {
+        "player_id": "p08",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      },
+      {
+        "player_id": "p09",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      },
+      {
+        "player_id": "p10",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      },
+      {
+        "player_id": "p11",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      },
+      {
+        "player_id": "p12",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      },
+      {
+        "player_id": "p13",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      },
+      {
+        "player_id": "p14",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      },
+      {
+        "player_id": "p15",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      },
+      {
+        "player_id": "p16",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      },
+      {
+        "player_id": "p17",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      },
+      {
+        "player_id": "p18",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      },
+      {
+        "player_id": "p19",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      },
+      {
+        "player_id": "p20",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      },
+      {
+        "player_id": "p21",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      },
+      {
+        "player_id": "p22",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      },
+      {
+        "player_id": "p23",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      },
+      {
+        "player_id": "p24",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      },
+      {
+        "player_id": "p25",
+        "kind": "action",
+        "text": "Review the three-play walkthrough sheet.",
+        "skill": "Decision-Making",
+        "quote": "Whole team: Review the three-play walkthrough sheet by 2026-11-25.",
+        "due_date": "2026-11-25"
+      }
+    ],
+    "review_guidance": "One shared assignment with independent completion per selected attendee."
+  },
+  "group-encouragement": {
+    "items": [],
+    "review_guidance": "Save the original meeting note only; do not invent praise, improvement or tasks."
+  },
+  "team-encouragement": {
+    "items": [],
+    "review_guidance": "Save the original meeting note only; do not invent praise, improvement or tasks."
   }
 }

@@ -13,6 +13,28 @@ def read(name):
 
 
 class SyntheticPackTests(unittest.TestCase):
+    def test_shared_group_team_and_encouragement_seeds_preserve_completion(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store=Store(Path(directory)/'shared-demo.sqlite3')
+            self.assertEqual(store.seed_pack(),6)
+            saved={m['id']:m for m in store.list()}
+            self.assertIn('m-football-v2-0',saved)
+            self.assertIn('m-football-v2-1',saved)
+            for sid,count in [('shared-group-action',3),('shared-team-action',25)]:
+                meeting=saved[f'm-football-v2-{sid}']
+                self.assertEqual(len(meeting['items']),count)
+                self.assertEqual(len({i['display_group']['id'] for i in meeting['items']}),1)
+                first=meeting['items'][0]
+                store.complete(meeting['id'],first['id'],True)
+            self.assertEqual(store.seed_pack(),0)
+            for sid in ('shared-group-action','shared-team-action'):
+                meeting=next(m for m in store.list() if m['id']==f'm-football-v2-{sid}')
+                self.assertEqual(sum(i['completed'] for i in meeting['items']),1)
+            for sid in ('group-encouragement','team-encouragement'):
+                meeting=saved[f'm-football-v2-{sid}']
+                self.assertTrue(meeting['note_only'])
+                self.assertEqual(meeting['items'],[])
+
     def test_football_roster_reference_skills_and_readable_notes(self):
         roster = read('roster.json')
         self.assertEqual(read('manifest.json')['sport'], 'Football')

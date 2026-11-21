@@ -115,3 +115,30 @@ Date: 2026-11-20 · Type: team
 Attendees: Avery Brooks (p01, #4 QB), Jordan Ellis (p02, #12 CB), Morgan Reed (p03, #23 WR), Casey Lane (p04, #8 S), Riley Quinn (p05, #15 QB), Taylor Hayes (p06, #3 WR), Drew Parker (p07, #21 RB), Skyler Vale (p08, #82 TE), Emery Finch (p09, #1 WR), Rowan Hart (p10, #52 LB), Sage Mercer (p11, #5 RB), Blair Wren (p12, #76 LT), Reese Alder (p13, #65 LG), Quinn Marlow (p14, #60 C), Alex Linden (p15, #10 WR), Dakota Penn (p16, #91 DE), Jamie Cove (p17, #13 K), Cameron Ash (p18, #14 CB), Robin Frost (p19, #16 QB), Ellis Rowan (p20, #90 DT), Finley Moss (p21, #18 WR), Peyton Lake (p22, #19 CB), Remy Birch (p23, #68 RG), Arden West (p24, #22 RB), Charlie Wynn (p25, #24 P)
 
 All attendees: Complete the football warm-up checklist by 2026-11-21.
+
+
+## Shared group/team demonstration additions (revision 3)
+
+### Group · offensive line shared drill
+
+ID: `shared-group-action` · Date: 2026-11-21 · Type: group · Attendees: p12, p13, p14
+
+All offensive linemen: Complete the pass-protection footwork drill by 2026-11-24.
+
+### Full team · shared walkthrough assignment
+
+ID: `shared-team-action` · Date: 2026-11-21 · Type: team · Attendees: p01, p02, p03, p04, p05, p06, p07, p08, p09, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25
+
+Whole team: Review the three-play walkthrough sheet by 2026-11-25.
+
+### Group · encouragement only, no tasks
+
+ID: `group-encouragement` · Date: 2026-11-21 · Type: group · Attendees: p12, p13, p14
+
+To everyone here: I believe in your ability to keep learning. Support one another and keep going. This conversation is encouragement, with no assigned follow-up tasks.
+
+### Full team · encouragement speech, no tasks
+
+ID: `team-encouragement` · Date: 2026-11-21 · Type: team · Attendees: p01, p02, p03, p04, p05, p06, p07, p08, p09, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25
+
+Whole team: Every practice is another opportunity to learn together. I believe in what we can build together. This speech is encouragement, with no assigned follow-up tasks.
