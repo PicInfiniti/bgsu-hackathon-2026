@@ -142,3 +142,12 @@ To everyone here: I believe in your ability to keep learning. Support one anothe
 ID: `team-encouragement` · Date: 2026-11-21 · Type: team · Attendees: p01, p02, p03, p04, p05, p06, p07, p08, p09, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25
 
 Whole team: Every practice is another opportunity to learn together. I believe in what we can build together. This speech is encouragement, with no assigned follow-up tasks.
+
+
+### Individual · sensitive trainer follow-up (revision 4)
+
+ID: `sensitive-followup` · Date: 2026-11-21 · Type: individual · Attendee: p01
+
+Avery: Bring the trainer appointment confirmation by 2026-11-24.
+
+Original fictional administrative example. No medical advice, diagnosis, or real personal information.

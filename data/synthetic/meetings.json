@@ -394,5 +394,22 @@
       "encouragement",
       "meeting-context"
     ]
+  },
+  {
+    "id": "sensitive-followup",
+    "label": "Individual · sensitive trainer follow-up",
+    "title": "Avery · sensitive trainer follow-up",
+    "date": "2026-11-21",
+    "meeting_type": "individual",
+    "attendees": [
+      "p01"
+    ],
+    "note": "Avery: Bring the trainer appointment confirmation by 2026-11-24.",
+    "tags": [
+      "football",
+      "individual",
+      "sensitive",
+      "administrative-follow-up"
+    ]
   }
 ]

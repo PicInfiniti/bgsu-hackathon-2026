@@ -765,5 +765,25 @@
   "team-encouragement": {
     "items": [],
     "review_guidance": "Save the original meeting note only; do not invent praise, improvement or tasks."
+  },
+  "sensitive-followup": {
+    "items": [
+      {
+        "schema_version": 2,
+        "player_id": "p01",
+        "scope": "player",
+        "kind": "action",
+        "text": "Bring the trainer appointment confirmation.",
+        "topic": "Health & Injury Follow-up",
+        "skill": "Not Applicable",
+        "quote": "Avery: Bring the trainer appointment confirmation by 2026-11-24.",
+        "due_date": "2026-11-24",
+        "confidence": "high",
+        "match_method": "first_or_last_name",
+        "mention": "Avery",
+        "deadline_text": "by 2026-11-24"
+      }
+    ],
+    "review_guidance": "Fictional administrative follow-up only. Mark sensitive and hide by default; no diagnosis, treatment, clearance, or invented medical details. Exclude from AI preparation and assistant context."
   }
 }

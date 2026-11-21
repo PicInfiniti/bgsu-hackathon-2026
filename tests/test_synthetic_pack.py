@@ -16,7 +16,7 @@ class SyntheticPackTests(unittest.TestCase):
     def test_shared_group_team_and_encouragement_seeds_preserve_completion(self):
         with tempfile.TemporaryDirectory() as directory:
             store=Store(Path(directory)/'shared-demo.sqlite3')
-            self.assertEqual(store.seed_pack(),6)
+            self.assertEqual(store.seed_pack(),len(read('manifest.json')['seed_sample_ids']))
             saved={m['id']:m for m in store.list()}
             self.assertIn('m-football-v2-0',saved)
             self.assertIn('m-football-v2-1',saved)
@@ -34,6 +34,24 @@ class SyntheticPackTests(unittest.TestCase):
                 meeting=saved[f'm-football-v2-{sid}']
                 self.assertTrue(meeting['note_only'])
                 self.assertEqual(meeting['items'],[])
+
+    def test_sensitive_example_remains_sensitive_in_demo_storage_and_ai_retrieval(self):
+        from backend.extraction import enrich_demo
+        from backend.assistant import select_context
+        sample=next(s for s in DEMO['samples'] if s['id']=='sensitive-followup')
+        draft=enrich_demo(sample['items'],sample,[p for p in DEMO['players'] if p['id']=='p01'])
+        self.assertTrue(draft[0]['sensitive'])
+        self.assertEqual(draft[0]['topic'],'Health & Injury Follow-up')
+        with tempfile.TemporaryDirectory() as directory:
+            store=Store(Path(directory)/'sensitive.sqlite3')
+            store.seed_pack()
+            seeded=next(m for m in store.list() if m['id']=='m-football-v2-sensitive-followup')
+            self.assertTrue(seeded['items'][0]['sensitive'])
+            _,sources,_,_=select_context(store.list(),{'player_id':'p01','mode':'demo','question':'Prepare my next meeting.'})
+            self.assertNotIn(seeded['id'],{s['meeting_id'] for s in sources})
+            store.complete(seeded['id'],seeded['items'][0]['id'],True)
+            self.assertEqual(store.seed_pack(),0)
+            self.assertTrue(next(m for m in store.list() if m['id']==seeded['id'])['items'][0]['completed'])
 
     def test_football_roster_reference_skills_and_readable_notes(self):
         roster = read('roster.json')

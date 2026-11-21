@@ -2,7 +2,7 @@
   "provenance": "Original fictional football Project A practice data created by picInfiniti. Not supplied or endorsed by the organizers. Names and events are invented; any resemblance is coincidental.",
   "sport": "Football",
   "pack_version": 2,
-  "pack_revision": 3,
+  "pack_revision": 4,
   "reference_date": "2026-11-20",
   "players": [
     {
@@ -1253,6 +1253,34 @@
       ],
       "note": "Whole team: Every practice is another opportunity to learn together. I believe in what we can build together. This speech is encouragement, with no assigned follow-up tasks.",
       "items": []
+    },
+    {
+      "id": "sensitive-followup",
+      "label": "Individual · sensitive trainer follow-up",
+      "title": "Avery · sensitive trainer follow-up",
+      "date": "2026-11-21",
+      "meeting_type": "individual",
+      "attendees": [
+        "p01"
+      ],
+      "note": "Avery: Bring the trainer appointment confirmation by 2026-11-24.",
+      "items": [
+        {
+          "schema_version": 2,
+          "player_id": "p01",
+          "scope": "player",
+          "kind": "action",
+          "text": "Bring the trainer appointment confirmation.",
+          "topic": "Health & Injury Follow-up",
+          "skill": "Not Applicable",
+          "quote": "Avery: Bring the trainer appointment confirmation by 2026-11-24.",
+          "due_date": "2026-11-24",
+          "confidence": "high",
+          "match_method": "first_or_last_name",
+          "mention": "Avery",
+          "deadline_text": "by 2026-11-24"
+        }
+      ]
     }
   ],
   "meetings": [
@@ -1766,6 +1794,37 @@
       "approved": true,
       "origin": "demo",
       "note_only": true
+    },
+    {
+      "title": "Avery · sensitive trainer follow-up",
+      "date": "2026-11-21",
+      "meeting_type": "individual",
+      "attendees": [
+        "p01"
+      ],
+      "note": "Avery: Bring the trainer appointment confirmation by 2026-11-24.",
+      "items": [
+        {
+          "schema_version": 2,
+          "player_id": "p01",
+          "scope": "player",
+          "kind": "action",
+          "text": "Bring the trainer appointment confirmation.",
+          "topic": "Health & Injury Follow-up",
+          "skill": "Not Applicable",
+          "quote": "Avery: Bring the trainer appointment confirmation by 2026-11-24.",
+          "due_date": "2026-11-24",
+          "confidence": "high",
+          "match_method": "first_or_last_name",
+          "mention": "Avery",
+          "deadline_text": "by 2026-11-24",
+          "id": "i-football-v2-sensitive-followup-0",
+          "completed": false
+        }
+      ],
+      "id": "m-football-v2-sensitive-followup",
+      "approved": true,
+      "origin": "demo"
     }
   ]
 }

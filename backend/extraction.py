@@ -238,12 +238,12 @@ def enrich_demo(items, meeting, players):
         method = 'full_name' if mention == player['name'] else 'first_or_last_name'
         if 'All attendees:' in quote:
             mention, method = 'All attendees', 'team'
-        topic = 'Football Skills' if item['skill'] != 'Not Applicable' else 'Team Communication'
+        topic = item.get('topic') or ('Football Skills' if item['skill'] != 'Not Applicable' else 'Team Communication')
         if 'warm-up checklist' in quote:
             topic = 'Training & Conditioning'
         item.update(schema_version=2, topic=topic,
                     confidence='medium' if warning else 'high', mention=mention, match_method=method,
-                    scope='player', sensitive=False, source_valid=True, warnings=[warning] if warning else [],
+                    scope='player', sensitive=topic in SENSITIVE_TOPICS, source_valid=True, warnings=[warning] if warning else [],
                     deadline_text=phrase if item['kind'] == 'action' else None,
                     due_date=due if item['kind'] == 'action' else None, id=str(uuid.uuid4()), completed=False)
         result.append(item)
