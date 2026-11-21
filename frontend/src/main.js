@@ -1,6 +1,8 @@
 import './styles.scss';
 import './workspace.scss';
 import './strategy.scss';
+import './note-dictation.scss';
+import { mountNoteDictation } from './note-dictation.js';
 import { initializeStrategy } from './strategy.js';
 import demo from '../../data/demo.json';
 import { workspaceMode } from './access.js';
@@ -117,7 +119,7 @@ document.querySelector('#app').innerHTML = `
               <div class="form-row meeting-meta"><label>Date<input id="date" type="date" required></label><label>Meeting type<select id="meeting-type"><option value="individual">Individual</option><option value="group">Group</option><option value="team">Team</option></select></label></div>
               <label class="sample-control">Start with a sample<select id="sample">${demo.samples.map(s => `<option value="${s.id}">${escape(meetingDisplayTitle(s.label))}</option>`).join('')}</select></label>
               <details class="attendee-picker"><summary id="attendee-summary">Meeting attendees</summary><fieldset><legend class="sr-only">Attendees</legend><div id="attendees" class="attendees"></div></fieldset></details>
-              <label class="note-label">The conversation<textarea id="note" rows="8" maxlength="12000" placeholder="What will you discuss, or what did you discuss? Add an agenda or meeting notes. Include specific feedback and deadlines if you want to extract records…" required></textarea></label>
+              <div class="note-label"><div class="note-entry-heading"><label for="note">The conversation</label></div><textarea id="note" rows="8" maxlength="12000" placeholder="What will you discuss, or what did you discuss? Add an agenda or meeting notes. Include specific feedback and deadlines if you want to extract records…" required></textarea><div class="note-dictation-controls"><p id="note-dictation-status" class="dictation-status" role="status" aria-live="polite"></p><button class="secondary note-dictate-button" id="note-dictate" type="button" aria-controls="note" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg><span data-dictation-label>Voice to text</span></button></div><p class="dictation-privacy">Uses your browser’s speech service, which may process audio online. Synthetic notes only.</p><p id="note-dictation-preview" class="dictation-preview" hidden></p></div>
               <details class="writing-help"><summary>Tips for a useful meeting note</summary><p>Synthetic notes only. Record what the coach said; avoid assumptions about character or attitude. For long team notes, extract short sections with a few assignments each. Keep the date, attendees, and attribution context; review and save each section separately. Shorten truncated extractions before retrying.</p></details>
               <div class="editor-footer"><span>${icon('note')} Save your meeting with or without extracted records.</span><div class="editor-submit-actions"><button class="secondary" id="extract" type="button">Extract sample records</button><button class="primary" id="review-meeting" type="submit">Review meeting</button></div></div>
             </form>
@@ -179,6 +181,11 @@ document.querySelector('#app').innerHTML = `
     </main>
   </div>`;
 
+const noteDictation = mountNoteDictation({
+  textarea:$('#note'), button:$('#note-dictate'), status:$('#note-dictation-status'), preview:$('#note-dictation-preview'), form:$('#meeting-form'), review:$('#review'),
+  canStart:() => !busy && view === 'meetings',
+});
+
 const strategyRoom = initializeStrategy($('#strategy'), {players:demo.players,api,notify,today});
 
 function notify(text, error = false) {
@@ -220,6 +227,7 @@ function updateAttendeeSummary() {
   $('#attendee-summary').textContent = `Attendees · ${selected.length ? selected.length <= 2 ? selected.join(', ') : `${selected.length} players selected` : 'Choose players'}`;
 }
 function loadSample(id) {
+  noteDictation.cancel();
   reviewingNoteOnly = false;
   current = clone(demo.samples.find(x => x.id === id)); draft = []; extractionId = null; extractionWarnings = [];
   $('#title').value = meetingDisplayTitle(current.title); $('#date').value = current.date; $('#meeting-type').value = current.meeting_type; $('#note').value = current.note;
@@ -507,6 +515,7 @@ function renderActionBoard(actions = items().filter(i => i.kind === 'action')) {
   document.querySelectorAll('[data-action-status]').forEach(button => { const active = button.dataset.actionStatus === options.status; button.classList.toggle('active',active); button.setAttribute('aria-pressed',String(active)); });
 }
 function switchView(next) {
+  if (next !== 'meetings') noteDictation.cancel();
   view = next;
   if (next === 'strategy') strategyRoom.show();
   document.querySelectorAll('.view').forEach(el => el.hidden = el.id !== view);
@@ -581,6 +590,7 @@ function renderPlanning() {
   $('#radar-list').innerHTML = pending.map(i => `<button class="radar-item" data-player="${escape(i.player_id)}">${icon(overdue(i) ? 'check' : 'people')}<span><strong>${escape(name(i.player_id))}</strong><small>${escape(i.text)}</small><em>${i.due_date ? `Due ${escape(i.due_date)}${overdue(i) ? ' · Overdue' : ''}` : 'No deadline set'}</em></span>${icon('chevron')}</button>`).join('') || (items().some(i => i.kind === 'action' && !i.completed && i.sensitive && overdue(i)) ? '<p class="radar-empty">Sensitive overdue actions are hidden here. Open the action board to review them.</p>' : '<p class="radar-empty">No overdue actions. Future deadlines appear in Upcoming.</p>');
 }
 function newMeeting() {
+  noteDictation.cancel();
   if (busy) return;
   reviewingNoteOnly = false;
   current = {title:'', date:today(), meeting_type:'individual', attendees:[], note:''};
@@ -750,6 +760,7 @@ $('#reset-task-filters').addEventListener('click', () => { $('#show-sensitive-ac
 $('#show-sensitive').addEventListener('change',render);
 $('#show-sensitive-actions').addEventListener('change',render);
 $('#mode').addEventListener('change', e => {
+  noteDictation.cancel();
   if (busy) { e.target.value = mode; return; }
   mode = e.target.value; reviewingNoteOnly = false;
   clearAssistant();
