@@ -44,7 +44,7 @@ const clone = (x) => structuredClone(x);
 let meetings = [];
 let selectedMeetingId = null, meetingLibrarySensitive = false;
 let prepRevision = 0, prepPlayer = null, prepSelectedSources = null;
-let mode = workspaceMode(window.location.search), view = 'desk', draft = [], origin = 'demo', selectedPlayer = 'p01', busy = false, connected = false, prepSource = null;
+let mode = workspaceMode(window.location.search), view = 'home', draft = [], origin = 'demo', selectedPlayer = 'p01', busy = false, connected = false, prepSource = null;
 let current = clone(demo.samples[0]);
 let playerDetailOpen = false, playerUnitFilter = 'all';
 let extractionId = null, extractionWarnings = [], highlightedDraft = 0, reviewingNoteOnly = false;
@@ -66,6 +66,7 @@ const icon = (name) => {
     chat: '<path d="M21 11a8 8 0 0 1-8 8H7l-4 3V11a9 9 0 0 1 18 0Z"/><path d="M7 10h10M7 14h6"/>',
     team: '<circle cx="12" cy="7" r="3"/><path d="M7 21v-3a5 5 0 0 1 10 0v3M4 6a3 3 0 0 0 0 6M20 6a3 3 0 0 1 0 6M2 20v-3a4 4 0 0 1 3-4M22 20v-3a4 4 0 0 0-3-4"/>',
     football: '<path d="M2 12C6.5 3 17.5 3 22 12c-4.5 9-15.5 9-20 0Z" fill="currentColor" fill-opacity=".08"/><path d="M6 6.9a11 11 0 0 1 0 10.2M18 6.9a11 11 0 0 0 0 10.2"/><path d="M9 12h6m-5-1.6v3.2m2-3.2v3.2m2-3.2v3.2" stroke-width="1.4"/>',
+    dashboard: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="11" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="18" width="7" height="3" rx="1"/>',
     home: '<path d="m3 10 9-7 9 7v10H3z"/><path d="M9 20v-7h6v7"/>',
     note: '<rect x="5" y="3" width="15" height="18" rx="2"/><path d="M9 8h7M9 12h7M9 16h4M3 7h4M3 12h4M3 17h4"/>',
     people: '<circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6M18 15a5 5 0 0 1 3 5"/>',
@@ -83,7 +84,8 @@ document.querySelector('#app').innerHTML = `
     <a class="brand" href="/workspace"><span class="brand-mark">F<span>·</span></span><span>Falcon<small>Follow-up</small></span></a>
     <div class="workspace-label">THE FOOTBALL NOTEBOOK</div>
     <nav aria-label="Main navigation">
-      <button data-view="desk" class="active">${icon('home')} Overview</button>
+      <button data-view="home" class="active">${icon('home')} Home</button>
+      <button data-view="desk">${icon('dashboard')} Overview</button>
       <button data-view="meeting-library">${icon('note')} Meetings</button>
       <button data-view="players">${icon('people')} Players</button>
       <button data-view="tasks">${icon('check')} Actions <b id="nav-count"></b></button>
@@ -93,17 +95,25 @@ document.querySelector('#app').innerHTML = `
     <div class="sidebar-bottom"><span class="team-avatar">pi</span><div>picInfiniti<small>Football Meeting Tracker</small></div></div>
   </aside>
   <div class="shell">
-    <header class="topbar"><div class="header-context"><p class="header-eyebrow">COACH’S NOTEBOOK</p><h1 id="page-title">Overview</h1><p id="page-date"></p></div><div class="header-actions"><label class="mode-control">Mode <select id="mode"><option value="demo">Demo · prepared samples</option><option value="live">Live · Aivana</option></select></label><button class="header-ask" id="header-ask" type="button" aria-label="Ask Aivana about a player"><span aria-hidden="true">✦</span><span>Ask Aivana</span></button><button class="secondary tour-replay" id="replay-tour" type="button" aria-label="Replay welcome tour">? <span>Tour</span></button><button class="primary" id="new-meeting" type="button" aria-label="Create a new meeting">${icon('plus')} New meeting</button><a class="profile-link" href="/login" aria-label="Open coach sign-in preview">${icon('user')}</a></div></header>
+    <header class="topbar"><div class="header-context"><p class="header-eyebrow">COACH’S NOTEBOOK</p><h1 id="page-title">Home</h1><p id="page-date"></p></div><div class="header-actions"><label class="mode-control">Mode <select id="mode"><option value="demo">Demo · prepared samples</option><option value="live">Live · Aivana</option></select></label><button class="header-ask" id="header-ask" type="button" aria-label="Ask Aivana about a player"><span aria-hidden="true">✦</span><span>Ask Aivana</span></button><button class="secondary tour-replay" id="replay-tour" type="button" aria-label="Replay welcome tour">? <span>Tour</span></button><button class="primary" id="new-meeting" type="button" aria-label="Create a new meeting">${icon('plus')} New meeting</button><a class="profile-link" href="/login" aria-label="Open coach sign-in preview">${icon('user')}</a></div></header>
     <div id="status-toast" class="status-toast" role="status" aria-live="polite" hidden><span id="status-toast-text"></span><button class="icon-button" id="close-status-toast" aria-label="Dismiss notification">×</button></div>
     <main>
 
       <div id="message" role="status" aria-live="polite" hidden></div>
-      <section id="desk" class="view">
+      <section id="home" class="view">
         <div class="home-grid">
           <aside class="home-col home-left"><section class="panel overview-types"><div class="section-heading"><h2>Coach’s notebook</h2><span class="muted">Saved meetings</span></div><form id="overview-search-form" class="overview-search"><label for="overview-search">Search saved meetings</label><div><input id="overview-search" type="search" placeholder="Search notes or players…" maxlength="300"><button class="secondary" type="submit" aria-label="Search saved meetings">${icon('search')}</button></div></form><div id="overview-meeting-types"></div></section><section class="panel overview-conversations"><div id="recent-heading" class="section-heading"><div><p class="eyebrow">THE RUNNING RECORD</p><h2>Recent conversations</h2><span id="overview-recent-count" class="recent-count"></span></div><button class="rail-link" data-view="meetings">Write a note</button></div><div id="recent" class="recent-list"></div></section><section class="panel overview-checkins"><div class="section-heading"><div><p class="eyebrow">KEEP THE CONNECTION</p><h2>Players to check in with</h2></div>${icon('people')}</div><div class="checkin-controls"><label>Look back<select id="checkin-window"><option value="7">7 days</option><option value="14" selected>14 days</option><option value="30">30 days</option><option value="60">60 days</option><option value="90">90 days</option></select></label><label>Count meetings<select id="checkin-type"><option value="individual">Individual</option><option value="">Any meeting type</option><option value="group">Group</option><option value="team">Team</option></select></label></div><div id="overview-checkins"></div><button class="rail-link" data-view="players">Browse the football roster</button></section></aside>
           <div class="home-col home-center"><div id="overview-editor"></div><section class="stats" aria-label="Workspace summary"><a href="#meeting-library" data-stat="meetings"><strong id="meeting-count">0</strong><span>Saved meetings</span><small>Reviewed conversations</small></a><a href="#tasks" data-stat="open"><strong id="open-count">0</strong><span>Open actions</span><small>Ready to follow up</small></a><a href="#tasks" data-stat="overdue" class="urgent"><strong id="overdue-count">0</strong><span>Needs follow-up</span><small id="clock-note"></small></a><a href="#players" data-stat="players"><strong id="players-count">0</strong><span>Players reached</span><small>Of ${demo.players.length} fictional players</small></a></section></div>
           <aside class="home-col home-right"><section class="calendar-panel panel"><div class="calendar-heading"><h2 id="calendar-title"></h2><div><button class="icon-button" id="calendar-prev" aria-label="Previous month">${icon('chevron')}</button><button class="icon-button" id="calendar-next" aria-label="Next month">${icon('chevron')}</button></div></div><p class="calendar-caption">Saved conversations & action deadlines</p><div class="calendar-grid" id="calendar"></div><div class="calendar-key"><span class="meeting-individual">Individual</span><span class="meeting-group">Group</span><span class="meeting-team">Team</span><span class="action-due-key">Action due</span></div><div id="calendar-activities" class="calendar-activities" aria-live="polite" hidden></div></section><section class="panel upcoming-panel"><div class="section-heading"><h2>Next up</h2>${icon('calendar')}</div><p class="upcoming-caption">Open actions due today or later</p><div id="upcoming-list"></div><button class="rail-link" data-stat="open">View all open actions</button></section><section class="followup-panel panel"><div class="section-heading"><h2>Needs attention</h2>${icon('check')}</div><div id="radar-list"></div><button class="rail-link" data-stat="overdue">Review overdue actions</button></section></aside>
         </div>
+      </section>
+      <section id="desk" class="view" hidden>
+        <div class="overview-lead"><div><p class="eyebrow">THE COACH'S DASHBOARD</p><h2>A clear view of your team.</h2><p>Conversations captured. Next steps ready.</p></div><button class="secondary" data-view="meetings">${icon('note')} Open meeting notebook</button></div>
+        <div class="dashboard-slot" data-dashboard-slot="stats"></div>
+        <div class="overview-grid"><div class="overview-main">
+          <div class="panel overview-conversation-hub"><div class="dashboard-slot" data-dashboard-slot="upcoming"></div><div class="dashboard-slot" data-dashboard-slot="recent"></div></div>
+          <div class="dashboard-slot" data-dashboard-slot="checkins"></div><div class="dashboard-slot" data-dashboard-slot="types"></div>
+        </div><aside class="overview-aside"><div class="dashboard-slot" data-dashboard-slot="calendar"></div><div class="dashboard-slot" data-dashboard-slot="attention"></div></aside></div>
       </section>
       <section id="meeting-library" class="view" hidden>
         <div id="meeting-library-list"><h2 id="meetings-title" class="sr-only" tabindex="-1">Meetings</h2>
@@ -182,10 +192,32 @@ document.querySelector('#app').innerHTML = `
     </main>
   </div>`;
 
+// Share the live notebook cards between layouts so filters and listeners stay intact.
+const dashboardCards = [
+  ['stats','#home .stats'], ['types','#home .overview-types'], ['recent','#home .overview-conversations'],
+  ['checkins','#home .overview-checkins'], ['calendar','#home .calendar-panel'],
+  ['upcoming','#home .upcoming-panel'], ['attention','#home .followup-panel'],
+].map(([key,selector]) => {
+  const node=$(selector), slot=document.createElement('div');
+  slot.className='dashboard-slot'; slot.dataset.homeSlot=key;
+  node.replaceWith(slot); slot.after(node);
+  return {key,node,home:slot,overview:$(`[data-dashboard-slot="${key}"]`)};
+});
+function mountDashboardCards(destination) {
+  for(const card of dashboardCards) {
+    const host=destination==='home'?card.home:card.overview;
+    if(host.nextElementSibling!==card.node)host.after(card.node);
+    if(['recent','upcoming'].includes(card.key))card.node.classList.toggle('panel',destination==='home');
+  }
+  $('.upcoming-panel h2').textContent=destination==='home'?'Next up':'Upcoming';
+  $('.followup-panel h2').textContent=destination==='home'?'Needs attention':'Needs follow-up';
+  $('.overview-types h2').textContent=destination==='home'?'Coach’s notebook':'Your conversations';
+}
+
 let noteMedia;
 const noteDictation = mountNoteDictation({
   textarea:$('#note'), button:$('#note-dictate'), status:$('#note-dictation-status'), preview:$('#note-dictation-preview'), form:$('#meeting-form'), review:$('#review'),
-  canStart:() => !busy && ['desk','meetings'].includes(view),
+  canStart:() => !busy && ['home','meetings'].includes(view),
   onStateChange:active=>{noteMedia?.voiceState(active);if(active)askPanel.cancelVoice();}
 });
 
@@ -558,10 +590,11 @@ function switchView(next) {
   if (next !== view) noteMedia.cancel();
   if (next !== view) noteDictation.cancel();
   const editor = $('.meeting-workspace');
-  const editorHost = next === 'desk' ? $('#overview-editor') : $('#meetings');
+  const editorHost = next === 'home' ? $('#overview-editor') : $('#meetings');
   if (editor.parentElement !== editorHost) editorHost.append(editor);
+  if (next === 'home' || next === 'desk') mountDashboardCards(next);
   view = next;
-  $('#page-title').textContent = ({desk:'Overview','meeting-library':'Meetings',meetings:'New meeting',players:'Players',tasks:'Actions',strategy:'Strategy',assistant:'Coach assistant'})[next] || 'Falcon Follow-up';
+  $('#page-title').textContent = ({home:'Home',desk:'Overview','meeting-library':'Meetings',meetings:'New meeting',players:'Players',tasks:'Actions',strategy:'Strategy',assistant:'Coach assistant'})[next] || 'Falcon Follow-up';
   $('#page-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   if (next === 'strategy') strategyRoom.show();
   document.querySelectorAll('.view').forEach(el => el.hidden = el.id !== view);
@@ -1003,7 +1036,7 @@ $('#assistant-form').addEventListener('submit', async e => {
     $('#mode').disabled = busy; $('#assistant-send').disabled = !connected;
   }
 });
-loadSample('individual'); $('#mode').value = mode; render(); switchView('desk');
+loadSample('individual'); $('#mode').value = mode; render(); switchView('home');
 async function initializeNotebook() {
   busy = true; $('#mode').disabled = true; render();
   notify('Loading the shared SQLite notebook…');

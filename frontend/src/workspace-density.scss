@@ -15,7 +15,7 @@
     .team-avatar { width: 31px; height: 31px; }
     .topbar { min-height: 78px; padding: 13px 22px; gap: 14px;
       .header-actions { gap: 8px; }
-      .mode-control select { min-width: 140px; padding: 7px 20px 7px 8px; }
+      .mode-control select { min-width: 170px; padding: 7px 34px 7px 10px; }
       #new-meeting { padding: 8px 11px; }
       .profile-link { padding-left: 10px; .ui-icon { width: 19px; height: 19px; } }
     }
@@ -34,7 +34,7 @@
     #note { padding: 14px 13px 14px 30px; min-height: 224px; line-height: 24px;
       background-image: linear-gradient(90deg,transparent 22px,#dc9c8373 22px,#dc9c8373 23px,transparent 23px),repeating-linear-gradient(transparent 0,transparent 23px,#c8c7bb8c 23px,#c8c7bb8c 24px);
     }
-    #desk {
+    #home {
       .home-grid, .home-col { gap: 14px; }
       .panel { padding: 15px; border-radius: 10px; }
       .meeting-workspace { gap: 14px; }
@@ -51,7 +51,7 @@
 }
 // Keep the three-column overview on laptop screens once the desktop controls are compact.
 @media (min-width: 1101px) and (max-width: 1200px) {
-  .workspace-app #desk {
+  .workspace-app #home {
     .home-grid { grid-template-columns: minmax(165px,.8fr) minmax(320px,2fr) minmax(205px,1fr); }
     .home-left { grid-column: auto; grid-template-columns: minmax(0,1fr); }
   }
