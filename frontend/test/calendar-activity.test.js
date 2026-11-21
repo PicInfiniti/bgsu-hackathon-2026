@@ -34,7 +34,7 @@ test('overview uses simple markers while action calendar filters meeting types a
   const typed=calendarGrid(meetings,'2026-11','2026-11-21','2026-11-21',true);
   assert.ok(typed.includes('class="meeting-group"'));
   assert.ok(typed.includes('class="meeting-team"'));
-  assert.ok(typed.includes('1 group meeting, 1 full team meeting'));
+  assert.ok(typed.includes('1 group meeting, 1 team meeting'));
   const groupOnly=calendarMeetings(meetings,'group');
   assert.deepEqual(groupOnly.map(m=>m.id),['g']);
   const grid=calendarGrid(groupOnly,'2026-11','2026-11-21',null,true);

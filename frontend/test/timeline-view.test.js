@@ -9,7 +9,7 @@ const meetings=[group,team,individual];
 assert.deepEqual(timelineMeetings(meetings,'p1').map(m=>m.id),['t','g']);
 const avery=playerMeetingHistory(meetings,'p1',players,false,render);
 assert.ok(avery.includes('Group meeting'));
-assert.ok(avery.includes('Full team meeting'));
+assert.ok(avery.includes('Team meeting'));
 assert.ok(avery.includes('Group &lt;review&gt;'));
 assert.ok(avery.includes('This player attended. No separate player feedback or tasks were saved'));
 assert.ok(!avery.includes('Only Jordan action'));
