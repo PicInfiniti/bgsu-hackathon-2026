@@ -1,0 +1,152 @@
+[
+  {
+    "id": "p01",
+    "name": "Avery Brooks",
+    "number": 4,
+    "position": "Guard"
+  },
+  {
+    "id": "p02",
+    "name": "Jordan Ellis",
+    "number": 12,
+    "position": "Forward"
+  },
+  {
+    "id": "p03",
+    "name": "Morgan Reed",
+    "number": 23,
+    "position": "Guard"
+  },
+  {
+    "id": "p04",
+    "name": "Casey Lane",
+    "number": 8,
+    "position": "Center"
+  },
+  {
+    "id": "p05",
+    "name": "Riley Quinn",
+    "number": 15,
+    "position": "Forward"
+  },
+  {
+    "id": "p06",
+    "name": "Taylor Hayes",
+    "number": 3,
+    "position": "Guard"
+  },
+  {
+    "id": "p07",
+    "name": "Drew Parker",
+    "number": 21,
+    "position": "Forward"
+  },
+  {
+    "id": "p08",
+    "name": "Skyler Vale",
+    "number": 32,
+    "position": "Center"
+  },
+  {
+    "id": "p09",
+    "name": "Emery Finch",
+    "number": 1,
+    "position": "Guard"
+  },
+  {
+    "id": "p10",
+    "name": "Rowan Hart",
+    "number": 2,
+    "position": "Forward"
+  },
+  {
+    "id": "p11",
+    "name": "Sage Mercer",
+    "number": 5,
+    "position": "Guard"
+  },
+  {
+    "id": "p12",
+    "name": "Blair Wren",
+    "number": 6,
+    "position": "Center"
+  },
+  {
+    "id": "p13",
+    "name": "Reese Alder",
+    "number": 7,
+    "position": "Forward"
+  },
+  {
+    "id": "p14",
+    "name": "Quinn Marlow",
+    "number": 9,
+    "position": "Guard"
+  },
+  {
+    "id": "p15",
+    "name": "Alex Linden",
+    "number": 10,
+    "position": "Forward"
+  },
+  {
+    "id": "p16",
+    "name": "Dakota Penn",
+    "number": 11,
+    "position": "Center"
+  },
+  {
+    "id": "p17",
+    "name": "Jamie Cove",
+    "number": 13,
+    "position": "Guard"
+  },
+  {
+    "id": "p18",
+    "name": "Cameron Ash",
+    "number": 14,
+    "position": "Forward"
+  },
+  {
+    "id": "p19",
+    "name": "Robin Frost",
+    "number": 16,
+    "position": "Guard"
+  },
+  {
+    "id": "p20",
+    "name": "Ellis Rowan",
+    "number": 17,
+    "position": "Center"
+  },
+  {
+    "id": "p21",
+    "name": "Finley Moss",
+    "number": 18,
+    "position": "Forward"
+  },
+  {
+    "id": "p22",
+    "name": "Peyton Lake",
+    "number": 19,
+    "position": "Guard"
+  },
+  {
+    "id": "p23",
+    "name": "Remy Birch",
+    "number": 20,
+    "position": "Forward"
+  },
+  {
+    "id": "p24",
+    "name": "Arden West",
+    "number": 22,
+    "position": "Center"
+  },
+  {
+    "id": "p25",
+    "name": "Charlie Wynn",
+    "number": 24,
+    "position": "Guard"
+  }
+]

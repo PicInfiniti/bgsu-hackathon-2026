@@ -1,1 +1,1 @@
-"""picInfiniti travel planner backend."""
+"""Isolated Project A prototype; independent of Falcon Away."""

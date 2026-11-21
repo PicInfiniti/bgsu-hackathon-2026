@@ -1,59 +1,40 @@
-import pytest
-from fastapi.testclient import TestClient
+import copy
+import importlib.util
+import os
+import tempfile
+import unittest
 
-from backend.main import app
-
-client = TestClient(app)
-
-
-@pytest.fixture
-def trip():
-    return {
-        "opponent": "Synthetic Opponent",
-        "game_date": "2026-12-01",
-        "players": 48,
-        "coaches": 2,
-        "staff": 1,
-        "budget": "5000.00",
-        "departure_constraint": "Leave after 3 PM Friday",
-        "seats_per_bus": 50,
-        "room_occupancy": 2,
-        "meal_allowance": "20.00",
-    }
+AVAILABLE = all(importlib.util.find_spec(x) for x in ('fastapi', 'httpx'))
 
 
-def test_health():
-    assert client.get("/api/health").json() == {"status": "ok"}
-
-
-@pytest.mark.parametrize("players,expected", [(47, 1), (48, 2)])
-def test_bus_capacity_rounds_up(trip, players, expected):
-    trip["players"] = players
-    response = client.post("/api/trips/preview", json=trip)
-    assert response.status_code == 200
-    result = response.json()
-    assert result["total_travelers"] == players + 3
-    assert result["buses_needed"] == expected
-    assert result["pricing_available"] is False
-    assert result["trip"]["budget"] == "5000.00"
-
-
-@pytest.mark.parametrize("field,value", [
-    ("players", -1), ("players", 1.5), ("players", True),
-    ("seats_per_bus", 0), ("room_occupancy", 0),
-    ("opponent", "   "), ("game_date", "2026-02-30"),
-    ("budget", "NaN"), ("budget", "0"), ("budget", "1.001"),
-    ("meal_allowance", "-1"), ("departure_constraint", ""),
-])
-def test_invalid_inputs_are_rejected(trip, field, value):
-    trip[field] = value
-    assert client.post("/api/trips/preview", json=trip).status_code == 422
-
-
-def test_empty_team_is_rejected(trip):
-    trip.update(players=0, coaches=0, staff=0)
-    assert client.post("/api/trips/preview", json=trip).status_code == 422
-
-
-def test_missing_details_are_rejected():
-    assert client.post("/api/trips/preview", json={}).status_code == 422
+@unittest.skipUnless(AVAILABLE, 'Install backend/requirements-dev.txt to run FastAPI route checks.')
+class ApiTests(unittest.TestCase):
+    def test_review_save_and_complete(self):
+        from fastapi.testclient import TestClient
+        from backend.core import DEMO, Store
+        from backend import main
+        with tempfile.TemporaryDirectory() as directory:
+            old_store = main.store
+            main.store = Store(os.path.join(directory, 'routes.sqlite3'))
+            try:
+                with TestClient(main.app) as client:
+                    meeting = copy.deepcopy(DEMO['samples'][0])
+                    result = client.post('/api/extract', json={**meeting,'mode':'demo'})
+                    self.assertEqual(result.status_code,200)
+                    meeting['items'] = result.json()['items']
+                    self.assertEqual(client.post('/api/meetings',json=meeting).status_code,422)
+                    meeting['approved'] = True
+                    meeting['origin'] = 'demo'
+                    saved = client.post('/api/meetings',json=meeting)
+                    self.assertEqual(saved.status_code,201)
+                    saved = saved.json()
+                    self.assertEqual(len(client.get('/api/meetings').json()),1)
+                    # Recreate the store as a backend restart would, then read via HTTP.
+                    main.store = Store(os.path.join(directory, 'routes.sqlite3'))
+                    self.assertEqual(client.get('/api/meetings').json()[0], saved)
+                    complete = client.patch(f"/api/meetings/{saved['id']}/items/{saved['items'][0]['id']}",json={'completed':True})
+                    self.assertTrue(complete.json()['items'][0]['completed'])
+                    reopened = client.patch(f"/api/meetings/{saved['id']}/items/{saved['items'][0]['id']}",json={'completed':False})
+                    self.assertFalse(reopened.json()['items'][0]['completed'])
+            finally:
+                main.store = old_store

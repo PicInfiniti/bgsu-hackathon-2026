@@ -1,0 +1,979 @@
+{
+  "provenance": "Original fictional Project A practice data created by picInfiniti. Not supplied or endorsed by the organizers. Names and events are invented; any resemblance is coincidental.",
+  "reference_date": "2026-11-20",
+  "players": [
+    {
+      "id": "p01",
+      "name": "Avery Brooks",
+      "number": 4,
+      "position": "Guard"
+    },
+    {
+      "id": "p02",
+      "name": "Jordan Ellis",
+      "number": 12,
+      "position": "Forward"
+    },
+    {
+      "id": "p03",
+      "name": "Morgan Reed",
+      "number": 23,
+      "position": "Guard"
+    },
+    {
+      "id": "p04",
+      "name": "Casey Lane",
+      "number": 8,
+      "position": "Center"
+    },
+    {
+      "id": "p05",
+      "name": "Riley Quinn",
+      "number": 15,
+      "position": "Forward"
+    },
+    {
+      "id": "p06",
+      "name": "Taylor Hayes",
+      "number": 3,
+      "position": "Guard"
+    },
+    {
+      "id": "p07",
+      "name": "Drew Parker",
+      "number": 21,
+      "position": "Forward"
+    },
+    {
+      "id": "p08",
+      "name": "Skyler Vale",
+      "number": 32,
+      "position": "Center"
+    },
+    {
+      "id": "p09",
+      "name": "Emery Finch",
+      "number": 1,
+      "position": "Guard"
+    },
+    {
+      "id": "p10",
+      "name": "Rowan Hart",
+      "number": 2,
+      "position": "Forward"
+    },
+    {
+      "id": "p11",
+      "name": "Sage Mercer",
+      "number": 5,
+      "position": "Guard"
+    },
+    {
+      "id": "p12",
+      "name": "Blair Wren",
+      "number": 6,
+      "position": "Center"
+    },
+    {
+      "id": "p13",
+      "name": "Reese Alder",
+      "number": 7,
+      "position": "Forward"
+    },
+    {
+      "id": "p14",
+      "name": "Quinn Marlow",
+      "number": 9,
+      "position": "Guard"
+    },
+    {
+      "id": "p15",
+      "name": "Alex Linden",
+      "number": 10,
+      "position": "Forward"
+    },
+    {
+      "id": "p16",
+      "name": "Dakota Penn",
+      "number": 11,
+      "position": "Center"
+    },
+    {
+      "id": "p17",
+      "name": "Jamie Cove",
+      "number": 13,
+      "position": "Guard"
+    },
+    {
+      "id": "p18",
+      "name": "Cameron Ash",
+      "number": 14,
+      "position": "Forward"
+    },
+    {
+      "id": "p19",
+      "name": "Robin Frost",
+      "number": 16,
+      "position": "Guard"
+    },
+    {
+      "id": "p20",
+      "name": "Ellis Rowan",
+      "number": 17,
+      "position": "Center"
+    },
+    {
+      "id": "p21",
+      "name": "Finley Moss",
+      "number": 18,
+      "position": "Forward"
+    },
+    {
+      "id": "p22",
+      "name": "Peyton Lake",
+      "number": 19,
+      "position": "Guard"
+    },
+    {
+      "id": "p23",
+      "name": "Remy Birch",
+      "number": 20,
+      "position": "Forward"
+    },
+    {
+      "id": "p24",
+      "name": "Arden West",
+      "number": 22,
+      "position": "Center"
+    },
+    {
+      "id": "p25",
+      "name": "Charlie Wynn",
+      "number": 24,
+      "position": "Guard"
+    }
+  ],
+  "samples": [
+    {
+      "id": "individual",
+      "label": "Avery · weekly check-in",
+      "title": "Avery · weekly check-in",
+      "date": "2026-11-20",
+      "meeting_type": "individual",
+      "attendees": [
+        "p01"
+      ],
+      "note": "Avery: Complete 20 minutes of left-hand dribbling by 2026-11-23. Your transition passing was excellent today. Work on keeping your eyes up under pressure.",
+      "items": [
+        {
+          "player_id": "p01",
+          "kind": "action",
+          "text": "Complete 20 minutes of left-hand dribbling.",
+          "skill": "Ball handling",
+          "quote": "Complete 20 minutes of left-hand dribbling by 2026-11-23.",
+          "due_date": "2026-11-23"
+        },
+        {
+          "player_id": "p01",
+          "kind": "praise",
+          "text": "Your transition passing was excellent today.",
+          "skill": "Passing",
+          "quote": "Your transition passing was excellent today.",
+          "due_date": null
+        },
+        {
+          "player_id": "p01",
+          "kind": "improvement",
+          "text": "Work on keeping your eyes up under pressure.",
+          "skill": "Court awareness",
+          "quote": "Work on keeping your eyes up under pressure.",
+          "due_date": null
+        }
+      ]
+    },
+    {
+      "id": "group",
+      "label": "Defensive rotation review",
+      "title": "Defensive rotation review",
+      "date": "2026-11-19",
+      "meeting_type": "group",
+      "attendees": [
+        "p02",
+        "p04"
+      ],
+      "note": "Jordan: Review the defensive rotation clips by 2026-11-22. Casey: Call out every screen during the next practice. Both players: Your communication improved in the second half.",
+      "items": [
+        {
+          "player_id": "p02",
+          "kind": "action",
+          "text": "Review the defensive rotation clips.",
+          "skill": "Positioning",
+          "quote": "Review the defensive rotation clips by 2026-11-22.",
+          "due_date": "2026-11-22"
+        },
+        {
+          "player_id": "p04",
+          "kind": "action",
+          "text": "Call out every screen during the next practice.",
+          "skill": "Communication",
+          "quote": "Call out every screen during the next practice.",
+          "due_date": null
+        },
+        {
+          "player_id": "p02",
+          "kind": "praise",
+          "text": "Your communication improved in the second half.",
+          "skill": "Communication",
+          "quote": "Your communication improved in the second half.",
+          "due_date": null
+        },
+        {
+          "player_id": "p04",
+          "kind": "praise",
+          "text": "Your communication improved in the second half.",
+          "skill": "Communication",
+          "quote": "Your communication improved in the second half.",
+          "due_date": null
+        }
+      ]
+    },
+    {
+      "id": "team",
+      "label": "Full team: preparation huddle",
+      "title": "Full team: preparation huddle",
+      "date": "2026-11-18",
+      "meeting_type": "team",
+      "attendees": [
+        "p01",
+        "p02",
+        "p03",
+        "p04",
+        "p05",
+        "p06",
+        "p07",
+        "p08",
+        "p09",
+        "p10",
+        "p11",
+        "p12",
+        "p13",
+        "p14",
+        "p15",
+        "p16",
+        "p17",
+        "p18",
+        "p19",
+        "p20",
+        "p21",
+        "p22",
+        "p23",
+        "p24",
+        "p25"
+      ],
+      "note": "Jordan Ellis: Review two defensive rotation clips by 2026-11-19. Casey Lane: Your screen calls were clear in the final drill. Morgan Reed: Work on keeping your eyes up when receiving the outlet pass.",
+      "items": [
+        {
+          "player_id": "p02",
+          "kind": "action",
+          "text": "Jordan Ellis: Review two defensive rotation clips by 2026-11-19.",
+          "skill": "Positioning",
+          "quote": "Jordan Ellis: Review two defensive rotation clips by 2026-11-19.",
+          "due_date": "2026-11-19"
+        },
+        {
+          "player_id": "p04",
+          "kind": "praise",
+          "text": "Casey Lane: Your screen calls were clear in the final drill.",
+          "skill": "Communication",
+          "quote": "Casey Lane: Your screen calls were clear in the final drill.",
+          "due_date": null
+        },
+        {
+          "player_id": "p03",
+          "kind": "improvement",
+          "text": "Morgan Reed: Work on keeping your eyes up when receiving the outlet pass.",
+          "skill": "Court awareness",
+          "quote": "Morgan Reed: Work on keeping your eyes up when receiving the outlet pass.",
+          "due_date": null
+        }
+      ]
+    },
+    {
+      "id": "relative-date",
+      "label": "One-on-one: explicit relative deadline",
+      "title": "One-on-one: explicit relative deadline",
+      "date": "2026-11-20",
+      "meeting_type": "individual",
+      "attendees": [
+        "p09"
+      ],
+      "note": "Emery Finch: Complete 15 minutes of crossover dribbling tomorrow. Emery Finch: Your outlet passing was accurate today.",
+      "items": [
+        {
+          "player_id": "p09",
+          "kind": "action",
+          "text": "Emery Finch: Complete 15 minutes of crossover dribbling tomorrow.",
+          "skill": "Ball handling",
+          "quote": "Emery Finch: Complete 15 minutes of crossover dribbling tomorrow.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p09",
+          "kind": "praise",
+          "text": "Emery Finch: Your outlet passing was accurate today.",
+          "skill": "Passing",
+          "quote": "Emery Finch: Your outlet passing was accurate today.",
+          "due_date": null
+        }
+      ]
+    },
+    {
+      "id": "ambiguous-date",
+      "label": "One-on-one: ambiguous deadline",
+      "title": "One-on-one: ambiguous deadline",
+      "date": "2026-11-20",
+      "meeting_type": "individual",
+      "attendees": [
+        "p10"
+      ],
+      "note": "Rowan Hart: Send your rebounding drill notes sometime next week.",
+      "items": [
+        {
+          "player_id": "p10",
+          "kind": "action",
+          "text": "Rowan Hart: Send your rebounding drill notes sometime next week.",
+          "skill": "Rebounding",
+          "quote": "Rowan Hart: Send your rebounding drill notes sometime next week.",
+          "due_date": null
+        }
+      ]
+    },
+    {
+      "id": "no-deadline",
+      "label": "One-on-one: no deadline",
+      "title": "One-on-one: no deadline",
+      "date": "2026-11-17",
+      "meeting_type": "individual",
+      "attendees": [
+        "p11"
+      ],
+      "note": "Sage Mercer: Practice ten bounce passes to a moving partner. Sage Mercer: Work on planting your outside foot before changing direction.",
+      "items": [
+        {
+          "player_id": "p11",
+          "kind": "action",
+          "text": "Sage Mercer: Practice ten bounce passes to a moving partner.",
+          "skill": "Passing",
+          "quote": "Sage Mercer: Practice ten bounce passes to a moving partner.",
+          "due_date": null
+        },
+        {
+          "player_id": "p11",
+          "kind": "improvement",
+          "text": "Sage Mercer: Work on planting your outside foot before changing direction.",
+          "skill": "Footwork",
+          "quote": "Sage Mercer: Work on planting your outside foot before changing direction.",
+          "due_date": null
+        }
+      ]
+    },
+    {
+      "id": "shared-praise",
+      "label": "Group: shared praise, individual action",
+      "title": "Group: shared praise, individual action",
+      "date": "2026-11-19",
+      "meeting_type": "group",
+      "attendees": [
+        "p12",
+        "p13",
+        "p14"
+      ],
+      "note": "Blair Wren, Reese Alder, and Quinn Marlow: Your spacing during the final possession was excellent. Blair Wren: Complete the box-out drill by 2026-11-22.",
+      "items": [
+        {
+          "player_id": "p12",
+          "kind": "praise",
+          "text": "Blair Wren, Reese Alder, and Quinn Marlow: Your spacing during the final possession was excellent.",
+          "skill": "Spacing",
+          "quote": "Blair Wren, Reese Alder, and Quinn Marlow: Your spacing during the final possession was excellent.",
+          "due_date": null
+        },
+        {
+          "player_id": "p13",
+          "kind": "praise",
+          "text": "Blair Wren, Reese Alder, and Quinn Marlow: Your spacing during the final possession was excellent.",
+          "skill": "Spacing",
+          "quote": "Blair Wren, Reese Alder, and Quinn Marlow: Your spacing during the final possession was excellent.",
+          "due_date": null
+        },
+        {
+          "player_id": "p14",
+          "kind": "praise",
+          "text": "Blair Wren, Reese Alder, and Quinn Marlow: Your spacing during the final possession was excellent.",
+          "skill": "Spacing",
+          "quote": "Blair Wren, Reese Alder, and Quinn Marlow: Your spacing during the final possession was excellent.",
+          "due_date": null
+        },
+        {
+          "player_id": "p12",
+          "kind": "action",
+          "text": "Blair Wren: Complete the box-out drill by 2026-11-22.",
+          "skill": "Rebounding",
+          "quote": "Blair Wren: Complete the box-out drill by 2026-11-22.",
+          "due_date": "2026-11-22"
+        }
+      ]
+    },
+    {
+      "id": "group-four",
+      "label": "Group: four separate assignments",
+      "title": "Group: four separate assignments",
+      "date": "2026-11-20",
+      "meeting_type": "group",
+      "attendees": [
+        "p15",
+        "p16",
+        "p17",
+        "p18"
+      ],
+      "note": "Alex Linden: Review the sideline inbound diagram by 2026-11-23. Dakota Penn: Practice calling the screen before contact. Jamie Cove: Complete 20 free throws by 2026-11-21. Cameron Ash: Review the closeout clips by 2026-11-24.",
+      "items": [
+        {
+          "player_id": "p15",
+          "kind": "action",
+          "text": "Alex Linden: Review the sideline inbound diagram by 2026-11-23.",
+          "skill": "Preparation",
+          "quote": "Alex Linden: Review the sideline inbound diagram by 2026-11-23.",
+          "due_date": "2026-11-23"
+        },
+        {
+          "player_id": "p16",
+          "kind": "action",
+          "text": "Dakota Penn: Practice calling the screen before contact.",
+          "skill": "Communication",
+          "quote": "Dakota Penn: Practice calling the screen before contact.",
+          "due_date": null
+        },
+        {
+          "player_id": "p17",
+          "kind": "action",
+          "text": "Jamie Cove: Complete 20 free throws by 2026-11-21.",
+          "skill": "Shooting",
+          "quote": "Jamie Cove: Complete 20 free throws by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p18",
+          "kind": "action",
+          "text": "Cameron Ash: Review the closeout clips by 2026-11-24.",
+          "skill": "Defense",
+          "quote": "Cameron Ash: Review the closeout clips by 2026-11-24.",
+          "due_date": "2026-11-24"
+        }
+      ]
+    },
+    {
+      "id": "group-feedback",
+      "label": "Group: specific positive feedback",
+      "title": "Group: specific positive feedback",
+      "date": "2026-11-16",
+      "meeting_type": "group",
+      "attendees": [
+        "p19",
+        "p20",
+        "p21",
+        "p22",
+        "p23"
+      ],
+      "note": "Robin Frost: Your chest passes reached the target cleanly. Ellis Rowan: Your box-outs created space for rebounds. Finley Moss: Your cuts opened the lane. Peyton Lake: Your footwork on the closeout was balanced. Remy Birch: Your screen calls were clear.",
+      "items": [
+        {
+          "player_id": "p19",
+          "kind": "praise",
+          "text": "Robin Frost: Your chest passes reached the target cleanly.",
+          "skill": "Passing",
+          "quote": "Robin Frost: Your chest passes reached the target cleanly.",
+          "due_date": null
+        },
+        {
+          "player_id": "p20",
+          "kind": "praise",
+          "text": "Ellis Rowan: Your box-outs created space for rebounds.",
+          "skill": "Rebounding",
+          "quote": "Ellis Rowan: Your box-outs created space for rebounds.",
+          "due_date": null
+        },
+        {
+          "player_id": "p21",
+          "kind": "praise",
+          "text": "Finley Moss: Your cuts opened the lane.",
+          "skill": "Movement",
+          "quote": "Finley Moss: Your cuts opened the lane.",
+          "due_date": null
+        },
+        {
+          "player_id": "p22",
+          "kind": "praise",
+          "text": "Peyton Lake: Your footwork on the closeout was balanced.",
+          "skill": "Footwork",
+          "quote": "Peyton Lake: Your footwork on the closeout was balanced.",
+          "due_date": null
+        },
+        {
+          "player_id": "p23",
+          "kind": "praise",
+          "text": "Remy Birch: Your screen calls were clear.",
+          "skill": "Communication",
+          "quote": "Remy Birch: Your screen calls were clear.",
+          "due_date": null
+        }
+      ]
+    },
+    {
+      "id": "group-pivots",
+      "label": "Group: pivot and passing review",
+      "title": "Group: pivot and passing review",
+      "date": "2026-11-20",
+      "meeting_type": "group",
+      "attendees": [
+        "p24",
+        "p25"
+      ],
+      "note": "Arden West: Practice pivoting away from the baseline trap by 2026-11-25. Charlie Wynn: Work on releasing the pass before the second defender arrives.",
+      "items": [
+        {
+          "player_id": "p24",
+          "kind": "action",
+          "text": "Arden West: Practice pivoting away from the baseline trap by 2026-11-25.",
+          "skill": "Footwork",
+          "quote": "Arden West: Practice pivoting away from the baseline trap by 2026-11-25.",
+          "due_date": "2026-11-25"
+        },
+        {
+          "player_id": "p25",
+          "kind": "improvement",
+          "text": "Charlie Wynn: Work on releasing the pass before the second defender arrives.",
+          "skill": "Passing",
+          "quote": "Charlie Wynn: Work on releasing the pass before the second defender arrives.",
+          "due_date": null
+        }
+      ]
+    },
+    {
+      "id": "followup",
+      "label": "One-on-one: completed task and new action",
+      "title": "One-on-one: completed task and new action",
+      "date": "2026-11-20",
+      "meeting_type": "individual",
+      "attendees": [
+        "p01"
+      ],
+      "note": "Avery Brooks: You completed the left-hand dribbling session we discussed. Avery Brooks: Complete 20 minutes of left-hand dribbling by 2026-11-23.",
+      "items": [
+        {
+          "player_id": "p01",
+          "kind": "action",
+          "text": "Avery Brooks: Complete 20 minutes of left-hand dribbling by 2026-11-23.",
+          "skill": "Ball handling",
+          "quote": "Avery Brooks: Complete 20 minutes of left-hand dribbling by 2026-11-23.",
+          "due_date": "2026-11-23"
+        }
+      ]
+    },
+    {
+      "id": "no-records",
+      "label": "One-on-one: scheduling only",
+      "title": "One-on-one: scheduling only",
+      "date": "2026-11-20",
+      "meeting_type": "individual",
+      "attendees": [
+        "p05"
+      ],
+      "note": "Riley Quinn attended a scheduling check-in. No tasks were assigned and no performance feedback was given.",
+      "items": []
+    },
+    {
+      "id": "non-attendee",
+      "label": "One-on-one: non-attendee mentioned",
+      "title": "One-on-one: non-attendee mentioned",
+      "date": "2026-11-20",
+      "meeting_type": "individual",
+      "attendees": [
+        "p06"
+      ],
+      "note": "Taylor Hayes: Review the passing clips by 2026-11-22. The coach also said, \"Avery Brooks should review the shooting clips by 2026-11-23,\" but Avery did not attend this meeting.",
+      "items": [
+        {
+          "player_id": "p06",
+          "kind": "action",
+          "text": "Taylor Hayes: Review the passing clips by 2026-11-22.",
+          "skill": "Passing",
+          "quote": "Taylor Hayes: Review the passing clips by 2026-11-22.",
+          "due_date": "2026-11-22"
+        }
+      ]
+    },
+    {
+      "id": "team-broadcast",
+      "label": "Stress case: assignment for all 25 players",
+      "title": "Stress case: assignment for all 25 players",
+      "date": "2026-11-20",
+      "meeting_type": "team",
+      "attendees": [
+        "p01",
+        "p02",
+        "p03",
+        "p04",
+        "p05",
+        "p06",
+        "p07",
+        "p08",
+        "p09",
+        "p10",
+        "p11",
+        "p12",
+        "p13",
+        "p14",
+        "p15",
+        "p16",
+        "p17",
+        "p18",
+        "p19",
+        "p20",
+        "p21",
+        "p22",
+        "p23",
+        "p24",
+        "p25"
+      ],
+      "note": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+      "items": [
+        {
+          "player_id": "p01",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p02",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p03",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p04",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p05",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p06",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p07",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p08",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p09",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p10",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p11",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p12",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p13",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p14",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p15",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p16",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p17",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p18",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p19",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p20",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p21",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p22",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p23",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p24",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        },
+        {
+          "player_id": "p25",
+          "kind": "action",
+          "text": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "skill": "Preparation",
+          "quote": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+          "due_date": "2026-11-21"
+        }
+      ]
+    }
+  ],
+  "meetings": [
+    {
+      "title": "Defensive rotation review",
+      "date": "2026-11-19",
+      "meeting_type": "group",
+      "attendees": [
+        "p02",
+        "p04"
+      ],
+      "note": "Jordan: Review the defensive rotation clips by 2026-11-22. Casey: Call out every screen during the next practice. Both players: Your communication improved in the second half.",
+      "items": [
+        {
+          "player_id": "p02",
+          "kind": "action",
+          "text": "Review the defensive rotation clips.",
+          "skill": "Positioning",
+          "quote": "Review the defensive rotation clips by 2026-11-22.",
+          "due_date": "2026-11-22",
+          "id": "i-seed-0-0",
+          "completed": false
+        },
+        {
+          "player_id": "p04",
+          "kind": "action",
+          "text": "Call out every screen during the next practice.",
+          "skill": "Communication",
+          "quote": "Call out every screen during the next practice.",
+          "due_date": null,
+          "id": "i-seed-0-1",
+          "completed": false
+        },
+        {
+          "player_id": "p02",
+          "kind": "praise",
+          "text": "Your communication improved in the second half.",
+          "skill": "Communication",
+          "quote": "Your communication improved in the second half.",
+          "due_date": null,
+          "id": "i-seed-0-2",
+          "completed": false
+        },
+        {
+          "player_id": "p04",
+          "kind": "praise",
+          "text": "Your communication improved in the second half.",
+          "skill": "Communication",
+          "quote": "Your communication improved in the second half.",
+          "due_date": null,
+          "id": "i-seed-0-3",
+          "completed": false
+        }
+      ],
+      "id": "m-seed-0",
+      "approved": true,
+      "origin": "demo"
+    },
+    {
+      "title": "Full team: preparation huddle",
+      "date": "2026-11-18",
+      "meeting_type": "team",
+      "attendees": [
+        "p01",
+        "p02",
+        "p03",
+        "p04",
+        "p05",
+        "p06",
+        "p07",
+        "p08",
+        "p09",
+        "p10",
+        "p11",
+        "p12",
+        "p13",
+        "p14",
+        "p15",
+        "p16",
+        "p17",
+        "p18",
+        "p19",
+        "p20",
+        "p21",
+        "p22",
+        "p23",
+        "p24",
+        "p25"
+      ],
+      "note": "Jordan Ellis: Review two defensive rotation clips by 2026-11-19. Casey Lane: Your screen calls were clear in the final drill. Morgan Reed: Work on keeping your eyes up when receiving the outlet pass.",
+      "items": [
+        {
+          "player_id": "p02",
+          "kind": "action",
+          "text": "Jordan Ellis: Review two defensive rotation clips by 2026-11-19.",
+          "skill": "Positioning",
+          "quote": "Jordan Ellis: Review two defensive rotation clips by 2026-11-19.",
+          "due_date": "2026-11-19",
+          "id": "i-seed-1-0",
+          "completed": false
+        },
+        {
+          "player_id": "p04",
+          "kind": "praise",
+          "text": "Casey Lane: Your screen calls were clear in the final drill.",
+          "skill": "Communication",
+          "quote": "Casey Lane: Your screen calls were clear in the final drill.",
+          "due_date": null,
+          "id": "i-seed-1-1",
+          "completed": false
+        },
+        {
+          "player_id": "p03",
+          "kind": "improvement",
+          "text": "Morgan Reed: Work on keeping your eyes up when receiving the outlet pass.",
+          "skill": "Court awareness",
+          "quote": "Morgan Reed: Work on keeping your eyes up when receiving the outlet pass.",
+          "due_date": null,
+          "id": "i-seed-1-2",
+          "completed": false
+        }
+      ],
+      "id": "m-seed-1",
+      "approved": true,
+      "origin": "demo"
+    }
+  ]
+}

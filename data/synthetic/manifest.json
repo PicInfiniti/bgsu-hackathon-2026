@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "provenance": "Original fictional Project A practice data created by picInfiniti. Not supplied or endorsed by the organizers. Names and events are invented; any resemblance is coincidental.",
+  "reference_date": "2026-11-20",
+  "sport": "Basketball",
+  "player_count": 25,
+  "meeting_count": 14,
+  "expected_record_count": 57,
+  "files": {
+    "roster": "roster.json",
+    "meetings": "meetings.json",
+    "reference_answers": "expected.json"
+  },
+  "limitations": [
+    "Author-written reference answers, not an independent or measured AI benchmark.",
+    "Skill labels and faithful paraphrases can vary; compare meaning as well as exact fields.",
+    "The all-player broadcast is an output-budget stress case.",
+    "No real accounts, contact details, medical records, or credentials."
+  ]
+}

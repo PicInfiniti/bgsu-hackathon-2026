@@ -1,0 +1,264 @@
+[
+  {
+    "id": "individual",
+    "label": "Avery · weekly check-in",
+    "title": "Avery · weekly check-in",
+    "date": "2026-11-20",
+    "meeting_type": "individual",
+    "attendees": [
+      "p01"
+    ],
+    "note": "Avery: Complete 20 minutes of left-hand dribbling by 2026-11-23. Your transition passing was excellent today. Work on keeping your eyes up under pressure.",
+    "tags": [
+      "baseline",
+      "individual"
+    ]
+  },
+  {
+    "id": "group",
+    "label": "Defensive rotation review",
+    "title": "Defensive rotation review",
+    "date": "2026-11-19",
+    "meeting_type": "group",
+    "attendees": [
+      "p02",
+      "p04"
+    ],
+    "note": "Jordan: Review the defensive rotation clips by 2026-11-22. Casey: Call out every screen during the next practice. Both players: Your communication improved in the second half.",
+    "tags": [
+      "baseline",
+      "group"
+    ]
+  },
+  {
+    "id": "team",
+    "label": "Full team: preparation huddle",
+    "title": "Full team: preparation huddle",
+    "date": "2026-11-18",
+    "meeting_type": "team",
+    "attendees": [
+      "p01",
+      "p02",
+      "p03",
+      "p04",
+      "p05",
+      "p06",
+      "p07",
+      "p08",
+      "p09",
+      "p10",
+      "p11",
+      "p12",
+      "p13",
+      "p14",
+      "p15",
+      "p16",
+      "p17",
+      "p18",
+      "p19",
+      "p20",
+      "p21",
+      "p22",
+      "p23",
+      "p24",
+      "p25"
+    ],
+    "note": "Jordan Ellis: Review two defensive rotation clips by 2026-11-19. Casey Lane: Your screen calls were clear in the final drill. Morgan Reed: Work on keeping your eyes up when receiving the outlet pass.",
+    "tags": [
+      "team",
+      "selective-attribution",
+      "overdue"
+    ]
+  },
+  {
+    "id": "relative-date",
+    "label": "One-on-one: explicit relative deadline",
+    "title": "One-on-one: explicit relative deadline",
+    "date": "2026-11-20",
+    "meeting_type": "individual",
+    "attendees": [
+      "p09"
+    ],
+    "note": "Emery Finch: Complete 15 minutes of crossover dribbling tomorrow. Emery Finch: Your outlet passing was accurate today.",
+    "tags": [
+      "relative-date"
+    ]
+  },
+  {
+    "id": "ambiguous-date",
+    "label": "One-on-one: ambiguous deadline",
+    "title": "One-on-one: ambiguous deadline",
+    "date": "2026-11-20",
+    "meeting_type": "individual",
+    "attendees": [
+      "p10"
+    ],
+    "note": "Rowan Hart: Send your rebounding drill notes sometime next week.",
+    "tags": [
+      "ambiguous-deadline"
+    ]
+  },
+  {
+    "id": "no-deadline",
+    "label": "One-on-one: no deadline",
+    "title": "One-on-one: no deadline",
+    "date": "2026-11-17",
+    "meeting_type": "individual",
+    "attendees": [
+      "p11"
+    ],
+    "note": "Sage Mercer: Practice ten bounce passes to a moving partner. Sage Mercer: Work on planting your outside foot before changing direction.",
+    "tags": [
+      "no-deadline"
+    ]
+  },
+  {
+    "id": "shared-praise",
+    "label": "Group: shared praise, individual action",
+    "title": "Group: shared praise, individual action",
+    "date": "2026-11-19",
+    "meeting_type": "group",
+    "attendees": [
+      "p12",
+      "p13",
+      "p14"
+    ],
+    "note": "Blair Wren, Reese Alder, and Quinn Marlow: Your spacing during the final possession was excellent. Blair Wren: Complete the box-out drill by 2026-11-22.",
+    "tags": [
+      "shared-feedback"
+    ]
+  },
+  {
+    "id": "group-four",
+    "label": "Group: four separate assignments",
+    "title": "Group: four separate assignments",
+    "date": "2026-11-20",
+    "meeting_type": "group",
+    "attendees": [
+      "p15",
+      "p16",
+      "p17",
+      "p18"
+    ],
+    "note": "Alex Linden: Review the sideline inbound diagram by 2026-11-23. Dakota Penn: Practice calling the screen before contact. Jamie Cove: Complete 20 free throws by 2026-11-21. Cameron Ash: Review the closeout clips by 2026-11-24.",
+    "tags": [
+      "multiple-actions"
+    ]
+  },
+  {
+    "id": "group-feedback",
+    "label": "Group: specific positive feedback",
+    "title": "Group: specific positive feedback",
+    "date": "2026-11-16",
+    "meeting_type": "group",
+    "attendees": [
+      "p19",
+      "p20",
+      "p21",
+      "p22",
+      "p23"
+    ],
+    "note": "Robin Frost: Your chest passes reached the target cleanly. Ellis Rowan: Your box-outs created space for rebounds. Finley Moss: Your cuts opened the lane. Peyton Lake: Your footwork on the closeout was balanced. Remy Birch: Your screen calls were clear.",
+    "tags": [
+      "praise-only"
+    ]
+  },
+  {
+    "id": "group-pivots",
+    "label": "Group: pivot and passing review",
+    "title": "Group: pivot and passing review",
+    "date": "2026-11-20",
+    "meeting_type": "group",
+    "attendees": [
+      "p24",
+      "p25"
+    ],
+    "note": "Arden West: Practice pivoting away from the baseline trap by 2026-11-25. Charlie Wynn: Work on releasing the pass before the second defender arrives.",
+    "tags": [
+      "action-and-improvement"
+    ]
+  },
+  {
+    "id": "followup",
+    "label": "One-on-one: completed task and new action",
+    "title": "One-on-one: completed task and new action",
+    "date": "2026-11-20",
+    "meeting_type": "individual",
+    "attendees": [
+      "p01"
+    ],
+    "note": "Avery Brooks: You completed the left-hand dribbling session we discussed. Avery Brooks: Complete 20 minutes of left-hand dribbling by 2026-11-23.",
+    "tags": [
+      "followup",
+      "completed-mention"
+    ]
+  },
+  {
+    "id": "no-records",
+    "label": "One-on-one: scheduling only",
+    "title": "One-on-one: scheduling only",
+    "date": "2026-11-20",
+    "meeting_type": "individual",
+    "attendees": [
+      "p05"
+    ],
+    "note": "Riley Quinn attended a scheduling check-in. No tasks were assigned and no performance feedback was given.",
+    "tags": [
+      "empty-extraction"
+    ]
+  },
+  {
+    "id": "non-attendee",
+    "label": "One-on-one: non-attendee mentioned",
+    "title": "One-on-one: non-attendee mentioned",
+    "date": "2026-11-20",
+    "meeting_type": "individual",
+    "attendees": [
+      "p06"
+    ],
+    "note": "Taylor Hayes: Review the passing clips by 2026-11-22. The coach also said, \"Avery Brooks should review the shooting clips by 2026-11-23,\" but Avery did not attend this meeting.",
+    "tags": [
+      "non-attendee"
+    ]
+  },
+  {
+    "id": "team-broadcast",
+    "label": "Stress case: assignment for all 25 players",
+    "title": "Stress case: assignment for all 25 players",
+    "date": "2026-11-20",
+    "meeting_type": "team",
+    "attendees": [
+      "p01",
+      "p02",
+      "p03",
+      "p04",
+      "p05",
+      "p06",
+      "p07",
+      "p08",
+      "p09",
+      "p10",
+      "p11",
+      "p12",
+      "p13",
+      "p14",
+      "p15",
+      "p16",
+      "p17",
+      "p18",
+      "p19",
+      "p20",
+      "p21",
+      "p22",
+      "p23",
+      "p24",
+      "p25"
+    ],
+    "note": "All attendees: Complete the warm-up checklist by 2026-11-21.",
+    "tags": [
+      "team",
+      "shared-action",
+      "output-budget-stress"
+    ]
+  }
+]
