@@ -10,7 +10,7 @@ from .core import DEMO, PLAYERS, Store, demo_extract, validate_meeting
 from .config import load_environment
 from .extraction import normalize_records, enrich_demo, applies_to
 from .extraction_schema import CATEGORIES
-from .assistant import select_context, checked_answer
+from .assistant import select_context, checked_answer, selected_players
 from .grouping import annotate_shared_records
 
 load_environment()
@@ -142,19 +142,23 @@ def prep(player_id: str):
 def assistant(body: dict):
     try:
         question, sources, total, today = select_context(store.list(), body)
-        person = next(p for p in DEMO['players'] if p['id'] == body['player_id'])
+        scope, player_ids = selected_players(body)
+        people = [p for p in DEMO['players'] if p['id'] in player_ids]
+        context = {'scope': scope, 'players': people}
         answer = {'statements': [], 'suggestions': []}
         if sources:
             if body['mode'] == 'demo':
-                answer['statements'] = [{'text': s['text'], 'source_ids': [s['source_id']]} for s in sources[:8]]
+                answer['statements'] = [{'text': f"{', '.join(s['player_names'])}: {s['text']}", 'source_ids': [s['source_id']]} for s in sources[:8]]
             else:
                 try:
-                    answer = checked_answer(aivana.answer_question(question, person, sources, today), sources)
+                    answer = checked_answer(aivana.answer_question(question, context, sources, today), sources)
                 except ValueError as error:
                     raise aivana.AivanaError(str(error)) from None
         return {**answer, 'sources': sources, 'matched_count': total, 'context_count': len(sources),
                 'limited': total > len(sources), 'origin': 'demo' if body['mode'] == 'demo' else 'aivana',
-                'player_id': person['id'], 'question': question}
+                'player_id': player_ids[0] if scope == 'individual' else None, 'scope': scope,
+                'player_ids': player_ids, 'covered_player_count': len({pid for s in sources for pid in s['player_ids']}),
+                'question': question}
     except ValueError as error:
         raise HTTPException(422, str(error)) from None
     except aivana.AivanaError as error:

@@ -1,4 +1,4 @@
-"""Bounded retrieval and citation validation for the single-player assistant."""
+"""Bounded retrieval and citation validation for individual, group and team questions."""
 import re
 from datetime import date
 
@@ -11,10 +11,22 @@ LIMIT = 12
 STOP = set('a an the i we you he she they my our your his her their what which who when where how did do does have has had is are was were be been about for of to in on with and or me tell said say player players please prepare next meeting conversation summarize past feedback show need needs follow up outstanding tasks actions action items open overdue completed summarize summary before can should would could this these those'.split())
 
 
+def selected_players(body):
+    scope = body.get('scope', 'individual')
+    if scope not in ('individual', 'group', 'team'):
+        raise ValueError('Choose individual, group or team context.')
+    if scope == 'team':
+        return scope, list(PLAYERS)
+    ids = [body.get('player_id')] if scope == 'individual' else body.get('player_ids')
+    if not isinstance(ids, list) or not ids or any(not isinstance(pid, str) or pid not in PLAYERS for pid in ids):
+        raise ValueError('Choose players from the roster.')
+    if len(ids) != len(set(ids)) or scope == 'group' and not 2 <= len(ids) <= len(PLAYERS):
+        raise ValueError('Choose at least two distinct players for a group.')
+    return scope, ids
+
+
 def select_context(meetings, body):
-    player_id = body.get('player_id')
-    if not isinstance(player_id, str) or player_id not in PLAYERS:
-        raise ValueError('Choose one player from the roster.')
+    scope, player_ids = selected_players(body)
     question = text(body.get('question'), 'Question', 800)
     if body.get('mode') not in ('demo', 'live'):
         raise ValueError('Choose demo or live mode.')
@@ -29,6 +41,9 @@ def select_context(meetings, body):
         raise ValueError('Choose a valid skill.')
     if topic and topic not in CATEGORIES['topics']:
         raise ValueError('Choose a valid topic.')
+    meeting_type = filters.get('meeting_type', '')
+    if meeting_type not in ('', 'individual', 'group', 'team'):
+        raise ValueError('Choose a valid meeting type.')
     start, end = filters.get('start'), filters.get('end')
     for value in (start, end):
         if value:
@@ -47,16 +62,20 @@ def select_context(meetings, body):
     tokens = set(re.findall(r'[a-z0-9]+', question.casefold())) - STOP
     # Names provide player context, rather than a subject to search for.
     from .core import DEMO
-    person = next(p for p in DEMO['players'] if p['id'] == player_id)
-    tokens -= set(re.findall(r'[a-z0-9]+', person['name'].casefold()))
-    tokens -= {'s', 'synthesize', 'brief', 'discussion', 'questions'}
+    people = [p for p in DEMO['players'] if p['id'] in player_ids]
+    for person in people:
+        tokens -= set(re.findall(r'[a-z0-9]+', person['name'].casefold()))
+    tokens -= {'s', 'synthesize', 'brief', 'discussion', 'questions', 'team', 'group', 'selected', 'us'}
     today = date.today().isoformat()
     selected = []
     for meeting in meetings:
         if meeting.get('approved') is not True or start and meeting['date'] < start or end and meeting['date'] > end:
             continue
+        if meeting_type and meeting.get('meeting_type') != meeting_type:
+            continue
         for item in meeting['items']:
-            if not applies_to(item, player_id) or item.get('sensitive') or item.get('topic') in SENSITIVE_TOPICS:
+            applicable = [p for p in people if applies_to(item, p['id'])]
+            if not applicable or item.get('sensitive') or item.get('topic') in SENSITIVE_TOPICS:
                 continue
             if skill and item.get('skill') != skill or topic and item.get('topic') != topic:
                 continue
@@ -69,7 +88,7 @@ def select_context(meetings, body):
             if status == 'overdue' and (item['completed'] or not item.get('due_date') or item['due_date'] >= today):
                 continue
             haystack = ' '.join(str(item.get(k) or '') for k in ('text', 'skill', 'topic', 'kind'))
-            searchable = f"{haystack} {meeting['title']} {person['name']} {person['number']} {person['position']}".casefold()
+            searchable = f"{haystack} {meeting['title']} {' '.join(str(p[k]) for p in applicable for k in ('name', 'number', 'position'))}".casefold()
             if search.strip().casefold() not in searchable:
                 continue
             words = set(re.findall(r'[a-z0-9]+', haystack.casefold()))
@@ -78,10 +97,25 @@ def select_context(meetings, body):
                 continue
             selected.append((score, meeting['date'], meeting['id'], item['id'], {
                 'meeting_id': meeting['id'], 'record_id': item['id'], 'date': meeting['date'],
-                'title': meeting['title'], **{k: item.get(k) for k in ('kind', 'text', 'skill', 'topic', 'due_date', 'completed')},
+                'title': meeting['title'], 'meeting_type': meeting.get('meeting_type'),
+                'player_ids': [p['id'] for p in applicable], 'player_names': [p['name'] for p in applicable], **{k: item.get(k) for k in ('kind', 'text', 'skill', 'topic', 'due_date', 'completed')},
             }))
     selected.sort(key=lambda x: x[:4], reverse=True)
-    sources = [dict(source_id=f'S{i+1}', **entry[4]) for i, entry in enumerate(selected[:LIMIT])]
+    # Cover distinct players before filling remaining slots; never imply full coverage.
+    chosen, covered = [], set()
+    if scope != 'individual':
+        for entry in selected:
+            if set(entry[4]['player_ids']) - covered:
+                chosen.append(entry)
+                covered.update(entry[4]['player_ids'])
+            if len(chosen) == LIMIT:
+                break
+    for entry in selected:
+        if len(chosen) == LIMIT:
+            break
+        if entry not in chosen:
+            chosen.append(entry)
+    sources = [dict(source_id=f'S{i+1}', **entry[4]) for i, entry in enumerate(chosen)]
     return question, sources, len(selected), today
 
 

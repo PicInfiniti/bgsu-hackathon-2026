@@ -14,3 +14,9 @@ assert.ok(html.includes('data-assistant-record="S1"'));
 assert.ok(html.includes('Context limited to 12'));
 assert.ok(assistantAnswerMarkup({...result,origin:'demo'}).includes('not an AI answer'));
 assert.ok(assistantAnswerMarkup({...result,statements:[],sources:[],suggestions:[],matched_count:0,context_count:0,limited:false}).includes('No answer was found'));
+
+const groupHtml = assistantAnswerMarkup({...result, scope:'group', player_ids:['p01','p02'], covered_player_count:1,
+  sources:[{...source,player_ids:['p01'],player_names:['Avery <test>']}]});
+assert.ok(groupHtml.includes('Avery &lt;test&gt;'));
+assert.ok(groupHtml.includes('1 of 2 selected players'));
+assert.ok(groupHtml.includes('absence from this answer does not mean no history'));

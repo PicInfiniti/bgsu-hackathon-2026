@@ -26,7 +26,7 @@ let current = clone(demo.samples[0]);
 let playerDetailOpen = false, playerUnitFilter = 'all';
 let extractionId = null, extractionWarnings = [], highlightedDraft = 0, reviewingNoteOnly = false;
 let statusTimer = null;
-let assistantResult = null, assistantPending = false, assistantRevision = 0, assistantActionCategory = '';
+let assistantResult = null, assistantPending = false, assistantRevision = 0, assistantActionCategory = '', assistantScope = 'individual';
 const player = (id) => demo.players.find(p => p.id === id);
 const name = (id) => player(id)?.name ?? 'Unknown player';
 const positionLabel = (p) => p.position_label ? `${p.position} · ${p.position_label}` : p.position;
@@ -39,6 +39,7 @@ const items = () => meetings.flatMap(m => m.items.map(i => ({...i, meeting:m})))
 const icon = (name) => {
   const paths = {
     chat: '<path d="M21 11a8 8 0 0 1-8 8H7l-4 3V11a9 9 0 0 1 18 0Z"/><path d="M7 10h10M7 14h6"/>',
+    team: '<circle cx="12" cy="7" r="3"/><path d="M7 21v-3a5 5 0 0 1 10 0v3M4 6a3 3 0 0 0 0 6M20 6a3 3 0 0 1 0 6M2 20v-3a4 4 0 0 1 3-4M22 20v-3a4 4 0 0 0-3-4"/>',
     football: '<path d="M3 21C1 11 11 1 21 3c2 10-8 20-18 18Z"/><path d="m8 16 8-8M9 11l4 4M12 8l4 4"/>',
     home: '<path d="m3 10 9-7 9 7v10H3z"/><path d="M9 20v-7h6v7"/>',
     note: '<rect x="5" y="3" width="15" height="18" rx="2"/><path d="M9 8h7M9 12h7M9 16h4M3 7h4M3 12h4M3 17h4"/>',
@@ -124,21 +125,30 @@ document.querySelector('#app').innerHTML = `
         </div><aside class="action-calendar-rail"><section class="calendar-panel panel"><div class="calendar-heading"><h3 id="action-calendar-title"></h3><div><button class="icon-button" id="action-calendar-prev" aria-label="Previous action calendar month">${icon('chevron')}</button><button class="icon-button" id="action-calendar-next" aria-label="Next action calendar month">${icon('chevron')}</button></div></div><p class="calendar-caption">Meetings & action deadlines</p><label class="action-calendar-filter"><span class="sr-only">Calendar meeting type</span><select id="action-calendar-type"><option value="">All meeting types</option><option value="individual">Individual</option><option value="group">Group</option><option value="team">Team</option></select></label><div id="action-calendar" class="calendar-grid"></div><div class="calendar-key"><span class="meeting-individual">Individual</span><span class="meeting-group">Group</span><span class="meeting-team">Team</span><span class="action-due-key">Action due</span></div><div id="action-calendar-activities" class="calendar-activities" aria-live="polite"></div></section></aside></div>
       </section>
       <section id="assistant" class="view" hidden>
-        <div class="section-heading assistant-heading"><div><p class="eyebrow">BEFORE THE NEXT CONVERSATION</p><h2 id="assistant-title" tabindex="-1">AI Assistant</h2><p>Ask about a player. Bring their documented feedback into your next meeting.</p></div><span class="assistant-scope">${icon('chat')} Your approved notebook</span></div>
+        <div class="section-heading assistant-heading"><div><p class="eyebrow">BEFORE THE NEXT CONVERSATION</p><h2 id="assistant-title" tabindex="-1">AI Assistant</h2><p>Bring the right records into your next conversation. Ask about one player, a group, or your team.</p></div><span class="assistant-scope">${icon('chat')} Your approved notebook</span></div>
+        <div class="assistant-scope-picker" role="group" aria-label="Who is this conversation about?">
+          <button type="button" data-assistant-scope="individual" aria-pressed="true">${icon('user')}<span><strong>Individual</strong><small>One player’s history</small></span></button>
+          <button type="button" data-assistant-scope="group" aria-pressed="false">${icon('people')}<span><strong>Group</strong><small>Select players together</small></span></button>
+          <button type="button" data-assistant-scope="team" aria-pressed="false">${icon('team')}<span><strong>Team</strong><small>The whole roster</small></span></button>
+        </div>
+        <p id="assistant-selection-summary" class="assistant-selection-summary" role="status">Choose a player to begin.</p>
         <div class="assistant-layout">
-          <aside class="panel assistant-context"><h3>Conversation context</h3><label>Player<select id="assistant-player"><option value="">Choose a player…</option>${demo.players.map(p => `<option value="${p.id}">#${p.number} ${escape(p.name)}</option>`).join('')}</select></label>
+          <aside class="panel assistant-context"><h3>Conversation context</h3><label id="assistant-individual-context">Player<select id="assistant-player"><option value="">Choose a player…</option>${demo.players.map(p => `<option value="${p.id}">#${p.number} ${escape(p.name)}</option>`).join('')}</select></label>
+            <div id="assistant-group-context" hidden><label>Start with a position group<select id="assistant-position-group"><option value="">Choose a group…</option>${[...new Set(demo.players.map(p => p.position_group))].map(g => `<option value="${escape(g)}">${escape(g)}</option>`).join('')}</select></label><fieldset class="assistant-roster"><legend>Select at least two players</legend>${demo.players.map(p => `<label><input type="checkbox" name="assistant-member" value="${p.id}"><span>#${p.number} ${escape(p.name)}<small>${escape(p.position_group)}</small></span></label>`).join('')}</fieldset><button id="assistant-clear-group" class="rail-link" type="button">Clear players</button></div>
+            <p id="assistant-team-context" class="assistant-team-context" hidden>${demo.players.length} players · All approved individual, group and team conversations are eligible.</p>
+            <label>Meeting type<select id="assistant-meeting-type"><option value="">All meeting types</option><option value="individual">Individual</option><option value="group">Group</option><option value="team">Team</option></select></label>
             <label>Skill<select id="assistant-skill"><option value="">All skills</option>${optionList(categories.skills,'')}</select></label>
             <label>Topic<select id="assistant-topic"><option value="">All topics</option>${optionList(categories.topics,'')}</select></label>
             <div class="form-row"><label>From<input id="assistant-start" type="date"></label><label>Through<input id="assistant-end" type="date"></label></div>
             <label>Action status<select id="assistant-status"><option value="all">All statuses</option><option value="open">Open actions</option><option value="overdue">Overdue actions</option><option value="done">Completed actions</option></select></label>
             <label class="assistant-check"><input id="assistant-actions" type="checkbox"> Actions only</label>
             <label>Record search<input id="assistant-search" type="search" maxlength="300" placeholder="Optional words from a record"></label>
-            <p id="assistant-inherited-category" class="assistant-privacy" hidden></p><button id="assistant-reset" class="rail-link" type="button">Reset filters</button><p class="assistant-privacy">One player at a time. Uses approved, non-sensitive records only. Group and team feedback is included when it applies to this player.</p>
+            <p id="assistant-inherited-category" class="assistant-privacy" hidden></p><button id="assistant-reset" class="rail-link" type="button">Reset filters</button><p class="assistant-privacy">Uses approved, non-sensitive records for your selection. Choose a meeting type to narrow the source conversations. Answers may use only part of the matching history.</p>
           </aside>
           <div class="panel assistant-chat"><div class="assistant-chat-top"><span>${icon('chat')} A little context. A better conversation.</span><button id="assistant-clear" class="rail-link" type="button">Clear answer</button></div>
-            <div id="assistant-answer" class="assistant-answer" aria-live="polite" aria-busy="false"><div class="assistant-welcome"><span class="assistant-emblem">${icon('chat')}</span><h3>What would you like to revisit?</h3><p>Choose a player, then ask about past feedback, actions, or your next meeting. Answers link back to saved records.</p></div></div>
+            <div id="assistant-answer" class="assistant-answer" aria-live="polite" aria-busy="false"><div class="assistant-welcome"><span class="assistant-emblem">${icon('chat')}</span><h3>What would you like to revisit?</h3><p>Choose Individual, Group, or Team, then ask about documented feedback, actions, or your next meeting. Answers link back to saved records.</p></div></div>
             <div class="assistant-prompts"><button type="button" data-assistant-prompt="Prepare my next meeting.">Prepare my next meeting</button><button type="button" data-assistant-prompt="Summarize past feedback.">Summarize past feedback</button><button type="button" data-assistant-prompt="Which actions need follow-up?" data-assistant-actions>Review open actions</button></div>
-            <form id="assistant-form"><label for="assistant-question">Your question</label><div class="assistant-composer"><textarea id="assistant-question" rows="2" maxlength="800" required placeholder="What did I tell this player about footwork?"></textarea><button id="assistant-send" class="primary" type="submit">Ask assistant</button></div><p id="assistant-mode-note">Demo shows matching saved excerpts. Switch to Live for an Aivana answer.</p><p id="assistant-error" class="assistant-error" role="alert" hidden></p></form>
+            <form id="assistant-form"><label for="assistant-question">Your question</label><div class="assistant-composer"><textarea id="assistant-question" rows="2" maxlength="800" required placeholder="What feedback and follow-ups should we revisit?"></textarea><button id="assistant-send" class="primary" type="submit">Ask assistant</button></div><p id="assistant-mode-note">Demo shows matching saved excerpts. Switch to Live for an Aivana answer.</p><p id="assistant-error" class="assistant-error" role="alert" hidden></p></form>
           </div>
         </div>
       </section>
@@ -563,20 +573,51 @@ $('#prep').addEventListener('click', () => {
   prepSource.addEventListener('done', e => { const data = JSON.parse(e.data); prepSource?.close(); prepSource = null; $('#prep').disabled = false; if (data.finish_reason === 'length') notify('The brief was cut short. Treat this as an incomplete draft.',true); });
   prepSource.addEventListener('error', e => { let message = 'Preparation stream failed. Check your backend, key, balance, and connection.'; try { message = JSON.parse(e.data).message || message; } catch {} notify(message,true); prepSource?.close(); prepSource = null; $('#prep').disabled = false; $('#prep-text').innerHTML = formatBrief(content || 'No brief was generated.'); });
 });
+function assistantPlayerIds() {
+  return assistantScope === 'team' ? demo.players.map(p => p.id) : assistantScope === 'group'
+    ? [...document.querySelectorAll('[name="assistant-member"]:checked')].map(el => el.value)
+    : [$('#assistant-player').value].filter(Boolean);
+}
+function updateAssistantScope() {
+  document.querySelectorAll('[data-assistant-scope]').forEach(el => el.setAttribute('aria-pressed', String(el.dataset.assistantScope === assistantScope)));
+  $('#assistant-individual-context').hidden = assistantScope !== 'individual';
+  $('#assistant-group-context').hidden = assistantScope !== 'group';
+  $('#assistant-team-context').hidden = assistantScope !== 'team';
+  const ids = assistantPlayerIds();
+  $('#assistant-selection-summary').textContent = assistantScope === 'individual'
+    ? ids.length ? `Individual · ${name(ids[0])}` : 'Choose a player to begin.'
+    : `${assistantScope === 'team' ? 'Team' : 'Group'} · ${ids.length} players${assistantScope === 'group' && ids.length < 2 ? ' · Select at least two' : ''}`;
+}
+document.querySelector('.assistant-scope-picker').addEventListener('click', e => {
+  const button = e.target.closest('[data-assistant-scope]');
+  if (!button || assistantPending) return;
+  assistantScope = button.dataset.assistantScope; updateAssistantScope(); clearAssistant();
+});
+$('#assistant-position-group').addEventListener('change', e => {
+  if (!e.target.value) return;
+  document.querySelectorAll('[name="assistant-member"]').forEach(el => el.checked = player(el.value).position_group === e.target.value);
+  updateAssistantScope(); clearAssistant();
+});
+$('#assistant-clear-group').addEventListener('click', () => {
+  document.querySelectorAll('[name="assistant-member"]').forEach(el => el.checked = false);
+  $('#assistant-position-group').value = ''; updateAssistantScope(); clearAssistant();
+});
 function clearAssistant() {
   assistantRevision++; assistantResult = null;
-  $('#assistant-answer').innerHTML = '<div class="assistant-welcome"><span class="assistant-emblem">' + icon('chat') + '</span><h3>What would you like to revisit?</h3><p>Choose a player, then ask about past feedback, actions, or your next meeting. Answers link back to saved records.</p></div>';
+  $('#assistant-answer').innerHTML = '<div class="assistant-welcome"><span class="assistant-emblem">' + icon('chat') + '</span><h3>What would you like to revisit?</h3><p>Choose Individual, Group, or Team, then ask about documented feedback, actions, or your next meeting. Answers link back to saved records.</p></div>';
   $('#assistant-error').hidden = true;
 }
 function resetAssistantFilters() {
   assistantActionCategory = ''; $('#assistant-inherited-category').hidden = true;
-  for (const key of ['skill','topic','start','end','search']) $(`#assistant-${key}`).value = '';
+  for (const key of ['skill','topic','start','end','search','meeting-type']) $(`#assistant-${key}`).value = '';
   $('#assistant-status').value = 'all'; $('#assistant-actions').checked = false;
 }
 function openAssistant(playerId, fromActions = false) {
   if (assistantPending) { notify('Wait for the current assistant answer before changing its context.'); return; }
   resetAssistantFilters(); clearAssistant();
+  assistantScope = fromActions && !playerId ? 'team' : 'individual';
   $('#assistant-player').value = playerId || (fromActions ? '' : selectedPlayer);
+  updateAssistantScope();
   if (fromActions) {
     assistantActionCategory = $('#task-category').value;
     $('#assistant-inherited-category').textContent = `Action-board category: ${assistantActionCategory}`;
@@ -587,7 +628,6 @@ function openAssistant(playerId, fromActions = false) {
   $('#assistant-question').value = fromActions ? 'Which actions need follow-up?' : '';
   switchView('assistant'); $('#assistant-title').focus({preventScroll:true});
   $('#assistant-title').scrollIntoView({block:'start', behavior:'instant'});
-  if (fromActions && !playerId) notify('Choose one player to ask about their filtered actions.');
   $('#assistant-question').focus({preventScroll:true});
 }
 document.addEventListener('click', e => {
@@ -597,7 +637,10 @@ document.addEventListener('click', e => {
 $('#ask-actions').addEventListener('click', () => openAssistant($('#task-player').value, true));
 $('#assistant-reset').addEventListener('click', () => { resetAssistantFilters(); clearAssistant(); });
 $('#assistant-clear').addEventListener('click', clearAssistant);
-$('.assistant-context').addEventListener('input', clearAssistant);
+$('.assistant-context').addEventListener('input', e => {
+  if (e.target.name === 'assistant-member') $('#assistant-position-group').value = '';
+  updateAssistantScope(); clearAssistant();
+});
 $('.assistant-prompts').addEventListener('click', e => {
   const prompt = e.target.closest('[data-assistant-prompt]');
   if (!prompt || assistantPending) return;
@@ -616,7 +659,7 @@ $('#assistant-answer').addEventListener('click', e => {
   if (recordLink && assistantResult) {
     const source = assistantResult.sources.find(s => s.source_id === recordLink.dataset.assistantRecord);
     if (!source) return;
-    openPlayerTimeline(assistantResult.player_id);
+    openPlayerTimeline(source.player_ids?.[0] || assistantResult.player_id);
     const record = document.getElementById(`record-${source.meeting_id}-${source.record_id}`);
     if (record) { record.querySelector('details').open = true; record.focus({preventScroll:true}); record.scrollIntoView({block:'center',behavior:'smooth'}); }
     else notify('This record is no longer visible. Reload the notebook to check its latest state.',true);
@@ -625,10 +668,13 @@ $('#assistant-answer').addEventListener('click', e => {
 $('#assistant-form').addEventListener('submit', async e => {
   e.preventDefault(); if (assistantPending || !connected) return;
   const question = $('#assistant-question').value.trim(); if (!question) return;
-  if (!$('#assistant-player').value) { $('#assistant-error').textContent = 'Choose one player for this question.'; $('#assistant-error').hidden = false; $('#assistant-player').focus(); return; }
+  const selectedIds = assistantPlayerIds();
+  if (selectedIds.length < (assistantScope === 'group' ? 2 : 1)) { $('#assistant-error').textContent = assistantScope === 'group' ? 'Select at least two players for this group.' : 'Choose a player for this question.'; $('#assistant-error').hidden = false; return; }
   const start = $('#assistant-start').value, end = $('#assistant-end').value;
   if (start && end && start > end) { $('#assistant-error').textContent = 'From must be on or before Through.'; $('#assistant-error').hidden = false; return; }
-  const body = {player_id:$('#assistant-player').value, question, mode, filters: {
+  const selectionLabel = $('#assistant-selection-summary').textContent;
+  const body = {scope:assistantScope, player_id:$('#assistant-player').value, player_ids:selectedIds, question, mode, filters: {
+    meeting_type:$('#assistant-meeting-type').value,
     skill:$('#assistant-skill').value, topic:$('#assistant-topic').value, start, end,
     status:$('#assistant-status').value, actions_only:$('#assistant-actions').checked, search:$('#assistant-search').value, category:assistantActionCategory,
   }};
@@ -641,7 +687,7 @@ $('#assistant-form').addEventListener('submit', async e => {
     const result = await api('/assistant', body);
     if (revision !== assistantRevision) return;
     assistantResult = result;
-    $('#assistant-answer').innerHTML = `<div class="assistant-question-bubble"><strong>${escape(name(body.player_id))}</strong><p>${escape(question)}</p></div>` + assistantAnswerMarkup(result);
+    $('#assistant-answer').innerHTML = `<div class="assistant-question-bubble"><strong>${escape(selectionLabel)}</strong><p>${escape(question)}</p></div>` + assistantAnswerMarkup(result);
   } catch (error) {
     if (revision !== assistantRevision) return;
     $('#assistant-answer').innerHTML = '<p>No answer was generated. Your question is ready to retry.</p>';

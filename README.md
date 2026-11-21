@@ -16,7 +16,7 @@
 
 **Extraction upgrade:** typed football topics/skills, confidence and unmatched-player flags, deterministic Python deadlines, group fan-out, shared team feedback, manual additions, highlighted evidence, sensitive-topic filtering, and field-level approval audit logs are implemented. Old SQLite records remain readable. The live individual browser flow passed extraction, edit/remove/manual-add, approval, save/reload, timeline/source, complete/reopen, and streamed preparation checks on a disposable database. Broader browser QA and validation on the missing organizer pack remain outstanding. See [verification and limitations](docs/qa-2026-11-21.md).
 
-**AI Assistant (implemented):** sidebar chat view with one selected player, skill/topic/meeting-date filters, action status/search filters, suggested prompts, and clickable dated sources leading to timeline records. Timeline and Action-board buttons carry context into the assistant. Live uses one bounded structured Aivana call; Demo lists saved excerpts. Sensitive records are excluded and questions are independent. One real HTTP answer passed on disposable data; new assistant browser/mobile QA is pending because browser access was unavailable.
+**AI Assistant (implemented):** sidebar chat view with Individual, Group and Team scopes, position-group shortcuts, skill/topic/meeting-type/date filters, action status/search filters, suggested prompts, and clickable dated sources leading to timeline records. Timeline and Action-board buttons carry context into the assistant. Live uses one bounded structured Aivana call; Demo lists saved excerpts. Sensitive records are excluded and questions are independent. One real HTTP answer passed on disposable data; new assistant browser/mobile QA is pending because browser access was unavailable.
 
 **Shared meeting records (implemented):** Group/team review combines identical source-backed records into one shared card listing the affected players. Expand to review warnings or edit each player's version; **Update shared cards** separates changed versions before approval. Individual assignments remain separate. The Action board combines matching shared assignments into expandable rows, shows completed/total players, and keeps each player's Complete/Reopen controls independent. Player/status/search filters still apply to individual actions; the group states how many members match. Every action and timeline record shows the meeting type/title. The backend derives `display_group` metadata for new extractions and saved history without rewriting stored records or statuses. Similar wording alone never causes a merge: meeting, content, exact quote, categories, deadline, and sensitivity must match. Visual/browser verification remains pending.
 
@@ -93,7 +93,7 @@ The Football Coach Meeting Tracker lets a coach paste meeting notes (photo input
 
 ### Level 2: Standard (assistant and streamed brief implemented)
 
-- **Question box** ("What did I tell Jay about positioning?"). The backend first filters saved records by player, skill, topic, and date range, then sends only those entries to Aivana. The answer must cite meeting dates and record IDs.
+- **Question box** ("What did I tell Jay about positioning?"). The backend first filters saved records by selected player/group/team, meeting type, skill, topic, and date range, then sends only those entries to Aivana. The answer must cite meeting dates and record IDs.
 - **Streamed prep brief** for the next one-on-one. Summarizes past feedback, open action items, and suggests follow-up questions based only on documented feedback.
 - **Planned: players needing attention**, computed in code: not met with in N days, overdue action items, or repeated "Improvement" feedback in the same skill.
 
@@ -601,15 +601,15 @@ The browser calls the local FastAPI backend through Vite’s `/api` proxy; it ne
 | `POST` | `/api/meetings/import` | Idempotent migration of older reviewed Demo browser history. |
 | `PATCH` | `/api/meetings/{meeting_id}/items/{item_id}` | Complete/reopen an action with `{completed: true/false}`. |
 | `GET` | `/api/players/{player_id}/prep` | SSE brief from up to ten non-sensitive approved records. |
-| `POST` | `/api/assistant` | Single-player question with optional skill/topic/date/action/search filters; returns checked citations and supporting records. |
+| `POST` | `/api/assistant` | Individual, group or team question with optional meeting-type/skill/topic/date/action/search filters; returns checked citations and supporting records. |
 
 Separate roster/timeline endpoints, `/api/attention`, transcription, exports, and insights are planned. The current frontend reads the shared roster fixture and approved meetings. There is no public hosting/authentication boundary; run locally with synthetic data.
 
 ### AI Assistant
 
-Open **AI Assistant** in the sidebar, **Ask about this player** on a timeline, or **Ask about these actions** on the Action board. The Action board passes its player, category (including legacy categories), status, and search filters; choose one player if the board showed everyone. Suggested prompts fill the question and action scope for the coach to submit.
+Open **AI Assistant** in the sidebar, **Ask about this player** on a timeline, or **Ask about these actions** on the Action board. The Action board passes its player, category (including legacy categories), status, and search filters; an all-player board opens Team scope. Group scope supports a position-group shortcut and an editable player checklist (at least two players). Team includes the full roster. Meeting type independently limits which conversations can supply records. Suggested prompts fill the question and action scope for the coach to submit.
 
-`POST /api/assistant` accepts `player_id`, `question` (1–800 characters), `mode`, and optional `filters`: `skill`, `topic`, `start`, `end`, `status`, `actions_only`, `search`, and inherited Action-board `category`. Dates filter meeting dates. Questions are independent; chat history and questions are not stored. Retrieval uses keyword overlap after filtering, ranks by overlap and recency, and supplies at most 12 records. This is bounded keyword retrieval, not semantic search; use explicit subject words or broaden the filters if relevant records are missed.
+`POST /api/assistant` accepts `scope` (`individual`, `group`, or `team`; defaults to `individual`), `player_id` for Individual, `player_ids` for Group (two or more distinct roster IDs), `question` (1–800 characters), `mode`, and optional `filters`: `meeting_type`, `skill`, `topic`, `start`, `end`, `status`, `actions_only`, `search`, and inherited Action-board `category`. Dates filter meeting dates. Questions are independent; chat history and questions are not stored. Retrieval uses keyword overlap after filtering, ranks by overlap and recency, and supplies at most 12 records. Group/Team selection first covers distinct players, then fills remaining slots by rank. Each source identifies its applicable selected players; shared feedback appears once. The response reports selected IDs and the number of players represented in the supplied context. A limited answer is not a complete team summary, and missing coverage does not prove missing history. This is bounded keyword retrieval, not semantic search; use explicit subject words or broaden the filters if relevant records are missed.
 
 Live makes one structured Aivana call with a 1200-token output cap. Each factual statement requires known source IDs; invalid citations or truncated output fail the request. The UI maps those IDs to stored meeting dates and exact timeline records. This validates citation membership, not factual entailment; coaches must check the supporting records. Suggestions are separately labeled discussion questions. Full notes and quotes are not sent to the assistant model. No matching context returns without an AI call. Demo lists saved excerpts and explicitly labels them as application output.
 
@@ -763,7 +763,7 @@ Backup plan: if the network or Aivana is down, show a saved extraction from a pr
 |---|---|---|
 | Implemented; live individual browser flow passed; organizer-data QA pending | Meeting form, structured extraction, source highlighting, manual/edit/remove/approve, shared SQLite, timelines, open/overdue actions | 1 |
 | Implemented; live spot checks passed | Confidence/unmatched flags, attendee name/nickname/jersey matching, Python deadlines, group/team expansion, bounded correction, edit audit | 1 |
-| Implemented; one real HTTP answer checked, browser QA pending | Single-player AI Assistant with filtered records and date/source links | 2 |
+| Implemented; one real HTTP answer checked, browser QA pending | Individual/group/team AI Assistant with filtered records and attributed date/source links | 2 |
 | Implemented; live stream checked | Streamed one-on-one prep brief from approved non-sensitive context | 2 |
 | Planned | Players needing attention (computed in code) | 2 |
 | Stretch | Handwritten note photos | 3 |
@@ -782,7 +782,7 @@ Backup plan: if the network or Aivana is down, show a saved extraction from a pr
 |---|---|
 | Core functionality (30) | Section 2, Level 1: full note → extraction → review → save → timeline → action items flow on the data pack. |
 | Use of Aivana (20) | Sections 6 and 8: strict JSON Schema for extraction/assistant, streaming prep brief, `max_tokens`, no calculations left to the model. |
-| Depth (15) | Implemented Level 2 single-player assistant and streamed prep brief. Attention list and Level 3 features remain planned. |
+| Depth (15) | Implemented Level 2 individual/group/team assistant and streamed prep brief. Attention list and Level 3 features remain planned. |
 | Reliability and data handling (15) | Sections 9 and 12: validation loop, roster checks, error handling for 401/402/429/502, coach approval, no invented facts. |
 | Usability (10) | Side-by-side review with highlighted source text, confidence colors, dropdowns for unmatched players. |
 | Demo and documentation (10) | Section 15 demo script; this README covers running the app, Aivana features, and known limits; key kept out of the repo. |

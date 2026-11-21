@@ -60,6 +60,45 @@ class AssistantTests(unittest.TestCase):
             self.assertEqual(select_context([meeting],body)[2],expected)
         self.assertEqual(select_context([meeting],{**self.body,'filters':{'category':'Other'}})[2],0)
 
+    def test_group_scope_preserves_attribution_shared_feedback_and_filters(self):
+        meeting = self.meetings[0]
+        base = dict(meeting['items'][0], sensitive=False, kind='praise')
+        meeting['meeting_type'] = 'group'
+        meeting['items'] = [dict(base, id='one', player_id='p01'),
+                            dict(base, id='two', player_id='p02'),
+                            dict(base, id='other', player_id='p03'),
+                            dict(base, id='shared', player_id=None, player_ids=['p01','p02','p03'], scope='team'),
+                            dict(base, id='sensitive', player_id='p02', sensitive=True)]
+        body = {**self.body, 'scope':'group', 'player_ids':['p01','p02']}
+        _, sources, total, _ = select_context([meeting], body)
+        self.assertEqual(total, 3)
+        by_id = {s['record_id']:s for s in sources}
+        self.assertEqual(by_id['one']['player_ids'], ['p01'])
+        self.assertEqual(by_id['two']['player_ids'], ['p02'])
+        self.assertEqual(by_id['shared']['player_ids'], ['p01','p02'])
+        self.assertEqual(len(by_id['shared']['player_names']), 2)
+        self.assertNotIn('note', by_id['shared'])
+        self.assertEqual(select_context([meeting], {**body, 'filters':{'meeting_type':'team'}})[2], 0)
+        self.assertEqual(select_context([meeting], {**body, 'filters':{'meeting_type':'group'}})[2], 3)
+
+    def test_team_scope_covers_players_before_repeated_records_and_remains_bounded(self):
+        meeting = self.meetings[0]
+        base = dict(meeting['items'][0], sensitive=False)
+        meeting['items'] = [dict(base, id=f'z{i}', player_id='p01') for i in range(20)]
+        meeting['items'] += [dict(base, id=f'a{i}', player_id=p['id']) for i,p in enumerate(DEMO['players'][1:])]
+        _, sources, total, _ = select_context([meeting], {**self.body, 'scope':'team'})
+        self.assertEqual(total,44)
+        self.assertEqual(len(sources),12)
+        self.assertEqual(len({pid for s in sources for pid in s['player_ids']}),12)
+
+    def test_invalid_scopes_and_group_members_are_rejected(self):
+        for override in ({'scope':'unknown'}, {'scope':'group'}, {'scope':'group','player_ids':[]},
+                         {'scope':'group','player_ids':['p01']}, {'scope':'group','player_ids':['p01','p01']},
+                         {'scope':'group','player_ids':['p01','unknown']}, {'scope':'group','player_ids':'p01,p02'},
+                         {'filters':{'meeting_type':'unknown'}}):
+            with self.subTest(override=override), self.assertRaises(ValueError):
+                select_context(self.meetings, {**self.body, **override})
+
     def test_citations_require_known_sources_and_nonempty_factual_support(self):
         sources = [{'source_id':'S1'}]
         good = {'statements':[{'text':'Coach assigned a drill.', 'source_ids':['S1']}], 'suggestions':['What would help you practice?']}
@@ -114,6 +153,23 @@ class AssistantTests(unittest.TestCase):
                     self.assertEqual(client.post('/api/assistant',json=body).status_code,502)
                     answer.side_effect = aivana.AivanaError('Empty balance.',402)
                     self.assertEqual(client.post('/api/assistant',json=body).status_code,402)
+                    answer.side_effect = None
+                    answer.return_value = {'statements':[{'text':'Coach documented feedback.', 'source_ids':['S1']}], 'suggestions':[]}
+                    for scope, ids in [('group',['p01','p02']), ('team',[])]:
+                        scoped = {**body,'scope':scope,'player_ids':ids}
+                        demo = client.post('/api/assistant', json={**scoped,'mode':'demo'})
+                        self.assertEqual(demo.status_code,200)
+                        data = demo.json()
+                        self.assertEqual(data['scope'],scope)
+                        self.assertIsNone(data['player_id'])
+                        self.assertEqual(len(data['player_ids']),2 if scope == 'group' else 25)
+                        self.assertGreater(data['covered_player_count'],0)
+                        self.assertTrue(all(s['player_names'] for s in data['sources']))
+                        live = client.post('/api/assistant',json=scoped)
+                        self.assertEqual(live.status_code,200)
+                        self.assertEqual(answer.call_args.args[1]['scope'],scope)
+                        self.assertTrue(all(set(s['player_ids']) <= set(data['player_ids']) for s in answer.call_args.args[2]))
+                    self.assertEqual(client.post('/api/assistant',json={**body,'scope':'group','player_ids':['p01']}).status_code,422)
                     self.assertEqual(main.store.list(),before)
             finally:
                 main.store = old
