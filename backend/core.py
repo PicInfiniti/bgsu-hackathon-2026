@@ -120,6 +120,7 @@ class Store:
         self.path = str(path)
         with self.connect() as db:
             db.execute('CREATE TABLE IF NOT EXISTS meetings (id TEXT PRIMARY KEY, body TEXT NOT NULL)')
+            db.execute('CREATE TABLE IF NOT EXISTS meeting_media (id TEXT PRIMARY KEY, meeting_id TEXT NOT NULL, kind TEXT NOT NULL, mime TEXT NOT NULL, data BLOB NOT NULL)')
             db.execute('CREATE TABLE IF NOT EXISTS strategy_boards (id TEXT PRIMARY KEY, body TEXT NOT NULL, revision INTEGER NOT NULL)')
             db.execute('CREATE TABLE IF NOT EXISTS extraction_runs (id TEXT PRIMARY KEY, body TEXT NOT NULL, saved_meeting_id TEXT)')
             db.execute('CREATE TABLE IF NOT EXISTS record_edits (id TEXT PRIMARY KEY, meeting_id TEXT NOT NULL, extraction_id TEXT, draft_id TEXT, change_type TEXT NOT NULL, field_changes TEXT NOT NULL)')
@@ -135,6 +136,8 @@ class Store:
         return sorted(meetings, key=lambda m: (m['date'], m['id']), reverse=True)
 
     def save(self, raw):
+        from .note_media import validate_media
+        media = validate_media(raw.get('source_images', []))
         meeting = validate_meeting(raw, require_items=True)
         meeting['id'] = str(uuid.uuid4())
         with self.connect() as db:
@@ -152,6 +155,12 @@ class Store:
                     raise ValueError('Meeting changed after extraction. Extract again before approval.')
                 baseline = run['items']
                 meeting['origin'] = run['origin']
+            if media:
+                meeting['source_images'] = []
+                for kind, mime, data in media:
+                    image_id = str(uuid.uuid4())
+                    db.execute('INSERT INTO meeting_media VALUES (?, ?, ?, ?, ?)', (image_id, meeting['id'], kind, mime, data))
+                    meeting['source_images'].append({'id': image_id, 'kind': kind})
             db.execute('INSERT INTO meetings VALUES (?, ?)', (meeting['id'], json.dumps(meeting)))
             fields = ('player_id', 'player_ids', 'kind', 'text', 'topic', 'skill', 'quote', 'due_date', 'deadline_text', 'confidence', 'scope')
             originals = {i['id']: i for i in baseline}

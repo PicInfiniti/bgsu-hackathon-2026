@@ -92,9 +92,15 @@ The [official brief](sources/2026_BGSU_Hackathon_Project_Briefs.pdf), page 2, al
 
 The file is a snapshot. Later edits/completion do not sync, and repeated imports or alerts depend on the receiving calendar app.
 
+### Photo and freehand notes
+
+Overview and Create meeting include **Type / Freehand / Photo / Voice** capture controls. Freehand supports pen colors, eraser, undo/redo and touch/pointer drawing. Photo accepts up to four PNG/JPEG images under 8 MB each and resizes them in the browser. **Convert handwriting to text** and **Read photos** explicitly use Live Aivana; Demo makes no transcription calls. Check/edit the returned transcript, then choose **Add checked text to note** before the usual extraction and coach approval. Failed or stale responses never append text automatically.
+
+The original photos and drawing are stored atomically with an approved meeting in the separate `meeting_media` table. Reopen the meeting to inspect them. Images remain in the current draft until approval; New meeting or loading a sample clears them. Source images do not enter assistant or preparation context. As with the source note, image previews are hidden when the meeting contains hidden sensitive records. Restart the backend after this upgrade if not using `--reload`. Real Aivana image transcription and pointer/device behavior still need a live browser check; mocked provider and DOM checks pass.
+
 ### Voice dictation
 
-**Create meeting → Voice to text** appends final speech to existing notes and shows interim words separately. Stop, review the text, then extract. Context changes cancel recognition; stale results cannot enter another meeting. Recognition invalidates any previous extraction approval and never automatically calls Aivana or saves a meeting.
+**Overview or Create meeting → Voice → Voice to text** appends final speech to existing notes and shows interim words separately. Stop, review the text, then extract. Context changes cancel recognition; stale results cannot enter another meeting. Recognition invalidates any previous extraction approval and never automatically calls Aivana or saves a meeting.
 
 The browser speech service may process audio online. The app stores no audio. See [voice-to-text details](docs/voice-to-text.md).
 

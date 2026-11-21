@@ -1,0 +1,51 @@
+// Overview's three-column notebook layout, adapted from coach-dashboard-redesign.
+.workspace-app #desk {
+  .home-grid { display: grid; grid-template-columns: minmax(190px,.85fr) minmax(350px,2fr) minmax(245px,1fr); gap: 18px; align-items: start; }
+  .home-col { display: grid; gap: 18px; min-width: 0; }
+  .panel { padding: 18px; border: 1px solid #e3d8c9; border-radius: 12px; background: #fffdf9; }
+  h2 { font-size: 1.05rem; letter-spacing: -.02em; }
+  .section-heading { margin-bottom: 14px; align-items: center; }
+  .eyebrow { display: none; }
+  .overview-types .section-heading { display: block; .muted { font-size: .75rem; } }
+  .overview-search { margin: 16px 0; label { font-size: .75rem; color: #796f62; } >div { display: flex; margin-top: 5px; gap: 4px; } input { min-width: 0; width: 100%; margin: 0; font-size: .8rem; } button { padding: 8px; } }
+  #overview-meeting-types { display: grid; grid-template-columns: 1fr; border: 0; gap: 5px;
+    button { border: 0; border-radius: 7px; padding: 11px; background: #f8f2e9; span { font-size: .8rem; } strong { font-size: 1rem; } .ui-icon { display: block; width: 17px; } }
+  }
+  .overview-conversations { .section-heading { display: block; } .rail-link { margin-top: 8px; display: inline-block; } .recent-count { font-size: .72rem; } .meeting-row { gap: 8px; padding: 12px 0; } .meeting-title { min-width: 0; strong { font-size: .8rem; overflow-wrap: anywhere; } small { font-size: .7rem; } } .badge { display: none; } .meeting-date { width: 25px; height: 30px; } }
+  .meeting-workspace { display: grid; grid-template-columns: minmax(0,1fr); gap: 18px; }
+  .meeting-notebook { min-width: 0; }
+  .meeting-sheet-heading { border-radius: 12px 12px 0 0; }
+  .note-panel { border-radius: 0 0 12px 12px; }
+  .review-panel { position: static; max-height: none; }
+  .note-label textarea { min-height: 280px; }
+  .editor-footer { flex-wrap: wrap; gap: 10px; }
+  .stats { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 7px; margin: 0;
+    >a { padding: 10px 8px; border-radius: 8px; min-width: 0; strong { font-size: 1.3rem; } span { font-size: .68rem; } small { display: none; } &.urgent { padding-top: 8px; } }
+  }
+  .home-left .overview-checkins {
+    .checkin-controls { grid-template-columns: minmax(0,1fr); gap: 10px; }
+    .checkin-summary { gap: 10px; align-items: start; }
+    .checkin-player-list li { display: grid; grid-template-columns: 35px minmax(0,1fr); gap: 8px; >div { min-width: 0; overflow-wrap: anywhere; } .rail-link { grid-column: 2; margin-left: 0; padding: 0; } }
+    progress { appearance: none; display: block; width: 100%; height: 8px; border: 0; border-radius: 5px; background: #eee1ce; color: #c67135;
+      &::-webkit-progress-bar { background: #eee1ce; border-radius: 5px; }
+      &::-webkit-progress-value { background: #c67135; border-radius: 5px; }
+      &::-moz-progress-bar { background: #c67135; border-radius: 5px; }
+    }
+  }
+  .followup-panel { margin: 0; }
+  .calendar-panel { padding: 16px; .calendar-heading h2 { font-size: .95rem; } }
+  .upcoming-item, .radar-item { min-width: 0; small, strong { overflow-wrap: anywhere; } }
+}
+@media (max-width: 1200px) { .workspace-app #desk {
+  .home-grid { grid-template-columns: minmax(0,1.8fr) minmax(250px,1fr); }
+  .home-left { grid-column: 1 / -1; grid-template-columns: 1fr 1fr; }
+} }
+@media (max-width: 760px) { .workspace-app #desk {
+  .home-grid, .home-left { grid-template-columns: minmax(0,1fr); }
+  .home-left { grid-column: auto; }
+  .home-center { grid-row: 1; }
+  .stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
+} }
+
+// Keep Overview focused on capture; explicit review opens the meeting editor.
+.workspace-app #desk { #review-panel, .stats { display: none; } }

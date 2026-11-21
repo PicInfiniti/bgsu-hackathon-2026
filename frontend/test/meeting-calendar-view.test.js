@@ -17,12 +17,12 @@ test('week view includes exactly the selected Monday-to-Sunday week across year 
 test('colored meeting chips open exact IDs, escape titles and expose overflow without inventing times',()=>{
   const meetings=[base,{...base,id:'group',meeting_type:'group'},{...base,id:'team',meeting_type:'team'},{...base,id:'fourth',title:'Z extra meeting'}],before=structuredClone(meetings);
   const month=meetingCalendarMarkup(meetings,{month:'2026-11',today:'2026-11-21',selectedDate:'2026-11-21'});
-  assert.ok(month.includes('event-individual'));assert.ok(month.includes('event-group'));assert.ok(month.includes('event-team'));
+  assert.ok(month.includes('event-individual'));assert.ok(month.includes('event-group'));
   assert.ok(month.includes('Coverage &lt;review&gt;'));assert.ok(!month.includes('<review>'));
-  assert.ok(month.includes('+1 more meeting'));assert.equal((month.match(/data-open-meeting=/g)||[]).length,3);
+  assert.ok(month.includes('+2 more meetings'));assert.equal((month.match(/data-open-meeting=/g)||[]).length,2);
   assert.ok(month.includes('is-today is-selected'));assert.ok(month.includes('aria-current="date"'));
   const week=meetingCalendarMarkup(meetings,{month:'2026-11',view:'week',anchor:'2026-11-21',today:'2026-11-21'});
-  assert.equal((week.match(/data-open-meeting=/g)||[]).length,4);assert.ok(!week.includes('more meetings'));assert.ok(!week.includes(' AM'));assert.ok(!week.includes(' PM'));
+  assert.ok(week.includes('event-team'));assert.equal((week.match(/data-open-meeting=/g)||[]).length,4);assert.ok(!week.includes('more meetings'));assert.ok(!week.includes(' AM'));assert.ok(!week.includes(' PM'));
   assert.deepEqual(meetings,before);
 });
 

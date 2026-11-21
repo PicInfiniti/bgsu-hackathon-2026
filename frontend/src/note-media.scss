@@ -1,0 +1,53 @@
+.workspace-app .note-input-tools {
+  border: 1px solid #e3d8c9; border-radius: 10px; padding: 12px; margin: 15px 0; background: #fcf8f1;
+  .note-input-tabs, .ink-tools { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; button { padding: 7px 11px; border: 1px solid #e3d8c9; background: white; color: #4f2c1d; border-radius: 6px; font-size: .8rem; &[aria-pressed='true'] { background: #4f2c1d; border-color: #4f2c1d; color: white; } } }
+  .ink-tools button[data-ink-color] { color: var(--ink); &[aria-pressed='true'] { background: #f6e5d6; outline: 2px solid var(--ink); } }
+  p { font-size: .76rem; color: #796f62; line-height: 1.5; }
+  .note-ink-pad { width: 100%; height: 260px; display: block; border: 1px solid #d8ccbc; border-radius: 6px; background: white; margin-bottom: 10px; touch-action: none; }
+  .note-photo-picker { padding: 15px; display: grid; gap: 10px; border: 1px dashed #c6a88c; border-radius: 8px; input { width: 100%; min-width: 0; } }
+  .note-photo-strip { display: flex; gap: 8px; overflow-x: auto; margin: 10px 0; figure { position: relative; margin: 0; flex: 0 0 95px; } img { width: 95px; height: 100px; object-fit: contain; background: white; border: 1px solid #e3d8c9; } button { position: absolute; right: 0; top: 0; background: #4f2c1d; color: white; border: 0; border-radius: 50%; width: 25px; height: 25px; } }
+  .note-media-check { border-top: 1px solid #e3d8c9; margin-top: 12px; padding-top: 12px; label { display: grid; gap: 8px; } textarea { width: 100%; min-height: 140px; } >div { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; } }
+  .note-media-hint { margin-bottom: 0; }
+}
+.workspace-app .meeting-source-images { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; a { flex: 0 1 180px; font-size: .8rem; color: #7b4228; } img { display: block; max-width: 100%; max-height: 180px; object-fit: contain; border: 1px solid #e3d8c9; margin-bottom: 5px; } }
+// Cream-paper capture controls and voice presentation from coach-dashboard-redesign.
+.workspace-app .note-input-tools {
+  background: transparent; border: 0; border-radius: 0; padding: 0; margin: 18px 0;
+  .editor-input-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; h3 { margin: 0; color: #4f2c1d; font-size: 1rem; letter-spacing: -.02em; } }
+  .note-input-tabs { display: inline-flex; flex-wrap: nowrap; background: #f3eadd; padding: 3px; gap: 2px; border-radius: 999px; margin: 0;
+    button { background: transparent; border: 0; border-radius: 999px; padding: 7px 13px; color: #79634e; font-size: .84rem; font-weight: 650;
+      &[aria-pressed='true'] { background: white; color: #34291f; box-shadow: 0 1px 4px #4f2c1d22; }
+    }
+  }
+  .ink-tools { border-top: 1px solid #e3d8c9; border-bottom: 1px solid #e3d8c9; padding: 7px 0; button { background: transparent; border-color: transparent; } }
+  .note-ink-pad { height: 300px; background: #fffdf8 repeating-linear-gradient(#fffdf8 0 35px,#ece2d4 35px 36px); cursor: crosshair; border-radius: 8px; }
+  .note-photo-picker { position: relative; place-items: center; padding: 32px 14px; border: 2px dashed #dfcbb4; border-radius: 10px; background: #fcf8f1; text-align: center; color: #4f2c1d; font-size: 1rem; cursor: pointer;
+    &::before { content: '＋'; display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid #e6d1b7; border-radius: 12px; color: #b85828; background: #fffaf2; font-size: 1.5rem; }
+    input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; padding: 0; }
+    &:focus-within { outline: 3px solid #237bbf; outline-offset: 3px; }
+  }
+  .voice-box { display: grid; justify-items: center; gap: 12px; padding: 20px; border: 1px solid #e3d8c9; border-radius: 12px; background: radial-gradient(ellipse at 50% 35%,#fff8ed,#fcf8f1 65%); min-height: 300px;
+    h4 { margin: 0; color: #4f2c1d; font-size: 1.25rem; letter-spacing: -.035em; }
+    .voice-intro { margin: -5px 0 0; font-size: .84rem; }
+  }
+  .voice-session-heading { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .voice-session-label { font-size: .65rem; font-weight: 750; letter-spacing: .13em; color: #a27857; }
+  .voice-recording-state { display: inline-flex; align-items: center; gap: 6px; color: #8b7966; font-size: .73rem;
+    i { width: 6px; height: 6px; border-radius: 50%; background: #b9ac99; }
+    time { font-variant-numeric: tabular-nums; margin-left: 3px; }
+  }
+  .voice-orbit { display: grid; place-items: center; width: 68px; height: 68px; margin-top: 4px; background: #f9ead9; color: #a2552f; border: 1px solid #ead3bb; border-radius: 50%; box-shadow: 0 0 0 8px #fff7eb; svg { width: 29px; height: 29px; } }
+  .voice-button-slot .note-dictate-button { border-radius: 999px; padding: 11px 22px; background: white; border-color: #e4b993; color: #4f2c1d; font-size: .9rem; font-weight: 750; gap: 9px; box-shadow: 0 2px 5px #4f2c1d08; }
+  .voice-transcript { width: 100%; background: #fffdf9; border: 1px solid #e8ddd0; border-radius: 8px; padding: 14px 16px; min-height: 90px; margin-top: 3px;
+    >span { color: #a18b75; font-size: .6rem; letter-spacing: .12em; font-weight: 700; }
+    [data-voice-final] { color: #6f5b48; font-size: .9rem; line-height: 1.7; margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .dictation-preview { background: transparent; border: 0; padding: 0; margin: 4px 0 0; color: #a18b75; font-style: italic; }
+  }
+  .voice-status-slot { text-align: center; .dictation-status { min-width: 0; font-size: .76rem; } }
+  .voice-privacy-slot { .dictation-privacy { font-size: .68rem; text-align: center; margin: 0; max-width: 360px; } }
+  .is-recording { .voice-orbit { background: #fde6dc; color: #ba4327; box-shadow: 0 0 0 8px #fceadf; animation: voice-glow 1.8s ease-in-out infinite; } .voice-recording-state { color: #ba4327; i { background: #c8321f; } } .note-dictate-button { background: #fdeceb; color: #a23e27; border-color: #c8321f; } }
+  .note-media-hint { color: #9a846f; font-size: .7rem; line-height: 1.6; margin-top: 10px; }
+}
+@keyframes voice-glow { 50% { box-shadow: 0 0 0 13px #fceadf55; } }
+@media (prefers-reduced-motion: reduce) { .workspace-app .note-input-tools .is-recording .voice-orbit { animation: none; } }
+@media (max-width: 680px) { .workspace-app .note-input-tools { .voice-box { padding: 16px 12px; h4 { font-size: 1.1rem; text-align: center; } } .editor-input-top { gap: 12px; } .note-input-tabs { width: 100%; button { flex: 1; padding-inline: 10px; } } } }

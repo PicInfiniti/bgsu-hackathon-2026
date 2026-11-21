@@ -623,3 +623,6 @@ $paper: #fcf8f1;
     &.is-today-meeting::after, &.is-upcoming-meeting::after { animation: none; }
   }
 }
+
+// Keep follow-up actions above the calendar while the board starts at the top.
+.workspace-app #tasks .action-calendar-rail > .followup-heading-actions { margin-bottom: 22px; .assistant-action-entry { margin: 0; } }

@@ -208,3 +208,7 @@ def strategy_update(board_id: str, body: dict):
         raise HTTPException(409, str(error)) from None
     except ValueError as error:
         raise HTTPException(422, str(error)) from None
+
+
+from .note_media import register as register_note_media
+register_note_media(app, store)

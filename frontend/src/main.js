@@ -5,7 +5,11 @@ import './note-dictation.scss';
 import './meeting-calendar.scss';
 import './tour.scss';
 import './workspace-header.scss';
+import './overview.scss';
+import './note-media.scss';
+import { mountNoteMedia } from './note-media.js';
 import './ask-panel.scss';
+import './workspace-density.scss';
 import { createAskPanel } from './ask-panel.js';
 import { startTour, shouldStart, tourActive, readTourSettings, rememberTour } from './tour.js';
 import { mountNoteDictation } from './note-dictation.js';
@@ -95,27 +99,17 @@ document.querySelector('#app').innerHTML = `
 
       <div id="message" role="status" aria-live="polite" hidden></div>
       <section id="desk" class="view">
-        <div class="overview-lead"><div><p class="eyebrow">THE COACH'S DASHBOARD</p><h2>A clear view of your team.</h2><p>Conversations captured. Next steps ready.</p></div><button class="secondary" data-view="meetings">${icon('note')} Open meeting notebook</button></div>
-            <section class="stats" aria-label="Workspace summary"><a href="#meeting-library" data-stat="meetings"><strong id="meeting-count">0</strong><span>Saved meetings</span><small>Reviewed conversations</small></a><a href="#tasks" data-stat="open"><strong id="open-count">0</strong><span>Open actions</span><small>Ready to follow up</small></a><a href="#tasks" data-stat="overdue" class="urgent"><strong id="overdue-count">0</strong><span>Needs follow-up</span><small id="clock-note"></small></a><a href="#players" data-stat="players"><strong id="players-count">0</strong><span>Players reached</span><small>Of ${demo.players.length} fictional players</small></a></section>
-        <div class="overview-grid"><div class="overview-main">
-          <div class="panel overview-conversation-hub">
-            <section class="upcoming-panel"><div class="section-heading"><h2>Upcoming</h2>${icon('calendar')}</div><p class="upcoming-caption">Open actions due today or later</p><div id="upcoming-list"></div><button class="rail-link" data-stat="open">View all open actions</button></section>
-          <section class="overview-conversations"><div id="recent-heading" class="section-heading"><div><p class="eyebrow">THE RUNNING RECORD</p><h2>Recent conversations</h2><span id="overview-recent-count" class="recent-count"></span></div><button class="rail-link" data-view="meetings">Write a note</button></div><div id="recent" class="recent-list"></div></section>
-          </div>
-          <section class="panel overview-checkins"><div class="section-heading"><div><p class="eyebrow">KEEP THE CONNECTION</p><h2>Players to check in with</h2></div>${icon('people')}</div><div class="checkin-controls"><label>Look back<select id="checkin-window"><option value="7">7 days</option><option value="14" selected>14 days</option><option value="30">30 days</option><option value="60">60 days</option><option value="90">90 days</option></select></label><label>Count meetings<select id="checkin-type"><option value="individual">Individual</option><option value="">Any meeting type</option><option value="group">Group</option><option value="team">Team</option></select></label></div><div id="overview-checkins"></div><button class="rail-link" data-view="players">Browse the football roster</button></section>
-          <section class="panel overview-types"><div class="section-heading"><h2>Your conversations</h2><span class="muted">All saved meetings</span></div><div id="overview-meeting-types"></div></section>
-        </div><aside class="overview-aside">
-
-            <section class="calendar-panel panel"><div class="calendar-heading"><h2 id="calendar-title"></h2><div><button class="icon-button" id="calendar-prev" aria-label="Previous month">${icon('chevron')}</button><button class="icon-button" id="calendar-next" aria-label="Next month">${icon('chevron')}</button></div></div><p class="calendar-caption">Saved conversations & action deadlines</p><div class="calendar-grid" id="calendar"></div><div class="calendar-key"><span class="meeting-individual">Individual</span><span class="meeting-group">Group</span><span class="meeting-team">Team</span><span class="action-due-key">Action due</span></div><div id="calendar-activities" class="calendar-activities" aria-live="polite" hidden></div></section>
-
-            <section class="followup-panel panel"><div class="section-heading"><h2>Needs follow-up</h2>${icon('check')}</div><div id="radar-list"></div><button class="rail-link" data-stat="overdue">Review overdue actions</button></section>
-        </aside></div>
+        <div class="home-grid">
+          <aside class="home-col home-left"><section class="panel overview-types"><div class="section-heading"><h2>Coach’s notebook</h2><span class="muted">Saved meetings</span></div><form id="overview-search-form" class="overview-search"><label for="overview-search">Search saved meetings</label><div><input id="overview-search" type="search" placeholder="Search notes or players…" maxlength="300"><button class="secondary" type="submit" aria-label="Search saved meetings">${icon('search')}</button></div></form><div id="overview-meeting-types"></div></section><section class="panel overview-conversations"><div id="recent-heading" class="section-heading"><div><p class="eyebrow">THE RUNNING RECORD</p><h2>Recent conversations</h2><span id="overview-recent-count" class="recent-count"></span></div><button class="rail-link" data-view="meetings">Write a note</button></div><div id="recent" class="recent-list"></div></section><section class="panel overview-checkins"><div class="section-heading"><div><p class="eyebrow">KEEP THE CONNECTION</p><h2>Players to check in with</h2></div>${icon('people')}</div><div class="checkin-controls"><label>Look back<select id="checkin-window"><option value="7">7 days</option><option value="14" selected>14 days</option><option value="30">30 days</option><option value="60">60 days</option><option value="90">90 days</option></select></label><label>Count meetings<select id="checkin-type"><option value="individual">Individual</option><option value="">Any meeting type</option><option value="group">Group</option><option value="team">Team</option></select></label></div><div id="overview-checkins"></div><button class="rail-link" data-view="players">Browse the football roster</button></section></aside>
+          <div class="home-col home-center"><div id="overview-editor"></div><section class="stats" aria-label="Workspace summary"><a href="#meeting-library" data-stat="meetings"><strong id="meeting-count">0</strong><span>Saved meetings</span><small>Reviewed conversations</small></a><a href="#tasks" data-stat="open"><strong id="open-count">0</strong><span>Open actions</span><small>Ready to follow up</small></a><a href="#tasks" data-stat="overdue" class="urgent"><strong id="overdue-count">0</strong><span>Needs follow-up</span><small id="clock-note"></small></a><a href="#players" data-stat="players"><strong id="players-count">0</strong><span>Players reached</span><small>Of ${demo.players.length} fictional players</small></a></section></div>
+          <aside class="home-col home-right"><section class="calendar-panel panel"><div class="calendar-heading"><h2 id="calendar-title"></h2><div><button class="icon-button" id="calendar-prev" aria-label="Previous month">${icon('chevron')}</button><button class="icon-button" id="calendar-next" aria-label="Next month">${icon('chevron')}</button></div></div><p class="calendar-caption">Saved conversations & action deadlines</p><div class="calendar-grid" id="calendar"></div><div class="calendar-key"><span class="meeting-individual">Individual</span><span class="meeting-group">Group</span><span class="meeting-team">Team</span><span class="action-due-key">Action due</span></div><div id="calendar-activities" class="calendar-activities" aria-live="polite" hidden></div></section><section class="panel upcoming-panel"><div class="section-heading"><h2>Next up</h2>${icon('calendar')}</div><p class="upcoming-caption">Open actions due today or later</p><div id="upcoming-list"></div><button class="rail-link" data-stat="open">View all open actions</button></section><section class="followup-panel panel"><div class="section-heading"><h2>Needs attention</h2>${icon('check')}</div><div id="radar-list"></div><button class="rail-link" data-stat="overdue">Review overdue actions</button></section></aside>
+        </div>
       </section>
       <section id="meeting-library" class="view" hidden>
-        <div id="meeting-library-list"><div class="section-heading library-heading"><div><p class="eyebrow">EVERY CONVERSATION, TOGETHER</p><h2 id="meetings-title" tabindex="-1">Your meeting notebook</h2><p>Find the conversation. Keep the context. Follow through.</p></div><div class="library-heading-actions"><div id="meeting-heading-view-controls"><div class="meeting-view-switch" role="group" aria-label="Meetings display mode"><button type="button" data-meeting-view="month" aria-pressed="true">Month</button><button type="button" data-meeting-view="week" aria-pressed="false">Week</button><button type="button" data-meeting-view="day" aria-pressed="false">Day</button><button type="button" data-meeting-view="year" aria-pressed="false">Year</button><button type="button" data-meeting-view="list" aria-pressed="false">List</button></div></div><button class="secondary" type="button" data-new-meeting>${icon('plus')} Create meeting</button></div></div>
+        <div id="meeting-library-list"><h2 id="meetings-title" class="sr-only" tabindex="-1">Meetings</h2>
           <div class="library-layout"><div class="library-main"><div class="meeting-library-tools"><div class="meeting-type-chips" role="group" aria-label="Filter meetings by type">${[['','All types'],['individual','Individual'],['group','Group'],['team','Team']].map(([type,label])=>`<button type="button" data-calendar-type="${type}" aria-pressed="${!type}">${label}</button>`).join('')}</div><div class="meeting-search-row"><label class="meeting-page-search">${icon('search')}<span class="sr-only">Search meetings</span><input id="meeting-search" type="search" placeholder="Search meetings, players or notes…" autocomplete="off"></label><div class="meeting-calendar-filter-bar" id="meeting-calendar-filter-bar" hidden><button class="secondary" id="meeting-calendar-filter-toggle" type="button" aria-expanded="false" aria-controls="meeting-filter-panel">Filters</button><div id="meeting-calendar-filter-chips" class="meeting-calendar-filter-chips"></div></div></div></div><div class="panel library-filters" id="meeting-filter-panel"><label>Meeting type<select id="meeting-type-filter"><option value="">All types</option><option value="individual">Individual</option><option value="group">Group</option><option value="team">Team</option></select></label><label>Attendee<select id="meeting-player-filter"><option value="">All players</option>${demo.players.map(p => `<option value="${p.id}">#${p.number} ${escape(p.name)}</option>`).join('')}</select></label><label>From<input id="meeting-start" type="date"></label><label>Through<input id="meeting-end" type="date"></label><label class="meeting-sort-control">Sort<select id="meeting-sort"><option value="recent">Newest date</option><option value="oldest">Oldest date</option><option value="title">Meeting title</option></select></label></div>
           <div class="library-results"><div class="library-results-summary"><p id="meeting-results" role="status"></p><span class="meeting-selected-date-inline" id="meeting-selected-day" hidden><span id="meeting-selected-date"></span><button id="meeting-clear-date" type="button" aria-label="Clear selected date" title="Clear selected date">×</button></span></div><button id="meeting-reset" class="rail-link" type="button">Reset filters</button></div><p class="library-date-note">Dates belong to saved meetings. Future dates appear here and on the calendar; no invitations or reminders are sent.</p><div id="meeting-full-calendar" hidden><div class="meeting-wide-toolbar"><div class="meeting-wide-navigation"><button class="secondary" id="meeting-wide-today" type="button">Today</button><button class="icon-button" id="meeting-wide-prev" type="button" aria-label="Previous calendar period">${icon('chevron')}</button><button class="icon-button" id="meeting-wide-next" type="button" aria-label="Next calendar period">${icon('chevron')}</button><button type="button" class="meeting-title-picker" id="meeting-wide-picker" aria-haspopup="dialog"><span id="meeting-wide-title"></span> <span aria-hidden="true">▾</span></button></div><div class="meeting-wide-options"><div id="meeting-calendar-view-controls"></div><label class="meeting-deadlines-toggle"><input id="meeting-show-deadlines" type="checkbox" checked> Show action deadlines</label></div></div><div class="meeting-wide-key"><span class="event-individual">Individual</span><span class="event-group">Group</span><span class="event-team">Team</span><span class="event-due">Open action due</span></div><div class="meeting-large-scroll"><div id="meeting-large-grid"></div></div></div><div id="meeting-list-toolbar" class="meeting-list-toolbar" hidden><h3>Saved conversations</h3><div id="meeting-list-view-controls"></div><div id="meeting-list-sort"></div></div><div id="meeting-list" class="library-meeting-list"></div></div>
-          <aside class="library-calendar-rail"><section class="calendar-panel panel"><div class="calendar-heading"><h3 id="meeting-calendar-title"></h3><div><button class="icon-button" id="meeting-calendar-prev" aria-label="Previous meetings calendar month">${icon('chevron')}</button><button class="icon-button" id="meeting-calendar-next" aria-label="Next meetings calendar month">${icon('chevron')}</button></div></div><p class="calendar-caption">Meeting dates & action deadlines</p><div class="calendar-grid" id="meeting-calendar"></div><div class="calendar-key"><span class="meeting-individual">Individual</span><span class="meeting-group">Group</span><span class="meeting-team">Team</span><span class="action-due-key">Action due</span></div><div id="meeting-calendar-activities" class="calendar-activities" aria-live="polite"></div></section></aside>
+          <aside class="library-calendar-rail"><div class="library-heading-actions"><div id="meeting-heading-view-controls"><div class="meeting-view-switch" role="group" aria-label="Meetings display mode"><button type="button" data-meeting-view="month" aria-pressed="true">Month</button><button type="button" data-meeting-view="week" aria-pressed="false">Week</button><button type="button" data-meeting-view="day" aria-pressed="false">Day</button><button type="button" data-meeting-view="year" aria-pressed="false">Year</button><button type="button" data-meeting-view="list" aria-pressed="false">List</button></div></div><button class="secondary" type="button" data-new-meeting>${icon('plus')} Create meeting</button></div><section class="calendar-panel panel"><div class="calendar-heading"><h3 id="meeting-calendar-title"></h3><div><button class="icon-button" id="meeting-calendar-prev" aria-label="Previous meetings calendar month">${icon('chevron')}</button><button class="icon-button" id="meeting-calendar-next" aria-label="Next meetings calendar month">${icon('chevron')}</button></div></div><p class="calendar-caption">Meeting dates & action deadlines</p><div class="calendar-grid" id="meeting-calendar"></div><div class="calendar-key"><span class="meeting-individual">Individual</span><span class="meeting-group">Group</span><span class="meeting-team">Team</span><span class="action-due-key">Action due</span></div><div id="meeting-calendar-activities" class="calendar-activities" aria-live="polite"></div></section></aside>
           </div>
         </div>
         <div id="meeting-library-detail" hidden><div class="library-detail-toolbar"><button id="meeting-back" class="secondary" type="button">← Back to meetings</button><label class="sensitive-toggle"><input id="meeting-show-sensitive" type="checkbox"> Show sensitive records</label></div><div id="meeting-detail"></div></div>
@@ -145,14 +139,14 @@ document.querySelector('#app').innerHTML = `
 
       </section>
       <section id="tasks" class="view" hidden>
-        <div class="section-heading action-heading"><div><p class="eyebrow">KEEP THE NEXT STEP IN SIGHT</p><h2>Follow-ups</h2><p class="action-caption">Find the meeting. Check the task. Keep the conversation moving.</p></div><div class="followup-heading-actions"><button class="secondary" id="open-calendar-export" type="button">${icon('calendar')} Export calendar</button><button class="secondary assistant-action-entry" id="ask-actions" type="button">${icon('chat')} Ask assistant</button></div></div>
+        <h2 class="sr-only">Follow-ups</h2>
         <div class="action-followup-layout"><div class="action-followup-main">
         <select id="task-filter" hidden aria-label="Action status"><option value="open">Open actions</option><option value="overdue">Overdue</option><option value="done">Completed</option><option value="all">All actions</option></select>
         <div class="action-status-tabs" aria-label="Filter assignment status"><button type="button" data-action-status="open">Open</button><button type="button" data-action-status="overdue">Overdue</button><button type="button" data-action-status="done">Completed</button><button type="button" data-action-status="all">All</button></div>
         <div class="action-tools"><label class="action-quick-search"><span class="sr-only">Search assignments</span><input id="task-search" type="search" placeholder="Search assignments or players…"></label><label><span class="sr-only">Filter by player</span><select id="task-player"><option value="">All players</option>${demo.players.map(p => `<option value="${escape(p.id)}">#${p.number} ${escape(p.name)}</option>`).join('')}</select></label><details class="action-more-filters"><summary>More filters</summary><div><label>Category<select id="task-category"><option value="">All categories</option></select></label><label>Sort meetings by<select id="task-sort"><option value="due">Next deadline</option><option value="player">Player name</option><option value="recent">Newest meeting</option></select></label></div></details></div>
         <div class="action-results-bar"><p id="task-results" role="status"></p><button id="reset-task-filters" class="rail-link" type="button">Reset filters</button></div><div id="task-list" class="action-meeting-grid"></div>
         <label class="sensitive-toggle"><input id="show-sensitive-actions" type="checkbox" aria-describedby="task-hidden-note"> Show sensitive actions only <span id="sensitive-action-count"></span></label><p id="task-hidden-note" class="sensitive-notice" role="status" hidden></p>
-        </div><aside class="action-calendar-rail"><section class="calendar-panel panel"><div class="calendar-heading"><h3 id="action-calendar-title"></h3><div><button class="icon-button" id="action-calendar-prev" aria-label="Previous action calendar month">${icon('chevron')}</button><button class="icon-button" id="action-calendar-next" aria-label="Next action calendar month">${icon('chevron')}</button></div></div><p class="calendar-caption">Meetings & action deadlines</p><label class="action-calendar-filter"><span class="sr-only">Calendar meeting type</span><select id="action-calendar-type"><option value="">All meeting types</option><option value="individual">Individual</option><option value="group">Group</option><option value="team">Team</option></select></label><div id="action-calendar" class="calendar-grid"></div><div class="calendar-key"><span class="meeting-individual">Individual</span><span class="meeting-group">Group</span><span class="meeting-team">Team</span><span class="action-due-key">Action due</span></div><div id="action-calendar-activities" class="calendar-activities" aria-live="polite"></div></section></aside></div>
+        </div><aside class="action-calendar-rail"><div class="followup-heading-actions"><button class="secondary" id="open-calendar-export" type="button">${icon('calendar')} Export calendar</button><button class="secondary assistant-action-entry" id="ask-actions" type="button">${icon('chat')} Ask assistant</button></div><section class="calendar-panel panel"><div class="calendar-heading"><h3 id="action-calendar-title"></h3><div><button class="icon-button" id="action-calendar-prev" aria-label="Previous action calendar month">${icon('chevron')}</button><button class="icon-button" id="action-calendar-next" aria-label="Next action calendar month">${icon('chevron')}</button></div></div><p class="calendar-caption">Meetings & action deadlines</p><label class="action-calendar-filter"><span class="sr-only">Calendar meeting type</span><select id="action-calendar-type"><option value="">All meeting types</option><option value="individual">Individual</option><option value="group">Group</option><option value="team">Team</option></select></label><div id="action-calendar" class="calendar-grid"></div><div class="calendar-key"><span class="meeting-individual">Individual</span><span class="meeting-group">Group</span><span class="meeting-team">Team</span><span class="action-due-key">Action due</span></div><div id="action-calendar-activities" class="calendar-activities" aria-live="polite"></div></section></aside></div>
       </section>
       <section id="strategy" class="view" hidden></section>
       <section id="assistant" class="view" hidden>
@@ -188,10 +182,17 @@ document.querySelector('#app').innerHTML = `
     </main>
   </div>`;
 
+let noteMedia;
 const noteDictation = mountNoteDictation({
   textarea:$('#note'), button:$('#note-dictate'), status:$('#note-dictation-status'), preview:$('#note-dictation-preview'), form:$('#meeting-form'), review:$('#review'),
-  canStart:() => !busy && view === 'meetings',
-  onStateChange:active=>{if(active)askPanel.cancelVoice();}
+  canStart:() => !busy && ['desk','meetings'].includes(view),
+  onStateChange:active=>{noteMedia?.voiceState(active);if(active)askPanel.cancelVoice();}
+});
+
+noteMedia = mountNoteMedia({
+  form:$('#meeting-form'), textarea:$('#note'), voice:$('.note-dictation-controls'),
+  request:(path,body,signal)=>api(path,body,'POST',signal), getMode:()=>mode,
+  canUse:()=>!busy, cancelVoice:()=>noteDictation.cancel(),
 });
 
 const strategyRoom = initializeStrategy($('#strategy'), {players:demo.players,api,notify,today});
@@ -250,6 +251,7 @@ function updateAttendeeSummary() {
   $('#attendee-summary').textContent = `Attendees · ${selected.length ? selected.length <= 2 ? selected.join(', ') : `${selected.length} players selected` : 'Choose players'}`;
 }
 function loadSample(id) {
+  noteMedia.reset();
   noteDictation.cancel();
   reviewingNoteOnly = false;
   current = clone(demo.samples.find(x => x.id === id)); draft = []; extractionId = null; extractionWarnings = [];
@@ -553,12 +555,17 @@ function renderActionBoard(actions = items().filter(i => i.kind === 'action')) {
 }
 function switchView(next) {
   askPanel.cancelVoice();
-  if (next !== 'meetings') noteDictation.cancel();
+  if (next !== view) noteMedia.cancel();
+  if (next !== view) noteDictation.cancel();
+  const editor = $('.meeting-workspace');
+  const editorHost = next === 'desk' ? $('#overview-editor') : $('#meetings');
+  if (editor.parentElement !== editorHost) editorHost.append(editor);
   view = next;
   $('#page-title').textContent = ({desk:'Overview','meeting-library':'Meetings',meetings:'New meeting',players:'Players',tasks:'Actions',strategy:'Strategy',assistant:'Coach assistant'})[next] || 'Falcon Follow-up';
   $('#page-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   if (next === 'strategy') strategyRoom.show();
   document.querySelectorAll('.view').forEach(el => el.hidden = el.id !== view);
+  noteMedia.refresh();
   document.querySelectorAll('[data-view]').forEach(el => { const active = el.dataset.view === view || el.closest('nav') && view === 'meetings' && el.dataset.view === 'meeting-library'; el.classList.toggle('active', Boolean(active)); if (active) el.setAttribute('aria-current','page'); else el.removeAttribute('aria-current'); });
 }
 function cancelPrep() { prepRevision++; prepSource?.close(); prepSource = null; $('#prep').disabled = !connected; $('#prep-text').textContent = ''; }
@@ -576,6 +583,13 @@ function renderCheckIns() {
     days:Number($('#checkin-window').value), type:$('#checkin-type').value,
   }));
 }
+$('#overview-search-form').addEventListener('submit', e => {
+  e.preventDefault();
+  selectedMeetingId = null; meetingLibrarySensitive = false;
+  resetMeetingFilters(); $('#meeting-search').value = $('#overview-search').value;
+  meetingCalendarView = 'list'; renderMeetingLibrary(); switchView('meeting-library');
+  $('#meetings-title').focus();
+});
 $('#checkin-window').addEventListener('change', renderCheckIns);
 $('#checkin-type').addEventListener('change', renderCheckIns);
 function renderPlayerCalendar() {
@@ -632,6 +646,7 @@ function renderPlanning() {
 function newMeeting() {
   noteDictation.cancel();
   if (busy) return;
+  noteMedia.reset();
   reviewingNoteOnly = false;
   current = {title:'', date:today(), meeting_type:'individual', attendees:[], note:''};
   draft = []; extractionId = null; extractionWarnings = []; $('#title').value = ''; $('#date').value = current.date; $('#meeting-type').value = 'individual'; $('#note').value = '';
@@ -645,9 +660,10 @@ $('#new-meeting').addEventListener('click', newMeeting);
 $('#meeting-form').addEventListener('submit', e => {
   e.preventDefault();
   if (busy || !connected) return;
+  noteMedia.cancel();
   try { capture(); validMeeting(current); } catch (error) { notify(error.message,true); return; }
   if (!draft.length) { if (!extractionId) origin = 'manual'; reviewingNoteOnly = true; }
-  renderReview(); $('#review').scrollIntoView({block:'start', behavior:'smooth'});
+  renderReview(); switchView('meetings'); $('#review').scrollIntoView({block:'start', behavior:'smooth'});
   const heading = $('#review h3'); if (heading) { heading.tabIndex = -1; heading.focus({preventScroll:true}); }
 });
 for (const [id, offset] of [['calendar-prev', -1], ['calendar-next', 1]]) {
@@ -671,27 +687,30 @@ $('#calendar-activities').addEventListener('click', e => {
 
 $('#sample').addEventListener('change', e => { loadSample(e.target.value); notify('Sample loaded. Extract it to review the records.'); });
 $('#meeting-form').addEventListener('input', e => {
-  if (busy) return;
+  if (busy || e.target.closest('.note-input-tools')) return;
   if (e.target.matches('[name="attendee"]')) {
     const count = document.querySelectorAll('[name="attendee"]:checked').length;
     $('#meeting-type').value = meetingTypeForAttendees($('#meeting-type').value, count, demo.players.length);
   }
+  noteMedia.cancel();
   capture(); invalidate();
 });
 $('#meeting-type').addEventListener('change', () => {
   if ($('#meeting-type').value === 'team') document.querySelectorAll('[name="attendee"]').forEach(x => x.checked = true);
+  noteMedia.cancel();
   capture(); invalidate();
 });
 $('#extract').addEventListener('click', async e => {
   e.preventDefault(); if (busy) return;
   try {
+    noteMedia.cancel();
     const meeting = capture(); validMeeting(meeting); busy = true; $('#extract').disabled = true; $('#review-meeting').disabled = true; $('#extract').textContent = 'Extracting…'; notify('');
     $('#meeting-form').querySelectorAll('input,select,textarea').forEach(el => el.disabled = true); $('#sample').disabled = true; $('#mode').disabled = true;
     const result = await api('/extract', {...meeting,mode});
     reviewingNoteOnly = false;
     draft = result.items.sort((a,b) => reviewPriority(a)-reviewPriority(b)); origin = result.origin;
     extractionId = result.extraction_id; extractionWarnings = result.warnings || []; highlightedDraft = 0;
-    renderReview(); notify(draft.length ? 'Review every extracted record before saving.' : 'No feedback or tasks were found. You can review and save the original meeting note.');
+    renderReview(); switchView('meetings'); $('#review-panel').scrollIntoView({block:'start', behavior:'smooth'}); notify(draft.length ? 'Review every extracted record before saving.' : 'No feedback or tasks were found. You can review and save the original meeting note.');
   } catch (error) { notify(error.message, true); }
   finally { busy = false; $('#meeting-form').querySelectorAll('input,select,textarea').forEach(el => el.disabled = false); $('#sample').disabled = false; $('#mode').disabled = false; $('#extract').disabled = false; render(); }
 });
@@ -713,6 +732,7 @@ $('#review').addEventListener('input', e => {
 });
 $('#review').addEventListener('click', async e => {
   if (e.target.closest('[data-review-note-only]') && !busy) {
+    noteMedia.cancel();
     try { capture(); validMeeting(current); } catch (error) { notify(error.message,true); return; }
     if (!extractionId) origin = 'manual';
     reviewingNoteOnly = true; renderReview(); return;
@@ -721,6 +741,7 @@ $('#review').addEventListener('click', async e => {
   if (e.target.closest('[data-regroup-review]')) { renderReview(); return; }
   const add = e.target.closest('[data-add-record]');
   if (add && !busy) {
+    noteMedia.cancel();
     try { capture(); validMeeting(current); } catch (error) { notify(error.message,true); return; }
     if (!draft.length && !extractionId) origin = 'manual';
     draft.unshift({id:crypto.randomUUID(), schema_version:2, player_id:null, scope:'player', kind:'action', text:'', topic:'Other', skill:'Not Specified', quote:'', due_date:null, deadline_text:null, confidence:'low', mention:'', match_method:'unmatched', sensitive:false, warnings:[]});
@@ -731,13 +752,14 @@ $('#review').addEventListener('click', async e => {
   const remove = e.target.closest('[data-remove]');
   if (remove) { draft.splice(Number(remove.dataset.remove),1); renderReview(); return; }
   if (e.target.id !== 'save' || !$('#approved')?.checked || busy) return;
+  noteMedia.cancel();
   try {
     validMeeting(current);
     if (draft.some(i => reviewIssues(i,current).length)) throw Error('Correct the highlighted record issues before approval.');
-    const body = {...clone(current), approved:true, origin, extraction_id:extractionId, items:clone(draft), ...(reviewingNoteOnly ? {note_only:true} : {})};
+    const body = {...clone(current), source_images:noteMedia.sources(), approved:true, origin, extraction_id:extractionId, items:clone(draft), ...(reviewingNoteOnly ? {note_only:true} : {})};
     busy = true; e.target.disabled = true;
     const meeting = await api('/meetings',body);
-    meetings.unshift(meeting); clearAssistant();
+    meetings.unshift(meeting); noteMedia.reset(); clearAssistant();
     reviewingNoteOnly = false; draft = []; extractionId = null; extractionWarnings = []; renderReview(); cancelPrep(); render(); openMeeting(meeting.id); notify(meeting.note_only ? 'Meeting note saved. The original conversation is now in each attendee’s timeline.' : 'Meeting approved and saved. Its records are now in player timelines and the action board.');
   } catch (error) { notify(error.message,true); if ($('#save')) $('#save').disabled = false; }
   finally { busy = false; $('#extract').disabled = !connected; $('#review-meeting').disabled = !connected; renderActionBoard(); }
@@ -800,6 +822,7 @@ $('#reset-task-filters').addEventListener('click', () => { $('#show-sensitive-ac
 $('#show-sensitive').addEventListener('change',render);
 $('#show-sensitive-actions').addEventListener('change',render);
 $('#mode').addEventListener('change', e => {
+  noteMedia.cancel();
   noteDictation.cancel();
   if (busy) { e.target.value = mode; return; }
   mode = e.target.value; reviewingNoteOnly = false;

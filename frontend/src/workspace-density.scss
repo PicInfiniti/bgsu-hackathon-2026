@@ -1,0 +1,58 @@
+// Compact desktop sizing matching the approved 80% screenshot at normal browser zoom.
+// Use type, spacing and width tokens instead of scaling the page or overriding browser zoom.
+@media (min-width: 901px) {
+  :root:has(.workspace-app) { font-size: 81.25%; }
+  .workspace-app {
+    .sidebar { width: 172px; padding: 26px 13px 19px; }
+    .shell { margin-left: 172px; }
+    .brand { gap: 10px; }
+    .brand-mark { width: 32px; height: 37px; }
+    .workspace-label { margin: 36px 9px 13px; }
+    nav { gap: 6px; button { padding: 11px 10px; gap: 10px; border-radius: 7px; } }
+    .ui-icon { width: 18px; height: 18px; }
+    .sidebar-note { margin: auto 10px 22px; padding-top: 45px; }
+    .sidebar-bottom { padding-top: 16px; gap: 8px; }
+    .team-avatar { width: 31px; height: 31px; }
+    .topbar { min-height: 78px; padding: 13px 22px; gap: 14px;
+      .header-actions { gap: 8px; }
+      .mode-control select { min-width: 140px; padding: 7px 20px 7px 8px; }
+      #new-meeting { padding: 8px 11px; }
+      .profile-link { padding-left: 10px; .ui-icon { width: 19px; height: 19px; } }
+    }
+    .header-ask { padding: 7px 10px; }
+    .tour-replay { padding: 7px 10px; }
+    .shell>main { max-width: 1440px; padding: 24px 22px 16px; }
+    input:not([type='checkbox']), select, textarea { padding: 8px 10px; margin-top: 6px; margin-bottom: 14px; }
+    .primary, .secondary { padding: 9px 13px; }
+    .title-label input { padding: 10px 11px; }
+    .meeting-meta { gap: 10px; }
+    .meeting-notebook { padding: 10px; border-radius: 12px; }
+    .meeting-sheet-heading { padding: 12px 15px; }
+    .notebook-caption { padding: 10px 12px; }
+    .attendee-picker { padding: 8px 10px; margin-bottom: 14px; }
+    .editor-footer { padding: 12px 0; gap: 10px; }
+    #note { padding: 14px 13px 14px 30px; min-height: 224px; line-height: 24px;
+      background-image: linear-gradient(90deg,transparent 22px,#dc9c8373 22px,#dc9c8373 23px,transparent 23px),repeating-linear-gradient(transparent 0,transparent 23px,#c8c7bb8c 23px,#c8c7bb8c 24px);
+    }
+    #desk {
+      .home-grid, .home-col { gap: 14px; }
+      .panel { padding: 15px; border-radius: 10px; }
+      .meeting-workspace { gap: 14px; }
+      .overview-conversations .meeting-row { padding: 10px 0; }
+      .calendar-panel { padding: 13px; }
+      .note-label textarea { min-height: 224px; }
+      .overview-search input { margin: 0; }
+    }
+    .note-input-tools { padding: 0; margin: 14px 0;
+      .note-input-tabs button, .ink-tools button { padding: 6px 9px; }
+      .note-ink-pad { height: 210px; }
+    }
+  }
+}
+// Keep the three-column overview on laptop screens once the desktop controls are compact.
+@media (min-width: 1101px) and (max-width: 1200px) {
+  .workspace-app #desk {
+    .home-grid { grid-template-columns: minmax(165px,.8fr) minmax(320px,2fr) minmax(205px,1fr); }
+    .home-left { grid-column: auto; grid-template-columns: minmax(0,1fr); }
+  }
+}
