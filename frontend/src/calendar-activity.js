@@ -12,8 +12,9 @@ export function calendarGrid(meetings, monthValue, today, selectedDate, typed = 
     const types = ['individual','group','team'].map(type => ({type,count:saved.filter(m => m.meeting_type === type).length})).filter(entry => entry.count);
     const meetingLabel = typed ? types.map(({type,count}) => `${count} ${meetingTypeLabel(type).toLowerCase()}${count===1?'':'s'}`).join(', ') : saved.length ? `${saved.length} saved meeting${saved.length===1?'':'s'}` : '';
     const label = `${date}${meetingLabel ? `, ${meetingLabel}` : ''}${deadlines.has(date) ? ', open action due' : ''}`;
+    const tooltip = [meetingLabel, deadlines.has(date) ? 'Action due' : ''].filter(Boolean).join(' · ');
     const dots = typed ? types.map(({type}) => `<i class="meeting-${type}"></i>`).join('') : saved.length ? '<i class="meeting-dot"></i>' : '';
-    return `<button type="button" class="calendar-day ${date===today?'today':''} ${date===selectedDate?'selected-day':''}" data-calendar-date="${date}" aria-pressed="${date===selectedDate}" ${date===today?'aria-current="date"':''} aria-label="${esc(label)}" title="${esc(label)}">${index+1}<span class="day-markers" aria-hidden="true">${dots}${deadlines.has(date)?'<i class="deadline-dot"></i>':''}</span></button>`;
+    return `<button type="button" class="calendar-day ${date===today?'today':''} ${date===selectedDate?'selected-day':''} ${deadlines.has(date)?'has-action-due':''}" data-calendar-date="${date}" aria-pressed="${date===selectedDate}" ${date===today?'aria-current="date"':''} aria-label="${esc(label)}" ${tooltip ? `title="${esc(tooltip)}"` : ''}>${index+1}<span class="day-markers" aria-hidden="true">${dots}</span></button>`;
   }).join('');
 }
 
