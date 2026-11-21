@@ -100,6 +100,16 @@ def main():
                 prep_path = f"/api/players/{meeting['attendees'][0]}/prep"
                 if not args.live:
                     request(prep_path, expected=503)
+                    speech = {'title': 'Team encouragement', 'date': meeting['date'], 'meeting_type': 'team',
+                              'attendees': [p['id'] for p in demo['players']],
+                              'note': 'Keep supporting each other. I believe in this team.',
+                              'items': [], 'note_only': True, 'origin': 'manual', 'approved': False}
+                    request('/api/meetings', speech, expected=422)
+                    speech['approved'] = True
+                    note = request('/api/meetings', speech, expected=201)
+                    assert note['note_only'] and note['items'] == [] and note['note'] == speech['note']
+                    assert any(m == note for m in request('/api/meetings'))
+                    print('PASS: original team speech approval/save/read without player records or AI.', flush=True)
                     print('PASS: missing-key errors. No Aivana requests made.', flush=True)
                     return
                 print('Calling real Aivana structured extraction (one request, at most one corrective request)...', flush=True)

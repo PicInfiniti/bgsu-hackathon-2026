@@ -50,9 +50,15 @@ def validate_meeting(raw, require_items=False, historical=False):
         if raw.get('approved') is not True:
             raise ValueError('Review and approve the extraction before saving.')
         items = raw.get('items')
-        if not isinstance(items, list) or not 1 <= len(items) <= 80:
-            raise ValueError('Save between 1 and 80 reviewed items.')
+        if not isinstance(items, list) or len(items) > 80:
+            raise ValueError('Provide up to 80 reviewed items.')
+        if not items and raw.get('note_only') is not True:
+            raise ValueError('Choose save original note only when there are no extracted records.')
+        if items and raw.get('note_only') is True:
+            raise ValueError('Note-only meetings cannot include extracted records.')
         result['items'] = [validate_item(x, result) for x in items]
+        if not items:
+            result['note_only'] = True
         result['approved'] = True
         result['origin'] = raw.get('origin') if raw.get('origin') in ('demo', 'aivana') else 'manual'
     return result
@@ -209,7 +215,7 @@ class Store:
             return db.total_changes
 
     def seed_pack(self):
-        """Install the two pre-reviewed practice examples once, never overwrite edits."""
+        """Install pre-reviewed practice examples once, never overwrite edits."""
         return self.import_reviewed(DEMO['meetings'])
 
     def complete(self, meeting_id, item_id, completed):
