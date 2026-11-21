@@ -5,6 +5,7 @@ import uuid
 
 from .dates import resolve_deadline
 from .extraction_schema import CATEGORIES, SENSITIVE_TOPICS
+from .vocabulary import clean_tags, is_sensitive
 
 GROUP_ALIASES = {
     'QB': ('qb', 'qbs', 'quarterback', 'quarterbacks'),
@@ -78,12 +79,11 @@ def normalize_records(payload, meeting, players):
         if not source_valid:
             warnings.append('Source quote was not found. Correct it before approval.')
             hard_errors.append(f'{prefix}: source not found.')
-        topic = raw.get('topic')
-        if topic not in CATEGORIES['topics']:
-            topic = 'Other'; warnings.append('Unknown topic; review the category.'); hard_errors.append(f'{prefix}: invalid topic.')
-        skill = raw.get('skill')
-        if skill not in CATEGORIES['skills']:
-            skill = 'Not Specified'; warnings.append('Unknown skill; select a category.'); hard_errors.append(f'{prefix}: invalid skill.')
+        # Open categories: any topic, skill or tag text is kept (tidied in code), never rejected.
+        topic = raw.get('topic').strip()[:100] if isinstance(raw.get('topic'), str) and raw.get('topic').strip() else None
+        skill = raw.get('skill').strip()[:100] if isinstance(raw.get('skill'), str) and raw.get('skill').strip() else None
+        tags = clean_tags(raw.get('tags') if isinstance(raw.get('tags'), list) else [])
+        details = raw.get('details').strip()[:1000] if isinstance(raw.get('details'), str) and raw.get('details').strip() else None
         confidence = raw.get('confidence')
         if confidence not in CATEGORIES['confidences']:
             confidence = 'low'; warnings.append('Missing confidence; review carefully.')
@@ -96,7 +96,11 @@ def normalize_records(payload, meeting, players):
             claimed = target.get('player_id')
             if claimed is not None and (claimed not in attendee_ids or claimed != player_id):
                 player_id, method = None, 'unmatched'
-            if not source_valid or not mention_present(mention, quote) or not mention_present(mention, meeting['note']):
+            collective = bool(re.search(r'\b(both|both of (?:you|them)|the two of (?:you|them)|everyone|everybody|all of (?:you|them)|each of (?:you|them)|both players|you two)\b', quote, re.I))
+            if source_valid and player_id and collective and not mention_present(mention, quote) and mention_present(mention, meeting['note']):
+                # "Both players should…": a shared instruction for named attendees. Kept, but flagged for the coach.
+                warnings.append('Shared instruction for several players. Check that it applies to this player.')
+            elif not source_valid or not mention_present(mention, quote) or not mention_present(mention, meeting['note']):
                 player_id, method = None, 'unmatched'
             targets = [player_id]
         elif scope == 'group':
@@ -119,10 +123,10 @@ def normalize_records(payload, meeting, players):
             warnings.append('Unmatched player/group. Choose the correct attendee or remove this record.')
             hard_errors.append(f'{prefix}: unmatched player/group.')
         confidence = 'low' if warnings else confidence
-        common = dict(schema_version=2, topic=topic, skill=skill, confidence=confidence,
+        common = dict(schema_version=2, topic=topic, skill=skill, tags=tags, details=details, confidence=confidence,
                       quote=quote, source_valid=source_valid, mention=mention, match_method=method,
                       scope=scope, group_label=group_label if scope == 'group' else None,
-                      group_record_id=group_id, sensitive=topic in SENSITIVE_TOPICS)
+                      group_record_id=group_id, sensitive=topic in SENSITIVE_TOPICS or is_sensitive(topic, ' '.join(tags)))
         contents = []
         action = raw.get('action_item')
         if isinstance(action, dict) and isinstance(action.get('task'), str) and action['task'].strip():
@@ -179,7 +183,7 @@ def enrich_demo(items, meeting, players):
         topic = 'Football Skills' if item['skill'] != 'Not Applicable' else 'Team Communication'
         if 'warm-up checklist' in quote:
             topic = 'Training & Conditioning'
-        item.update(schema_version=2, topic=topic,
+        item.update(schema_version=2, topic=topic, tags=clean_tags([item.get('skill')] if item.get('skill') not in (None, 'Not Applicable', 'Not Specified', 'Other') else []),
                     confidence='medium' if warning else 'high', mention=mention, match_method=method,
                     scope='player', sensitive=False, source_valid=True, warnings=[warning] if warning else [],
                     deadline_text=phrase if item['kind'] == 'action' else None,

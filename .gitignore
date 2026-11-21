@@ -21,3 +21,9 @@ aivana.api
 
 # Organizer participant lists contain real names and contact information.
 sources/*Team_Roster*.pdf
+
+# Note photos and pen drawings saved next to the database
+backend/*_files/
+
+# Uploaded film, drawings and frame captures
+data/film/

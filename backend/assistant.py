@@ -25,10 +25,9 @@ def select_context(meetings, body):
     category = filters.get('category', '')
     if not isinstance(category, str) or len(category) > 100:
         raise ValueError('Category must contain at most 100 characters.')
-    if skill and skill not in CATEGORIES['skills']:
-        raise ValueError('Choose a valid skill.')
-    if topic and topic not in CATEGORIES['topics']:
-        raise ValueError('Choose a valid topic.')
+    for value in (skill, topic):
+        if value and (not isinstance(value, str) or len(value) > 100):
+            raise ValueError('Skill and topic filters are free text up to 100 characters.')
     start, end = filters.get('start'), filters.get('end')
     for value in (start, end):
         if value:
@@ -60,7 +59,7 @@ def select_context(meetings, body):
                 continue
             if skill and item.get('skill') != skill or topic and item.get('topic') != topic:
                 continue
-            if category and category not in (item.get('skill'), item.get('topic')):
+            if category and category not in (item.get('skill'), item.get('topic'), *(item.get('tags') or [])):
                 continue
             if (actions_only or status != 'all') and item['kind'] != 'action':
                 continue
@@ -68,7 +67,7 @@ def select_context(meetings, body):
                 continue
             if status == 'overdue' and (item['completed'] or not item.get('due_date') or item['due_date'] >= today):
                 continue
-            haystack = ' '.join(str(item.get(k) or '') for k in ('text', 'skill', 'topic', 'kind'))
+            haystack = ' '.join(str(item.get(k) or '') for k in ('text', 'skill', 'topic', 'kind', 'details')) + ' ' + ' '.join(item.get('tags') or [])
             searchable = f"{haystack} {meeting['title']} {person['name']} {person['number']} {person['position']}".casefold()
             if search.strip().casefold() not in searchable:
                 continue

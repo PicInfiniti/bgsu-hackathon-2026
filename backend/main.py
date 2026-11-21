@@ -12,12 +12,19 @@ from .extraction import normalize_records, enrich_demo, applies_to
 from .extraction_schema import CATEGORIES
 from .assistant import select_context, checked_answer
 from .grouping import annotate_shared_records
+from .notebook_routes import create_notebook, register
+from .film import FilmRoom
+from . import film_routes
 
 load_environment()
 app = FastAPI(title='Falcon Follow-up prototype')
 db_path = Path(os.environ.get('COACH_DB_PATH', Path(__file__).with_name('coach.sqlite3')))
 store = Store(db_path)
 store.seed_pack()
+notebook = create_notebook(db_path)
+film_room = FilmRoom(db_path, Path(os.environ.get('COACH_FILM_DIR', Path(__file__).resolve().parents[1] / 'data' / 'film')))
+register(app, store, notebook, extra_notifications=lambda now: film_routes.film_notifications(film_room, now), film_room=film_room)
+film_routes.register(app, store, notebook, film_room)
 
 
 @app.get('/api/health')

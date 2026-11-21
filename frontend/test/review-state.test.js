@@ -5,11 +5,12 @@ import { appliesTo, reviewIssues, reviewPriority, highlightSource } from '../src
 const meeting={attendees:['p01','p02'],date:'2026-11-20',note:'Avery: Review clips tomorrow.'};
 const item={player_id:'p01',kind:'action',text:'Review clips.',quote:meeting.note,topic:'Football Skills',skill:'Decision-Making',confidence:'high'};
 
-test('unmatched players, false evidence and invalid categories prevent approval',()=>{
+test('unmatched players and false evidence prevent approval; any topic, skill or tag is allowed',()=>{
   assert.deepEqual(reviewIssues(item,meeting),[]);
   assert.ok(reviewIssues({...item,player_id:null},meeting).length);
   assert.ok(reviewIssues({...item,quote:'Invented quote'},meeting).length);
-  assert.ok(reviewIssues({...item,topic:'Invalid'},meeting).length);
+  assert.deepEqual(reviewIssues({...item,topic:'Two-minute drill',skill:'QB sneak timing',tags:['any tag at all']},meeting),[]);
+  assert.deepEqual(reviewIssues({...item,topic:null,skill:null},meeting),[]);
   assert.ok(reviewIssues({...item,due_date:'2026-11-19'},meeting).length);
   assert.equal(reviewIssues({...item,confidence:'low'},meeting).length,0);
   assert.ok(reviewPriority({...item,player_id:null})<reviewPriority({...item,confidence:'low'}));

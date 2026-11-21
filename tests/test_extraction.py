@@ -164,10 +164,15 @@ class ExtractionTests(unittest.TestCase):
         self.assertTrue(items[0]['sensitive'])
         raw['topic']='made up'
         raw['skill']='made up'
+        raw['tags']=['Route-Running', 'travel', 'brand new tag', 'fourth tag dropped']
         items, _, errors = self.normalize(raw,meeting_for(raw['source_text']))
-        self.assertEqual(items[0]['topic'],'Other')
-        self.assertEqual(items[0]['skill'],'Not Specified')
-        self.assertTrue(errors)
+        self.assertEqual(items[0]['topic'],'made up')  # open categories: kept, never forced into a list
+        self.assertEqual(items[0]['skill'],'made up')
+        self.assertEqual(items[0]['tags'],['route running', 'travel', 'brand new tag'])
+        self.assertFalse(errors)
+        raw['tags']=['insurance form']
+        raw['topic']=None
+        self.assertTrue(self.normalize(raw,meeting_for(raw['source_text']))[0][0]['sensitive'])
 
     def test_demo_uses_python_dates_and_neutral_observations_are_supported(self):
         sample = next(s for s in DEMO['samples'] if s['id']=='relative-date')
@@ -208,7 +213,12 @@ class ExtractionTests(unittest.TestCase):
             run = store.capture_extraction(meeting,items,[],'demo',{})
             with self.assertRaisesRegex(ValueError,'Meeting changed'):
                 store.save({**meeting,'title':'Changed','approved':True,'items':items,'extraction_id':run})
-            items[0]['topic']='made up'
+            items[0]['confidence']='made up'  # review metadata is still checked
             with self.assertRaises(ValueError):
                 store.save({**meeting,'approved':True,'items':items})
             self.assertEqual(store.list(),[])
+            # Open categories: any topic, skill or tag text is accepted and kept.
+            items[0].update(confidence='high', topic='Two-minute drill', skill='QB sneak timing', tags=['  Wide Outs ', 'Any tag at all!', 'red zone'])
+            saved = store.save({**meeting,'approved':True,'items':items})
+            self.assertEqual((saved['items'][0]['topic'], saved['items'][0]['skill']), ('Two-minute drill', 'QB sneak timing'))
+            self.assertEqual(saved['items'][0]['tags'], ['receivers', 'any tag at all!', 'red zone'])

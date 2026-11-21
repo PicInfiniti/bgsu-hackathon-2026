@@ -10,7 +10,7 @@ SCHEMA = {
     'properties': {
         'records': {'type': 'array', 'maxItems': 80, 'items': {
             'type': 'object', 'additionalProperties': False,
-            'required': ['target', 'topic', 'skill', 'feedback_type', 'feedback', 'action_item', 'source_text', 'confidence'],
+            'required': ['target', 'topic', 'skill', 'tags', 'details', 'feedback_type', 'feedback', 'action_item', 'source_text', 'confidence'],
             'properties': {
                 'target': {'type': 'object', 'additionalProperties': False,
                            'required': ['scope', 'player_id', 'mention', 'match_method', 'group_label'],
@@ -20,8 +20,11 @@ SCHEMA = {
                                'mention': {'type': 'string', 'maxLength': 160},
                                'match_method': {'type': 'string', 'enum': CATEGORIES['match_methods']},
                                'group_label': {'type': ['string', 'null']}}},
-                'topic': {'type': 'string', 'enum': CATEGORIES['topics']},
-                'skill': {'type': 'string', 'enum': CATEGORIES['skills']},
+                # Open categories: topic and skill are optional free text, never a fixed list.
+                'topic': {'type': ['string', 'null'], 'maxLength': 100},
+                'skill': {'type': ['string', 'null'], 'maxLength': 100},
+                'tags': {'type': 'array', 'maxItems': 3, 'items': {'type': 'string', 'maxLength': 40}},
+                'details': {'type': ['string', 'null'], 'maxLength': 1000},
                 'feedback_type': {'type': ['string', 'null'], 'enum': CATEGORIES['feedback_types'] + [None]},
                 'feedback': {'type': ['string', 'null'], 'maxLength': 1000},
                 # Aivana allows nullable scalar types, but not nullable objects.

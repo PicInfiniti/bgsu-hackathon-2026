@@ -71,7 +71,7 @@ class AssistantTests(unittest.TestCase):
     def test_bad_input_rejected(self):
         for override in ({'player_id':'unknown'}, {'question':''}, {'mode':'other'},
                          {'filters':{'start':'2026-02-30'}}, {'filters':{'start':'2026-11-23','end':'2026-11-20'}},
-                         {'filters':{'status':'other'}}, {'filters':{'skill':'invented'}}):
+                         {'filters':{'status':'other'}}, {'filters':{'skill':'x' * 101}}):
             with self.subTest(override=override), self.assertRaises(ValueError):
                 select_context(self.meetings,{**self.body,**override})
 

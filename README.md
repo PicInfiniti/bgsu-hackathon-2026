@@ -228,9 +228,11 @@ Example extraction request body (simplified):
 
 ## 7. AI classification and extraction spec
 
-### 7.1 Football skill categories
+> **Categories are open (Salma, November 21, 2026).** Nothing is forced into a fixed list. Aivana suggests up to 3 tags per item in plain words and may fill `topic` and `skill` with any words that fit, or leave them empty. The coach can keep, edit, remove or type any tag, topic or skill. The lists below are **starter ideas only**, never a limit; code just tidies tags (lower-case, trim, exact synonyms in `backend/vocabulary.py`). Each item also has **Key details** (`details`) so nothing useful is thrown away.
 
-The AI classifies football-related feedback into these categories:
+### 7.1 Football skill ideas (starter suggestions, not a limit)
+
+The AI may suggest skills like these, or any other words that fit:
 
 | Skill | Description |
 |---|---|
@@ -247,13 +249,11 @@ The AI classifies football-related feedback into these categories:
 
 Additional values:
 
-- **Other:** a football skill not covered by the predefined categories.
-- **Not Specified:** the note does not identify a particular skill.
-- **Not Applicable:** the record concerns something other than a football skill.
+Any other skill words are accepted as they are. If no skill fits, `skill` is left empty.
 
 The AI classifies skills from the coach's words, **not** from a player's position. A note saying "Jay needs to work on blocking" is Blocking even though Jay is a receiver.
 
-### 7.2 Meeting topic categories
+### 7.2 Meeting topic ideas (starter suggestions, not a limit)
 
 | Topic | Description |
 |---|---|
@@ -268,13 +268,13 @@ The AI classifies skills from the coach's words, **not** from a player's positio
 | Academic & Personal Development | Academic support and development goals |
 | Insurance & Administration | Administrative questions, paperwork, and coverage discussions |
 | Team Communication | Team coordination and communication |
-| Other | Topics outside these categories |
+| (anything else) | Any other topic, in the coach's words |
 
-`Health & Injury Follow-up` and `Insurance & Administration` records are tagged **sensitive** (see section 13).
+`Health & Injury Follow-up` and `Insurance & Administration` records, and any item whose topic or tags mention health, injury, medical or insurance, are tagged **sensitive** (see section 13).
 
 **Travel & Away Games** records capture only what the coach said about a trip ("bus leaves 6 AM Friday, bring travel polos", "Marcus not on the travel roster"). Travel action items such as "turn in travel forms by Wednesday" become normal action items with deadlines. The app does not plan trips, compare hotels, or calculate travel costs; that is a separate tool (Project B). A player being left off a travel roster is recorded as stated, without the AI adding reasons.
 
-### 7.3 Feedback type values
+### 7.3 Record type (how the app files the item, not a content category)
 
 | Value | When used |
 |---|---|
@@ -288,8 +288,10 @@ The AI classifies skills from the coach's words, **not** from a player's positio
 For each relevant player or group, the AI extracts:
 
 1. **Player reference:** the player ID from the synthetic roster when identifiable, the exact mention used in the note, and how it was matched.
-2. **Meeting topic:** the general subject of the discussion.
-3. **Skill category:** a football skill, when applicable.
+2. **Topic:** optional, any words.
+3. **Skill:** optional, any words.
+3a. **Tags:** 0 to 3 short tags in plain words (open, never a fixed list).
+3b. **Key details:** other useful facts copied or lightly shortened from the note.
 4. **Feedback type:** see 7.3.
 5. **Feedback description:** what the coach said about performance, close to the coach's wording.
 6. **Action item:** a specific assigned task, if present.
@@ -341,7 +343,7 @@ Team records (`scope: "team"`) are stored once at the meeting level and shown on
 
 ## 8. Extraction JSON Schema
 
-Sent in `response_format.schema`. The executable contract is `backend/extraction_schema.py`; enums are shared with the frontend in `data/categories.json`. Aivana accepts nullable scalar fields but rejects nullable objects, so absent actions use an object with `task`, `deadline_text`, and `deadline_date` all null. See [Aivana’s supported schema subset](https://developers.aivana.ai/docs/parameters#json-schema-strict).
+Sent in `response_format.schema`. The executable contract is `backend/extraction_schema.py`. Topic, skill and tags are open free text; `data/categories.json` only holds starter suggestions and the review metadata lists (confidence, match method). Aivana accepts nullable scalar fields but rejects nullable objects, so absent actions use an object with `task`, `deadline_text`, and `deadline_date` all null. See [Aivana’s supported schema subset](https://developers.aivana.ai/docs/parameters#json-schema-strict).
 
 ```json
 {
@@ -375,24 +377,10 @@ Sent in `response_format.schema`. The executable contract is `backend/extraction
               "group_label":  { "type": ["string", "null"] }
             }
           },
-          "topic": {
-            "type": "string",
-            "enum": [
-              "Football Skills", "Game Strategy & Field Positioning", "Training & Conditioning",
-              "Health & Injury Follow-up", "Nutrition & Hydration", "Player Availability & Roster",
-              "Schedule & Attendance", "Travel & Away Games", "Academic & Personal Development",
-              "Insurance & Administration", "Team Communication", "Other"
-            ]
-          },
-          "skill": {
-            "type": "string",
-            "enum": [
-              "Passing", "Receiving", "Route Running", "Blocking", "Tackling",
-              "Coverage & Positioning", "Decision-Making", "Ball Security",
-              "Footwork & Agility", "Kicking & Punting",
-              "Other", "Not Specified", "Not Applicable"
-            ]
-          },
+          "topic":   { "type": ["string", "null"], "maxLength": 100 },
+          "skill":   { "type": ["string", "null"], "maxLength": 100 },
+          "tags":    { "type": "array", "maxItems": 3, "items": { "type": "string", "maxLength": 40 } },
+          "details": { "type": ["string", "null"], "maxLength": 1000 },
           "feedback_type": {
             "type": ["string", "null"],
             "enum": ["Praise", "Improvement", "Neutral/Observation", null]
@@ -792,7 +780,7 @@ frontend/
   test/                   # Node regression checks
   vite.config.js          # Frontend 5174, backend proxy 8001
 data/
-  categories.json         # Shared frontend/backend enums
+  categories.json         # Starter suggestions (open categories) + review metadata lists
   synthetic/              # Original football practice roster, notes and references
   demo.json               # Generated shared app fixtures
 scripts/

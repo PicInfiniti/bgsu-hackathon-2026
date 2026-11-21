@@ -3,10 +3,12 @@ import copy
 import json
 import sqlite3
 import uuid
-from datetime import date
+from contextlib import contextmanager
+from datetime import date, datetime
 from pathlib import Path
 from .extraction_schema import CATEGORIES, SENSITIVE_TOPICS
 from .grouping import annotate_shared_records
+from .vocabulary import clean_tags, is_sensitive
 
 ROOT = Path(__file__).resolve().parents[1]
 DEMO = json.loads((ROOT / 'data/demo.json').read_text())
@@ -71,8 +73,25 @@ def validate_item(raw, meeting):
     if raw.get('kind') not in ('action', 'praise', 'improvement', 'observation'):
         raise ValueError('Unknown item kind.')
     item = {k: raw[k] for k in ('player_id', 'kind')}
-    for key, limit in [('text', 1000), ('skill', 100), ('quote', 2000)]:
+    for key, limit in [('text', 1000), ('quote', 2000)]:
         item[key] = text(raw.get(key), key, limit)
+    # Open categories: skill and topic are optional free text; tags are any short words.
+    skill = raw.get('skill')
+    if skill is not None and (not isinstance(skill, str) or len(skill) > 100):
+        raise ValueError('Skill must be at most 100 characters.')
+    item['skill'] = skill.strip() if isinstance(skill, str) and skill.strip() else None
+    if raw.get('tags') is not None and not isinstance(raw.get('tags'), list):
+        raise ValueError('Tags must be a list of words.')
+    tags = clean_tags(raw.get('tags') or [])
+    if tags:
+        item['tags'] = tags
+    details = raw.get('details')
+    if details is not None and (not isinstance(details, str) or len(details) > 1000):
+        raise ValueError('Key details must be at most 1000 characters.')
+    if isinstance(details, str) and details.strip():
+        item['details'] = details.strip()
+    if isinstance(raw.get('film_note_id'), int):
+        item['film_note_id'] = raw['film_note_id']
     if item['quote'] not in meeting['note']:
         raise ValueError('Every source quote must appear verbatim in the meeting note.')
     due = raw.get('due_date')
@@ -80,7 +99,12 @@ def validate_item(raw, meeting):
     if item['kind'] != 'action' and item['due_date']:
         raise ValueError('Only action items can have a due date.')
     if raw.get('schema_version') == 2:
-        for key, category in [('topic', 'topics'), ('skill', 'skills'), ('confidence', 'confidences'), ('match_method', 'match_methods')]:
+        topic = raw.get('topic')
+        if topic is not None and (not isinstance(topic, str) or len(topic) > 100):
+            raise ValueError('Topic must be at most 100 characters.')
+        item['topic'] = topic.strip() if isinstance(topic, str) and topic.strip() else None
+        # Review metadata (not content categories) stays checked.
+        for key, category in [('confidence', 'confidences'), ('match_method', 'match_methods')]:
             if raw.get(key) not in CATEGORIES[category]:
                 raise ValueError(f'Choose a valid {key}.')
             item[key] = raw[key]
@@ -89,7 +113,7 @@ def validate_item(raw, meeting):
         if item['due_date'] and item['due_date'] < meeting['date']:
             raise ValueError('Deadline cannot precede the meeting date.')
         item.update(schema_version=2, scope=raw['scope'],
-                    sensitive=item['topic'] in SENSITIVE_TOPICS, source_valid=True)
+                    sensitive=bool(raw.get('sensitive')) or item['topic'] in SENSITIVE_TOPICS or is_sensitive(item['topic'], ' '.join(item.get('tags', []))), source_valid=True)
         for key, limit in [('mention', 160), ('deadline_text', 160), ('group_label', 100), ('group_record_id', 100)]:
             value = raw.get(key)
             if value is not None and (not isinstance(value, str) or len(value) > limit):
@@ -117,8 +141,16 @@ class Store:
             db.execute('CREATE TABLE IF NOT EXISTS extraction_runs (id TEXT PRIMARY KEY, body TEXT NOT NULL, saved_meeting_id TEXT)')
             db.execute('CREATE TABLE IF NOT EXISTS record_edits (id TEXT PRIMARY KEY, meeting_id TEXT NOT NULL, extraction_id TEXT, draft_id TEXT, change_type TEXT NOT NULL, field_changes TEXT NOT NULL)')
 
+    @contextmanager
     def connect(self):
-        return sqlite3.connect(self.path)
+        # Commit/rollback like sqlite3's context manager, then always close so
+        # Windows can delete temporary test databases.
+        db = sqlite3.connect(self.path)
+        try:
+            with db:
+                yield db
+        finally:
+            db.close()
 
     def list(self):
         with self.connect() as db:
@@ -175,7 +207,8 @@ class Store:
 
     def capture_extraction(self, meeting, items, warnings, origin, raw_output):
         run_id = str(uuid.uuid4())
-        body = dict(meeting=meeting, items=items, warnings=warnings, origin=origin, raw_output=raw_output)
+        body = dict(meeting=meeting, items=items, warnings=warnings, origin=origin, raw_output=raw_output,
+                    created_at=datetime.now().replace(microsecond=0).isoformat())
         with self.connect() as db:
             db.execute('INSERT INTO extraction_runs VALUES (?, ?, NULL)', (run_id, json.dumps(body)))
         return run_id
@@ -211,6 +244,10 @@ class Store:
     def seed_pack(self):
         """Install the two pre-reviewed practice examples once, never overwrite edits."""
         return self.import_reviewed(DEMO['meetings'])
+
+    def unsaved_runs(self):
+        with self.connect() as db:
+            return [(row[0], json.loads(row[1])) for row in db.execute('SELECT id, body FROM extraction_runs WHERE saved_meeting_id IS NULL')]
 
     def complete(self, meeting_id, item_id, completed):
         if not isinstance(completed, bool):

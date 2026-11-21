@@ -5,6 +5,9 @@ import { isDemoLogin } from './access.js';
 const route = window.location.pathname.replace(/\/$/, '') || '/';
 if (route === '/workspace') {
   import('./main.js');
+} else if (route.startsWith('/pack/')) {
+  import('./film.scss');
+  import('./pack-page.js').then(m => m.renderPack(document.querySelector('#app'), route.slice(6)));
 } else {
   const signup = route === '/signup';
   document.title = `${signup ? 'Create your account' : 'Coach sign in'} | Falcon Follow-up`;

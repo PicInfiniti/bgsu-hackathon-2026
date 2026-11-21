@@ -11,6 +11,6 @@ assert.ok(html.includes('data-assistant-source="S1"'));
 assert.ok(!html.includes('data-assistant-source="unknown"'));
 assert.ok(html.includes('2026-11-20 · S1'));
 assert.ok(html.includes('data-assistant-record="S1"'));
-assert.ok(html.includes('Context limited to 12'));
+assert.ok(html.includes('Limited to 12'));
 assert.ok(assistantAnswerMarkup({...result,origin:'demo'}).includes('not an AI answer'));
-assert.ok(assistantAnswerMarkup({...result,statements:[],sources:[],suggestions:[],matched_count:0,context_count:0,limited:false}).includes('No answer was found'));
+assert.ok(assistantAnswerMarkup({...result,statements:[],sources:[],suggestions:[],matched_count:0,context_count:0,limited:false}).includes("couldn't find that in your notes"));

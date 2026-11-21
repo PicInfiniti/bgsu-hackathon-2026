@@ -132,7 +132,7 @@ Work through these milestones in order. Commit after each one. Do not start a mi
 ## 5. Coding conventions
 
 - Keep all Aivana calls in `app/aivana_client.py`, all prompts in `app/prompts.py`, all schemas in `app/schemas/`.
-- Enums for topic, skill, feedback type, and confidence are defined once in `app/models.py` and reused by Pydantic and the frontend (expose via `GET /api/meta/categories`).
+- Categories are open (Salma, November 21, 2026): topic, skill and tags are free text. Never force them into a fixed list; starter suggestions only (`data/categories.json`, `backend/vocabulary.py`). Only review metadata (confidence, match method) and the record type stay fixed.
 - Use type hints and small pure functions for dates, fan-out, validation, and insights so they are easy to unit test.
 - Return JSON errors as `{ "error": "<code>", "message": "<friendly text>" }` with a sensible HTTP status.
 - Frontend: show a loading state during extraction, show friendly errors from the backend, never show raw stack traces.
@@ -167,4 +167,4 @@ Synthetic test notes must cover: multiple players in one note, a vague deadline,
 
 - If a requirement is unclear, choose the option that keeps the coach in control and the model from inventing facts, then note the choice in the README's known limits.
 - If time is short, cut Level 3 first, then the question box. Never cut coach approval, source text, or error handling.
-- Ask the human before changing the stack, the schema's enum values, or anything in section 1.
+- Ask the human before changing the stack or anything in section 1. Do not add fixed category lists.
