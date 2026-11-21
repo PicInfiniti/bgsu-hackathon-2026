@@ -9,7 +9,7 @@ import { loadSharedNotebook } from './shared-notebook.js';
 import { formatBrief } from './brief-format.js';
 import { summarizePlayers, filterPlayers } from './player-directory.js';
 import categories from '../../data/categories.json';
-import { appliesTo, reviewIssues, reviewPriority, highlightSource } from './review-state.js';
+import { appliesTo, reviewIssues, reviewPriority, highlightSource, giveToEveryone, canGiveToEveryone, visibleWarnings, alreadySentText } from './review-state.js';
 import { meetingTypeForAttendees } from './meeting-input.js';
 import { activityForDate } from './calendar-activity.js';
 import { upcomingActions } from './upcoming.js';
@@ -104,7 +104,7 @@ document.querySelector('#app').innerHTML = `
           <div class="home-col home-right">
             <section class="panel mini-cal-card"><div id="mini-calendar"></div><button class="rail-link" type="button" data-open-schedule>Open schedule →</button></section>
             <section class="panel next-up-card"><div class="section-heading"><h2>Next up</h2>${icon('calendar')}</div><div id="next-up"></div></section>
-            <section class="panel watch-card"><div class="section-heading"><h2>Watch list</h2>${icon('check')}</div><div id="watch-list"></div><button class="rail-link" type="button" data-view="tasks">All homework →</button></section>
+            <section class="panel watch-card"><div class="section-heading"><h2>Needs attention</h2>${icon('check')}</div><div id="watch-list"></div><button class="rail-link" type="button" data-view="tasks">All homework →</button></section>
           </div>
         </div>
       </section>
@@ -233,7 +233,8 @@ function invalidate() { draft = []; extractionId = null; extractionWarnings = []
 function optionList(values, selected) { return values.map(v => `<option value="${escape(v)}" ${v === selected ? 'selected' : ''}>${escape(v)}</option>`).join(''); }
 function renderReview() {
   const review = $('#review');
-  const warnings = extractionWarnings.length ? `<div class="extraction-warnings" role="status"><strong>Notes from Find homework</strong><ul>${extractionWarnings.map(w => `<li>${escape(w)}</li>`).join('')}</ul></div>` : '';
+  const shownWarnings = visibleWarnings(extractionWarnings, draft, current);
+  const warnings = shownWarnings.length ? `<div class="extraction-warnings" role="status"><strong>Notes from Find homework</strong><ul>${shownWarnings.map(w => `<li>${escape(w)}</li>`).join('')}</ul></div>` : '';
   if (!draft.length) {
     review.innerHTML = `${warnings}<div class="empty-review"><h3>A little clarity goes a long way.</h3><p>Press Find homework, then check each item.<br>You can also add homework by hand.</p></div><button class="secondary full" data-add-record type="button">Add homework by hand</button>`;
     return;
@@ -244,7 +245,7 @@ function renderReview() {
   const cards = draft.map((i,n) => {
     const issues = reviewIssues(i,current);
     const shared = i.scope === 'team' && i.player_ids?.length && i.kind !== 'action';
-    return `<article class="draft-item confidence-${i.confidence || 'medium'}"><p class="record-origin">${escape(meetingTypeLabel(current.meeting_type))} · ${escape(current.title)}</p><div class="draft-flags"><span class="confidence-badge ${i.confidence || 'medium'}">${escape(i.confidence || 'medium')} confidence</span>${!i.player_id && !shared ? '<span class="badge overdue">Unmatched player</span>' : ''}${i.sensitive ? '<span class="badge sensitive">Sensitive topic</span>' : ''}${i.group_record_id ? '<span class="badge">Shared instruction</span>' : ''}</div><div class="form-row"><label>Player<select data-index="${n}" data-field="player_id"><option value="" ${!i.player_id && !shared ? 'selected' : ''}>Choose attendee…</option>${current.meeting_type === 'team' && i.kind !== 'action' ? `<option value="__team__" ${shared ? 'selected' : ''}>Whole team feedback</option>` : ''}${current.attendees.map(id => `<option value="${id}" ${id === i.player_id ? 'selected' : ''}>${escape(name(id))}</option>`).join('')}</select></label><label>Type<select data-index="${n}" data-field="kind">${optionList(['action','praise','improvement','observation'], i.kind)}</select></label></div><label>Topic <small>(any words)</small><input data-index="${n}" data-field="topic" list="topic-ideas" maxlength="100" value="${escape(i.topic || '')}"></label><label>Coach's note<textarea rows="2" data-index="${n}" data-field="text" maxlength="1000">${escape(i.text)}</textarea></label><div class="form-row"><label>Skill <small>(any words)</small><input data-index="${n}" data-field="skill" list="skill-ideas" maxlength="100" value="${escape(i.skill || '')}"></label><label>Due date <small>(homework only)</small><input type="date" data-index="${n}" data-field="due_date" value="${escape(i.due_date || '')}" ${i.kind !== 'action' ? 'disabled' : ''}></label></div>${i.deadline_text ? `<p class="deadline-evidence">Original deadline: “${escape(i.deadline_text)}” · ${i.due_date ? `Resolved: ${escape(i.due_date)}` : 'No definite date — coach review needed'}</p>` : ''}<label>Tags <small>(any words, comma between, up to 3)</small><input data-index="${n}" data-field="tags" maxlength="130" value="${escape((i.tags || []).join(', '))}" placeholder="route running, red zone"></label>${i.kind === 'praise' || i.kind === 'improvement' ? `<div class="std-chips"><span>Program standard <small>(optional, your call)</small></span>${STANDARD_TAGS.map(([tag, label]) => `<button type="button" class="chip-button ${(i.tags || []).includes(tag) ? 'on' : ''}" data-std-tag="${tag}" data-index="${n}" aria-pressed="${(i.tags || []).includes(tag)}">${label}</button>`).join('')}</div>` : ''}${i.details ? `<p class="deadline-evidence">Key details: ${escape(i.details)}</p>` : ''}<label>Verbatim source quote<textarea rows="2" data-index="${n}" data-field="quote" maxlength="2000">${escape(i.quote)}</textarea></label><button class="text-button" data-highlight="${n}" type="button">Highlight in original note</button>${i.mention ? `<p class="match-evidence">Mention: ${escape(i.mention)} · ${escape(i.match_method || 'unmatched')}</p>` : ''}${i.warnings?.length ? `<details class="draft-extraction-notes"><summary>Notes from Find homework</summary><ul>${i.warnings.map(w => `<li>${escape(w)}</li>`).join('')}</ul></details>` : ''}<div class="record-issues" data-issues="${n}">${issues.map(issue => `<p>${escape(issue)}</p>`).join('')}</div><button class="text-button remove" data-remove="${n}" type="button">Remove</button></article>`;
+    return `<article class="draft-item confidence-${i.confidence || 'medium'}"><p class="record-origin">${escape(meetingTypeLabel(current.meeting_type))} · ${escape(current.title)}</p><div class="draft-flags"><span class="confidence-badge ${i.confidence || 'medium'}">${escape(i.confidence || 'medium')} confidence</span>${!i.player_id && !shared ? '<span class="badge overdue">Unmatched player</span>' : ''}${i.sensitive ? '<span class="badge sensitive">Sensitive topic</span>' : ''}${i.group_record_id ? '<span class="badge">Shared instruction</span>' : ''}</div><div class="form-row"><label>Player<select data-index="${n}" data-field="player_id"><option value="" ${!i.player_id && !shared ? 'selected' : ''}>Choose attendee…</option>${current.meeting_type === 'team' && i.kind !== 'action' ? `<option value="__team__" ${shared ? 'selected' : ''}>Whole team feedback</option>` : ''}${current.attendees.map(id => `<option value="${id}" ${id === i.player_id ? 'selected' : ''}>${escape(name(id))}</option>`).join('')}</select></label><label>Type<select data-index="${n}" data-field="kind">${optionList(['action','praise','improvement','observation'], i.kind)}</select></label></div><label>Topic <small>(any words)</small><input data-index="${n}" data-field="topic" list="topic-ideas" maxlength="100" value="${escape(i.topic || '')}"></label><label>Coach's note<textarea rows="2" data-index="${n}" data-field="text" maxlength="1000">${escape(i.text)}</textarea></label><div class="form-row"><label>Skill <small>(any words)</small><input data-index="${n}" data-field="skill" list="skill-ideas" maxlength="100" value="${escape(i.skill || '')}"></label><label>Due date <small>(homework only)</small><input type="date" data-index="${n}" data-field="due_date" value="${escape(i.due_date || '')}" ${i.kind !== 'action' ? 'disabled' : ''}></label></div>${i.deadline_text ? `<p class="deadline-evidence">Original deadline: “${escape(i.deadline_text)}” · ${i.due_date ? `Resolved: ${escape(i.due_date)}` : 'No definite date — coach review needed'}</p>` : ''}<label>Tags <small>(any words, comma between, up to 3)</small><input data-index="${n}" data-field="tags" maxlength="130" value="${escape((i.tags || []).join(', '))}" placeholder="route running, red zone"></label>${i.kind === 'praise' || i.kind === 'improvement' ? `<div class="std-chips"><span>Program standard <small>(optional, your call)</small></span>${STANDARD_TAGS.map(([tag, label]) => `<button type="button" class="chip-button ${(i.tags || []).includes(tag) ? 'on' : ''}" data-std-tag="${tag}" data-index="${n}" aria-pressed="${(i.tags || []).includes(tag)}">${label}</button>`).join('')}</div>` : ''}${i.details ? `<p class="deadline-evidence">Key details: ${escape(i.details)}</p>` : ''}<label>Verbatim source quote<textarea rows="2" data-index="${n}" data-field="quote" maxlength="2000">${escape(i.quote)}</textarea></label><button class="text-button" data-highlight="${n}" type="button">Highlight in original note</button>${i.mention ? `<p class="match-evidence">Mention: ${escape(i.mention)} · ${escape(i.match_method || 'unmatched')}</p>` : ''}${i.warnings?.length ? `<details class="draft-extraction-notes"><summary>Notes from Find homework</summary><ul>${i.warnings.map(w => `<li>${escape(w)}</li>`).join('')}</ul></details>` : ''}<div class="record-issues" data-issues="${n}">${issues.map(issue => `<p>${escape(issue)}</p>`).join('')}</div>${canGiveToEveryone(i, current) ? `<button class="secondary compact give-everyone" data-give-everyone="${n}" type="button">Give to everyone in this meeting (${current.attendees.length})</button>` : ''}<button class="text-button remove" data-remove="${n}" type="button">Remove</button></article>`;
   });
   const groups = groupRecords(draft);
   const sectioned = groups.map(group => {
@@ -483,11 +484,13 @@ $('#review').addEventListener('click', async e => {
   if (highlight) { highlightedDraft = Number(highlight.dataset.highlight); $('#highlighted-source').innerHTML = highlightSource(current.note,draft[highlightedDraft].quote); return; }
   const remove = e.target.closest('[data-remove]');
   if (remove) { draft.splice(Number(remove.dataset.remove),1); renderReview(); return; }
+  const everyone = e.target.closest('[data-give-everyone]');
+  if (everyone) { const n = Number(everyone.dataset.giveEveryone); draft.splice(n, 1, ...giveToEveryone(draft[n], current.attendees)); renderReview(); notify(`One item per player (${current.attendees.length}). Check each before approving.`); return; }
   if (e.target.id !== 'save' || !$('#approved')?.checked || busy) return;
   try {
     validMeeting(current);
     if (draft.some(i => reviewIssues(i,current).length)) throw Error('Fix the highlighted items before approval.');
-    const body = {...clone(current), approved:true, origin, extraction_id:extractionId, items:clone(draft)};
+    const body = {...clone(current), approved:true, origin, extraction_id:extractionId, items:clone(draft), ...(pendingNoteLink ? {source_note_id: pendingNoteLink} : {})};
     busy = true; e.target.disabled = true;
     const meeting = await api('/meetings',body);
     meetings.unshift(meeting); clearAssistant();
@@ -714,8 +717,11 @@ const editor = createNoteEditor($('#note-editor-root'), {
   addToSchedule: (event) => { showSchedule(event.start_at.slice(0, 10), 'week'); schedule.openAdd(event); },
   openWhiteboard: (note, opts = {}) => openWhiteboard({api, notify, players: demo.players, onSaved: opts.onSaved, onClose: opts.onClose}, opts.id ? {id: opts.id} : {template: 'play', note_id: note.id, title: note.title}),
 });
-function openFindHomework(note, recap = null) {
+async function openFindHomework(note, recap = null) {
   if (busy) return;
+  // F1: a note's homework is reviewed and saved once. A second send opens the saved meeting instead.
+  const existing = note?.id ? await api(`/notes/${note.id}/meeting`, undefined, 'GET').catch(() => null) : null;
+  if (existing) { showAlreadySent(existing); return; }
   const attendees = recap ? [...new Set(recap.to_dos.map(t => t.player_id).filter(Boolean))] : matchPlayersInText(note.body, demo.players);
   current = {title: note.title.slice(0, 160), date: note.note_date, meeting_type: attendees.length === demo.players.length ? 'team' : attendees.length > 1 ? 'group' : 'individual', attendees, note: note.body.slice(0, 12000)};
   $('#title').value = current.title; $('#date').value = current.date; $('#meeting-type').value = current.meeting_type; $('#note').value = current.note; $('#sample').selectedIndex = -1;
@@ -766,6 +772,13 @@ askPanel = createAskPanel({
   playerName: (id) => player(id)?.name,
   runButton: (b) => { if (b.action === 'plan_one_on_one') { const p = player(b.player_id); const d = new Date(); d.setDate(d.getDate() + 1); showSchedule(d.toLocaleDateString('en-CA'), 'week'); schedule.openAdd({type: 'meeting', title: `1-on-1: ${p.name}`, start_at: `${d.toLocaleDateString('en-CA')}T14:00`, duration_min: 30, audience: `player:${p.id}`}); return; } if (b.action === 'find_homework') api(`/notes/${b.note_id}`, undefined, 'GET').then(note => openFindHomework(note)).catch(e => notify(e.message, true)); },
 });
+function showAlreadySent(meeting) {
+  draft = []; extractionId = null; extractionWarnings = []; pendingNoteLink = null;
+  switchView('meetings'); window.scrollTo({top: 0});
+  $('#review').innerHTML = `<div class="already-sent" role="status"><h3>${escape(alreadySentText(meeting))}</h3><p>${escape(meeting.title)} · ${meeting.items.length} item${meeting.items.length === 1 ? '' : 's'} saved for ${escape(meeting.attendees.map(name).join(', '))}. Saving it again would put the same homework on the player pages twice.</p><button class="primary compact" type="button" data-open-sent="${escape(meeting.attendees[0])}">Open it</button></div>`;
+  notify(`${alreadySentText(meeting)} Open it to see the saved homework.`);
+}
+$('#review').addEventListener('click', e => { const o = e.target.closest('[data-open-sent]'); if (o) openPlayerTimeline(o.dataset.openSent); });
 function openReviewDraft({meeting, items: drafted}) {
   if (busy) return;
   current = {...meeting};

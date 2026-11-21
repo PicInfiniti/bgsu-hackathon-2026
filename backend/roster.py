@@ -34,7 +34,7 @@ def default_season(today=None):
 class Roster:
     def __init__(self, path):
         self.path = str(path)
-        pack = json.loads((core.ROOT / 'data/demo.json').read_text())
+        pack = json.loads((core.ROOT / 'data/demo.json').read_text(encoding='utf-8'))
         self.base = {p['id']: p for p in pack['players']}  # the synthetic pack, before edits
         with self.connect() as db:
             db.execute('''CREATE TABLE IF NOT EXISTS players (id TEXT PRIMARY KEY, first_name TEXT NOT NULL, last_name TEXT NOT NULL, number INTEGER,

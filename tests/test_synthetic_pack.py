@@ -9,7 +9,7 @@ from scripts.build_demo_data import PACK, build
 
 
 def read(name):
-    return json.loads((PACK / name).read_text())
+    return json.loads((PACK / name).read_text(encoding='utf-8'))
 
 
 class SyntheticPackTests(unittest.TestCase):
@@ -30,7 +30,7 @@ class SyntheticPackTests(unittest.TestCase):
                            'Other', 'Not Specified', 'Not Applicable'}
         for case in read('expected.json').values():
             self.assertTrue(all(item['skill'] in football_skills for item in case['items']))
-        readable = (PACK / 'notes.md').read_text()
+        readable = (PACK / 'notes.md').read_text(encoding='utf-8')
         for meeting in read('meetings.json'):
             self.assertIn(meeting['note'], readable)
             self.assertNotRegex(meeting['note'].lower(),

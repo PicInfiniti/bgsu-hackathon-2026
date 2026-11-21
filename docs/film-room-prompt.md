@@ -38,10 +38,10 @@ Build brief approved by Salma on November 21, 2026 (10:12 AM). It combines the c
 - **Draw on this frame**: uploads capture the paused frame; embeds ask for a screenshot. Linked to film + time and shown as an orange mark.
 - Saving: editable JSON + PNG preview; Not saved / Saving… / Saved / Save failed – retry; autosave 2 s after a change once saved; warning before leaving with unsaved changes; other-tab edits detected (HTTP 409); several drawings per film/note with thumbnails.
 
-### Skill checks, Next game, Watch list
+### Skill checks, Next game, Needs attention
 - Player page **Skill checks** card: suggested skills per position room (editable via `/api/position-skills`), any skill can be typed. Score 1–5 with meanings (Lots of work · Developing · Meets my standard · Consistently good · Excellent), a required "why", and "from" (film/practice/meeting/game). Trend ▲ Improving / — Steady / ▼ Needs attention and a one-skill line chart. Quick-grade % is shown beside it, never mixed in. No overall player number.
 - **Next game** card (Home and player page): opponent, home/away, date/time, days left, homework due before kickoff, film to break down, next 1-on-1 — all from code.
-- **Watch list**: the same tag noted as Improve for one player in 3 different weeks → "Same correction 3 weeks → plan a 1-on-1", with a button that opens the Schedule with a 1-on-1 ready to add. Also on the bell.
+- **Needs attention** (Home; called Watch list before November 21): the same tag noted as Improve for one player in 3 different weeks → "Same correction 3 weeks → plan a 1-on-1", with a button that opens the Schedule with a 1-on-1 ready to add. Also on the bell.
 
 ### Film packs
 - Per player or position room: clips (max 15), Good plays, notes marked "Show in film pack", up to 3 drawings, up to 3 questions, homework lines, due date, optional Quick grade % (off by default).

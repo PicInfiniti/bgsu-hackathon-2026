@@ -1,6 +1,7 @@
 """Validation and persistence, testable without third-party packages."""
 import copy
 import json
+import re
 import sqlite3
 import uuid
 from contextlib import contextmanager
@@ -11,7 +12,7 @@ from .grouping import annotate_shared_records
 from .vocabulary import clean_tags, is_sensitive
 
 ROOT = Path(__file__).resolve().parents[1]
-DEMO = json.loads((ROOT / 'data/demo.json').read_text())
+DEMO = json.loads((ROOT / 'data/demo.json').read_text(encoding='utf-8'))  # utf-8: Windows would read '·' as 'Â·'
 PLAYERS = {p['id'] for p in DEMO['players']}
 
 
@@ -134,6 +135,24 @@ def demo_extract(meeting):
     raise ValueError('Demo extraction requires unchanged sample notes, date, type, and attendees. Load a sample or use Aivana mode.')
 
 
+def repair_text(value):
+    """Undo utf-8 text that was decoded as cp1252 ('Â·' -> '·', 'â€™' -> '’'). Clean text is returned unchanged."""
+    if not isinstance(value, str) or not re.search('[Ââ][\u0080-¿€™‚-„‘-”†-…]', value):
+        return value
+    try:
+        return value.encode('cp1252').decode('utf-8')
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return value
+
+
+class DuplicateMeeting(ValueError):
+    """A note's homework was already approved once; a second meeting would double it."""
+    def __init__(self, meeting):
+        self.meeting = meeting
+        when = (meeting.get('saved_at') or meeting['date'])[:10]
+        super().__init__(f'Already sent to review on {when}. Open it instead of saving it again.')
+
+
 class Store:
     def __init__(self, path):
         self.path = str(path)
@@ -160,11 +179,60 @@ class Store:
             meeting['items'] = annotate_shared_records(meeting['items'], meeting, DEMO['players'])
         return sorted(meetings, key=lambda m: (m['date'], m['id']), reverse=True)
 
+    @staticmethod
+    def fingerprint(meeting):
+        """Same date, title, attendees and the same records (player, kind, text) = the same meeting."""
+        records = sorted((i.get('player_id') or ','.join(sorted(i.get('player_ids') or [])), i['kind'], ' '.join(i['text'].split()).casefold()) for i in meeting['items'])
+        return (meeting['date'], ' '.join(repair_text(meeting['title']).split()).casefold(), tuple(sorted(meeting['attendees'])), tuple(records))
+
+    def same_content(self, meeting):
+        key = self.fingerprint(meeting)
+        return next((m for m in self.list() if self.fingerprint(m) == key), None)
+
+    def repair_seed_text(self):
+        """Seeds stored by an older Windows build read data/demo.json as cp1252 ('·' became 'Â·'). Fix those rows only."""
+        fixed = 0
+        with self.connect() as db:
+            for mid, body in db.execute("SELECT id, body FROM meetings WHERE id LIKE 'm-%'").fetchall():
+                def walk(value):
+                    if isinstance(value, dict):
+                        return {k: walk(v) for k, v in value.items()}
+                    if isinstance(value, list):
+                        return [walk(v) for v in value]
+                    return repair_text(value)
+                original = json.loads(body)
+                repaired = walk(original)
+                if repaired != original:
+                    db.execute('UPDATE meetings SET body = ? WHERE id = ?', (json.dumps(repaired), mid))
+                    fixed += 1
+        return fixed
+
+    def meeting_for_note(self, note_id):
+        """The approved meeting already made from this notebook note, if any."""
+        return next((m for m in self.list() if m.get('source_note_id') == note_id), None)
+
     def save(self, raw):
         meeting = validate_meeting(raw, require_items=True)
         meeting['id'] = str(uuid.uuid4())
+        note_id = raw.get('source_note_id')
+        if note_id is not None:
+            if not isinstance(note_id, int) or isinstance(note_id, bool) or note_id < 1:
+                raise ValueError('Invalid source note.')
+            existing = self.meeting_for_note(note_id)
+            if existing:
+                raise DuplicateMeeting(existing)
+            meeting['source_note_id'] = note_id
+        meeting['saved_at'] = datetime.now().replace(microsecond=0).isoformat()
+        extraction_id = raw.get('extraction_id')
+        if extraction_id:
+            with self.connect() as db:
+                row = db.execute('SELECT saved_meeting_id FROM extraction_runs WHERE id = ?', (text(extraction_id, 'extraction id', 100),)).fetchone()
+            if row and row[0]:
+                raise ValueError('This extraction was already approved. Reload the notebook.')
+        same = self.same_content(meeting)
+        if same:
+            raise DuplicateMeeting(same)  # e.g. the practice-pack sample approved again
         with self.connect() as db:
-            extraction_id = raw.get('extraction_id')
             baseline = []
             if extraction_id:
                 extraction_id = text(extraction_id, 'extraction id', 100)
@@ -244,6 +312,7 @@ class Store:
 
     def seed_pack(self):
         """Install the two pre-reviewed practice examples once, never overwrite edits."""
+        self.repair_seed_text()
         return self.import_reviewed(DEMO['meetings'])
 
     def unsaved_runs(self):

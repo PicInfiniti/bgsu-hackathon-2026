@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 
-CATEGORIES = json.loads((Path(__file__).resolve().parents[1] / 'data/categories.json').read_text())
+CATEGORIES = json.loads((Path(__file__).resolve().parents[1] / 'data/categories.json').read_text(encoding='utf-8'))
 SENSITIVE_TOPICS = {'Health & Injury Follow-up', 'Insurance & Administration'}
 
 SCHEMA = {

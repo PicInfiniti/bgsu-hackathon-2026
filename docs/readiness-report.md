@@ -97,3 +97,14 @@ Test note (Player meetings): *"Jordan needs to improve route depth, run 20 curls
 - **Custom notebooks:** already built today as **folders** (create, rename, archive, delete; notes move to No folder, never deleted). No further work before the deadline.
 - **Recap-to-calendar confirmation:** already works as a confirmation. The Recap lists "Schedule items found in this note"; **Add to schedule** opens the filled-in event form, and nothing is added until the coach presses Add event. No change needed.
 - **Rename Watch List to Needs attention:** worth it, very low risk. One heading in `frontend/src/main.js` (Home right column) and the welcome text if any. Do it with the critical fixes if you approve.
+
+## Fixes made after the check (second local commit)
+| # | Fix | How it was checked |
+|---|---|---|
+| F1 | A note's homework is saved once. Sending the same note to review again (Find homework or Recap) shows "Already sent to review on DATE" with **Open it**; the server also refuses a second meeting from the same note (409) or with identical content | `tests/test_readiness_fixes.py`, `frontend/test/readiness-fixes.test.js`; browser: second send showed the message, still 1 meeting |
+| F2 | Unassigned group cards have **Give to everyone in this meeting**: one item per attendee, each still checked before approval | Tests; browser: 1 card became 2 (Morgan, Taylor) |
+| F5 | The "requires correction / unmatched" notes disappear once every card is valid; other notes stay | Tests |
+| F7 | Cause found: on Windows the backend read `data/demo.json` without UTF-8, so the seed title became "Defensive backs Â· coverage film review" and approving the Demo sample did not match it. Fixed the reads, repair the stored seed text at start-up, and refuse identical meetings. `scripts/remove_duplicate_meetings.py` removed the 2 exact copies from the real notebook (dry run first, backup `backend/coach.sqlite3-backup-20261121-131029`, the "done" tick kept) | Tests; real notebook now has 4 meetings, no duplicates |
+| Rename | "Watch list" is now **Needs attention** on Home and in the bell text; one section only | Test checks the heading appears once and "Watch list" is gone |
+
+Live recheck (on a copy of the database): Find homework 7.2 s with correct attribution (Taylor: 20 curls due 11-27, route depth; Morgan: 5 clips, catching; red-zone fades for both), corrected date saved, one meeting saved after a double-click, second send blocked, each player page shows only their own homework, Ask Aivana 8.5 s with sources. Backend 122 tests, frontend 76, accuracy 39/39.

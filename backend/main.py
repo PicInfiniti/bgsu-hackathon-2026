@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 
 from . import aivana
-from .core import DEMO, PLAYERS, Store, demo_extract, validate_meeting
+from .core import DEMO, PLAYERS, DuplicateMeeting, Store, demo_extract, validate_meeting
 from .config import load_environment
 from .extraction import normalize_records, enrich_demo, applies_to
 from .extraction_schema import CATEGORIES
@@ -105,9 +105,37 @@ def save(body: dict):
             raise ValueError('Use the current review form to save records with topic and confidence fields.')
         if body.get('origin') == 'aivana' and not body.get('extraction_id'):
             raise ValueError('Aivana records need their extraction draft ID before approval.')
+        note_id = body.get('source_note_id')
+        if isinstance(note_id, int) and not isinstance(note_id, bool):
+            existing = existing_meeting(note_id)
+            if existing:
+                raise DuplicateMeeting(existing)
         return store.save(body)
+    except DuplicateMeeting as error:
+        raise HTTPException(409, str(error)) from None
     except ValueError as error:
         raise HTTPException(422, str(error)) from None
+
+
+def existing_meeting(note_id):
+    """A meeting already approved from this note: by its source note id, or the note's older meeting link."""
+    meeting = store.meeting_for_note(note_id)
+    if meeting:
+        return meeting
+    try:
+        linked = notebook.get_note(note_id).get('meeting_id')
+    except KeyError:
+        return None
+    return next((m for m in store.list() if m['id'] == linked), None) if linked else None
+
+
+@app.get('/api/notes/{note_id}/meeting')
+def meeting_for_note(note_id: int):
+    """The meeting already approved from this note (so the review is not opened twice)."""
+    meeting = existing_meeting(note_id)
+    if not meeting:
+        raise HTTPException(404, 'No meeting from this note yet.')
+    return meeting
 
 
 @app.post('/api/meetings/import')

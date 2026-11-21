@@ -27,7 +27,7 @@ export function createBell(button, ctx) {
     const s = getSettings();
     pop.innerHTML = `<div class="bell-head"><strong>Notifications</strong><button type="button" class="text-button" data-read-all ${data.unread ? '' : 'disabled'}>Mark all read</button></div>
       ${settingsOpen ? `<div class="bell-settings"><p>Show these on the bell:</p>${Object.entries(KIND_LABELS).map(([k, v]) => `<label><input type="checkbox" data-kind="${k}" ${s.notification_kinds[k] !== false ? 'checked' : ''}> ${v}</label>`).join('')}</div>` : ''}
-      <ul>${data.items.map(n => `<li class="${n.read_at ? 'read' : 'unread'} kind-${n.kind}"><button type="button" data-open="${n.id}"><span class="bell-dot"></span><span><strong>${esc(n.text)}</strong><small>${timeAgo(n.created_at)}</small></span></button></li>`).join('') || '<li class="empty">No new notifications. Late homework and notes to check also show on the Home Watch list.</li>'}</ul>
+      <ul>${data.items.map(n => `<li class="${n.read_at ? 'read' : 'unread'} kind-${n.kind}"><button type="button" data-open="${n.id}"><span class="bell-dot"></span><span><strong>${esc(n.text)}</strong><small>${timeAgo(n.created_at)}</small></span></button></li>`).join('') || '<li class="empty">No new notifications. Late homework and notes to check also show under Needs attention on Home.</li>'}</ul>
       <div class="bell-foot"><button type="button" class="text-button" data-settings>${settingsOpen ? 'Done' : 'Notification settings'}</button></div>`;
   }
   button.addEventListener('click', () => { pop.hidden = !pop.hidden; button.setAttribute('aria-expanded', String(!pop.hidden)); if (!pop.hidden) { render(); refresh(); } });

@@ -12,7 +12,7 @@ PACK = ROOT / 'data/synthetic'
 
 def build():
     def read(name):
-        return json.loads((PACK / name).read_text())
+        return json.loads((PACK / name).read_text(encoding='utf-8'))
 
     manifest = read('manifest.json')
     roster = read('roster.json')
@@ -44,5 +44,5 @@ def build():
 
 
 if __name__ == '__main__':
-    (ROOT / 'data/demo.json').write_text(json.dumps(build(), indent=2, ensure_ascii=False) + '\n')
+    (ROOT / 'data/demo.json').write_text(json.dumps(build(), indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
     print('Built data/demo.json from data/synthetic; persistent app data untouched.')

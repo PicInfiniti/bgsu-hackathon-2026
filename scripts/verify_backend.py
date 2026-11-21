@@ -69,7 +69,7 @@ def main():
                     raise RuntimeError('Backend startup timed out.')
                 health = request('/api/health')
                 assert health == {'ok': True, 'aivana_configured': args.live}, health
-                demo = json.loads((ROOT / 'data/demo.json').read_text())
+                demo = json.loads((ROOT / 'data/demo.json').read_text(encoding='utf-8'))
                 seeded = request('/api/meetings')
                 assert {m['id'] for m in seeded} == {m['id'] for m in demo['meetings']}
                 assert all(m['approved'] and m['origin'] == 'demo' for m in seeded)
