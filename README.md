@@ -6,9 +6,13 @@
 
 ---
 
-**Current practice pack:** `data/synthetic/` is now football version 2: 25 fictional players with football positions/groups and nicknames, 14 scenarios, and 57 reference records. Regenerate app fixtures with `.venv/bin/python scripts/build_demo_data.py`, restart the backend, and refresh the frontend. Versioned football seeds are added once; existing saved notes and completion states remain unchanged as history. Login/signup and the workspace retain the BGSU notebook style with football positions, film-review copy, and play-diagram artwork. This is our original practice data, not the missing organizer pack. Earlier live AI evidence applies to the basketball version; football extraction has not yet been live-benchmarked.
+**Current practice pack:** `data/synthetic/` is now football version 2: 25 fictional players with football positions/groups and nicknames, 14 scenarios, and 57 reference records. Regenerate app fixtures with `.venv/bin/python scripts/build_demo_data.py`, restart the backend, and refresh the frontend. Versioned football seeds are added once; existing saved notes and completion states remain unchanged as history. Login/signup and the workspace retain the BGSU notebook style with football positions, film-review copy, and play-diagram artwork. This is our original practice data, not the missing organizer pack. Football schema-v2 live spot checks are recorded in [the November 21 QA report](docs/qa-2026-11-21.md); these are not a general accuracy benchmark.
 
 **Players view (implemented):** a compact football roster table with search, unit/group/position filters, actual meeting/open-action counts, and a player snapshot. Selecting a row updates the summary; **View timeline** opens full records, source notes, completion controls, and preparation. **Back to players** restores the directory and filters. Counts include saved historical meetings; source details remain attached.
+
+**Current workspace:** Overview is a summary dashboard with Upcoming on the left and Recent conversations on the right inside one main panel; the calendar stays in its own right sidebar. **Meeting notes** is a separate sidebar view with the note editor and approval review side by side on wide screens. Selecting more than one attendee changes an Individual meeting to Group; selecting one restores Individual. Explicit Full team is retained while all players are selected. Clicking a calendar date shows that day’s saved meetings and due actions, including completed actions. Mode-change confirmations use a nonblocking top-right alert that disappears after three seconds; ordinary success notices use the same three-second alert and errors/review warnings remain visible.
+
+**Extraction upgrade:** typed football topics/skills, confidence and unmatched-player flags, deterministic Python deadlines, group fan-out, shared team feedback, manual additions, highlighted evidence, sensitive-topic filtering, and field-level approval audit logs are implemented. Old SQLite records remain readable. Full browser QA and validation on the missing organizer pack remain outstanding. See [verification and limitations](docs/qa-2026-11-21.md).
 
 ## Table of contents
 
@@ -38,7 +42,7 @@
 
 Coaches meet with players one-on-one, in position groups, and as a full team. It is easy to lose track of who was asked to do what, who needs to improve what, and who earned praise.
 
-The Football Coach Meeting Tracker lets a coach paste (or photograph) meeting notes. The Aivana API extracts structured records: the player, meeting topic, skill area, feedback, action items, and deadlines. **The coach reviews and edits every AI-generated record next to the original note before anything is saved.** Approved records feed player timelines, an open and overdue action-item list, and follow-up tools.
+The Football Coach Meeting Tracker lets a coach paste meeting notes (photo input is planned). The Aivana API extracts structured records: the player, meeting topic, skill area, feedback, action items, and deadlines. **The coach reviews and edits every AI-generated record next to the original note before anything is saved.** Approved records feed player timelines, an open and overdue action-item list, and follow-up tools.
 
 **What this app is:** a meeting-notes and follow-up tracker.
 **What this app is not:** a video conferencing tool, a travel planning or booking tool, a medical or injury management system, an insurance tool, or a full football analytics platform.
@@ -90,12 +94,12 @@ The Football Coach Meeting Tracker lets a coach paste (or photograph) meeting no
 | Backend | Python 3.10+, **FastAPI**, Uvicorn | Fast to build, automatic API docs at `/docs`, Pydantic validation. |
 | AI | **Aivana MMI API** (`aivana` Python SDK or HTTPS) | Required by the hackathon. Called only from the backend. |
 | Database | **SQLite** (via `sqlite3` or SQLModel) | Zero setup, single file, easy to reset for demos. |
-| Validation | Pydantic + `jsonschema` | Validates Aivana output against the roster and allowed categories. |
-| Date handling | `python-dateutil` / `dateparser` | Resolves "by Friday" against the meeting date in code. |
-| Frontend | Plain HTML, CSS, and JavaScript (served by FastAPI) | No build step; works on any laptop for the demo. |
+| Validation | Aivana JSON Schema + Python validators | Backend checks roster matches, evidence, categories, and dates; the provider schema checks structure. |
+| Date handling | Standard-library `datetime` | Resolves supported unambiguous phrases against the meeting date; vague/event-relative deadlines remain for coach review. |
+| Frontend | Vanilla JavaScript + Sass + Vite | Existing BGSU notebook UI; port 5174 proxies `/api` to FastAPI on 8001. No React/TypeScript. |
 | Charts | Chart.js | Simple team-theme and trend charts. |
 | Calendar export | `ics` Python package | Level 3 reminders. |
-| Tests | `pytest` | Unit tests for validation and dates, plus the accuracy test. |
+| Tests | Python `unittest` + Node test runner | Offline regression checks; separate opt-in live verification. |
 
 ---
 
@@ -107,7 +111,7 @@ The Football Coach Meeting Tracker lets a coach paste (or photograph) meeting no
 │  - Meeting form + notes      │
 │  - Review & approve screen   │
 │  - Timelines, action items   │
-│  - Question box, prep brief  │
+│  - Prep brief (ask planned) │
 └──────────────┬───────────────┘
                │  JSON over HTTP (same origin)
 ┌──────────────▼───────────────┐
@@ -115,14 +119,14 @@ The Football Coach Meeting Tracker lets a coach paste (or photograph) meeting no
 │  - Builds prompts + schema   │──────► Aivana API (api.aivana.ai)
 │  - Validates AI output       │◄────── structured JSON / SSE stream
 │  - Resolves dates, fan-out   │
-│  - Overdue/attention logic   │        AIVANA_API_KEY lives only in
+│  - Validation/date logic     │        AIVANA_API_KEY lives only in
 │  - Edit tracking             │        the backend environment.
 └──────────────┬───────────────┘
                │
 ┌──────────────▼───────────────┐
-│  SQLite (data/tracker.db)    │
-│  players, meetings, records, │
-│  action items, edit log      │
+│ SQLite (backend/coach.sqlite3)│
+│  approved meeting bodies,    │
+│  extraction drafts, edit log │
 └──────────────────────────────┘
 ```
 
@@ -141,68 +145,52 @@ The Football Coach Meeting Tracker lets a coach paste (or photograph) meeting no
 
 ## 5. Setup and running the app
 
-### Prerequisites
+Use this repository root (`bgsu-hackathon-2026`), not the separate `coach-meeting` checkout. Python 3.10+ and Node 20.19+ or 22.12+ are needed. Both Demo and Live use the same local SQLite notebook and require FastAPI; only Live extraction/preparation need an Aivana key.
 
-- Python 3.10 or newer
-- An Aivana **live** API key (starts with `ai_live_`) from [developers.aivana.ai](https://developers.aivana.ai) → API Keys. Keys starting with `ai_test_` return 401 on the production API.
-
-### Install
+### Backend
 
 ```bash
-git clone <your-team-repo-url>
-cd coach-meeting-tracker
-python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+python3 -m venv .venv
+.venv/bin/python -m pip install -r backend/requirements-dev.txt
+# Fresh checkout only: create the private config without overwriting an existing one.
+[ -f backend/.env ] || cp backend/.env.example backend/.env
+.venv/bin/python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8001
 ```
 
-### Environment variables
+Set `AIVANA_API_KEY` privately in **`backend/.env`**. The existing local key is configured already; do not print or commit it. The backend automatically loads this explicit path; exported variables take precedence. Restart after changing `.env`. A root/frontend `.env` is not searched. Never put secrets in `VITE_` variables.
 
-Copy the example file and add your key. **`.env` is listed in `.gitignore` and must never be committed.**
+| Variable | Purpose |
+|---|---|
+| `AIVANA_API_KEY` | Backend-only Live key; Demo/manual entry need no key. |
+| `COACH_DB_PATH` | Optional SQLite path; defaults to ignored `backend/coach.sqlite3`. |
+| `COACH_ENV_FILE` | Optional explicit env-file override, used to isolate tests. |
+
+### Frontend (separate terminal)
 
 ```bash
-cp .env.example .env
+cd frontend
+npm ci
+npm run dev
 ```
 
-| Variable | Required | Example | Purpose |
-|---|---|---|---|
-| `AIVANA_API_KEY` | Yes | `ai_live_xxx` | Aivana key. Read by the backend only. |
-| `DATABASE_PATH` | No | `data/tracker.db` | SQLite file location. |
-| `AIVANA_MAX_TOKENS` | No | `2000` | Cap on extraction answer length. |
-| `ATTENTION_DAYS` | No | `14` | Days without a meeting before a player is flagged. |
-| `APP_TIMEZONE` | No | `America/New_York` | Used for "today" when computing overdue items. |
+Open <http://127.0.0.1:5174/login>. Coach ID **`demo`**, password **`demo`** opens Demo extraction. Inside the workspace, select **Live · Aivana** for real extraction. This is a local convenience, not authentication. Signup/other accounts remain previews; no passwords are stored or sent. FastAPI docs: <http://127.0.0.1:8001/docs>.
 
-`.env.example` (committed, no real values):
+Both modes read and save the same SQLite records; changing modes never changes the notebook. The original team-authored football pack supplies the roster, exact Demo samples, and two pre-reviewed, versioned seed meetings. Seeding and browser-history migration are idempotent; existing SQLite records and completion states win conflicts, and the old browser copy is kept. No destructive reset is part of normal startup. The organizer pack is still missing.
 
-```
-AIVANA_API_KEY=
-DATABASE_PATH=data/tracker.db
-AIVANA_MAX_TOKENS=2000
-ATTENTION_DAYS=14
-APP_TIMEZONE=America/New_York
-```
+Regenerate fixtures with `.venv/bin/python scripts/build_demo_data.py`, restart FastAPI, and refresh Vite. Existing records are retained as historical notes. Dates and display counts use code; the model does not calculate them.
 
-### Load the synthetic data pack and run
+### Verification (from repository root)
 
 ```bash
-python scripts/seed.py --roster data/roster.csv --notes data/sample_notes/   # loads the organizers' synthetic data pack
-uvicorn app.main:app --reload
+.venv/bin/python -m unittest discover -s tests -v
+.venv/bin/python scripts/verify_backend.py --port 18001
+npm --prefix frontend test
+npm --prefix frontend run build
+# Optional paid live checks: one extraction (at most one correction) and one brief.
+.venv/bin/python scripts/verify_backend.py --port 18001 --live --key-file aivana.api
 ```
 
-Open <http://localhost:8000>. Interactive API docs are at <http://localhost:8000/docs>.
-
-### Reset the demo database
-
-```bash
-python scripts/seed.py --reset
-```
-
-### Run tests
-
-```bash
-pytest                          # unit tests (no API calls, Aivana is mocked)
-python scripts/accuracy_test.py # live accuracy test against labeled notes (uses tokens)
-```
+HTTP smoke checks use a disposable SQLite file and cannot load the private `.env` in no-AI mode. Extraction output remains unsaved pending coach review; only the explicitly approved practice fixture is saved in the disposable check. See `docs/qa-2026-11-21.md` for actual evidence and remaining browser/data-pack checks.
 
 ---
 
@@ -210,14 +198,14 @@ python scripts/accuracy_test.py # live accuracy test against labeled notes (uses
 
 | Aivana feature | Where it is used | Level |
 |---|---|---|
-| **Structured JSON output** (`response_format` with JSON Schema) | Note extraction; question box answers with citations | 1, 2 |
+| **Structured JSON output** (`response_format` with JSON Schema) | Note extraction; question box answers are planned | 1, 2 |
 | **`system` instructions** | Extraction rules and guardrails | 1 |
 | **Streaming** (`/v1/generate:stream`) | One-on-one prep brief appears as it is written | 2 |
-| **Image input** (`attachments`, PNG/JPEG) | Photographed handwritten notes | 3 |
+| **Image input** (`attachments`, PNG/JPEG) | Planned photographed-note support | 3 |
 | **`max_tokens`, `effort`** | Token control; `effort: "low"` for short transcription | 1 to 3 |
-| **`intelligence_trace`** (optional) | Shown in a debug panel during the demo | 3 |
+| **`intelligence_trace`** (optional) | Planned debug/inspection support | 3 |
 
-What the model does **not** do: compute dates, count records, sort, decide overdue status, or calculate trends. Those are all done in Python.
+What the model does **not** do: compute dates, count records, sort, decide overdue status, or calculate trends. Relative deadlines and extraction validation run in Python; frontend dates, counts, filtering, and sorting run in application code. Attention/trend features remain planned.
 
 Example extraction request body (simplified):
 
@@ -226,7 +214,7 @@ Example extraction request body (simplified):
   "system": "You extract structured records from football coach meeting notes. Follow the rules exactly...",
   "prompt": "MEETING: type=group, date=2026-11-17\nATTENDEES: [P07 Jay Carter #12 WR \"JC\"], [P09 ...]\nNOTE:\n...",
   "response_format": { "type": "json_schema", "schema": { "...": "see section 8" } },
-  "max_tokens": 2000
+  "max_tokens": 2048
 }
 ```
 
@@ -335,7 +323,7 @@ Team records (`scope: "team"`) are stored once at the meeting level and shown on
 - Do not invent player feedback, tasks, deadlines, or facts.
 - Do not infer skills solely from player positions.
 - Keep separate actions and feedback attached to the correct player.
-- Use `null` for missing feedback, action items, or deadlines.
+- Use `null` for missing feedback/deadline fields. For no action, return an `action_item` object with all three fields null.
 - Copy source text verbatim for every record.
 - Return the deadline phrase as written. Do not calculate dates from relative phrases.
 - If a player reference is ambiguous, return `unmatched`. Never guess.
@@ -347,7 +335,7 @@ Team records (`scope: "team"`) are stored once at the meeting level and shown on
 
 ## 8. Extraction JSON Schema
 
-Sent in `response_format.schema`. It follows Aivana's limits: root is an object, under 32 KiB, and fewer than 10 levels deep.
+Sent in `response_format.schema`. The executable contract is `backend/extraction_schema.py`; enums are shared with the frontend in `data/categories.json`. Aivana accepts nullable scalar fields but rejects nullable objects, so absent actions use an object with `task`, `deadline_text`, and `deadline_date` all null. See [Aivana’s supported schema subset](https://developers.aivana.ai/docs/parameters#json-schema-strict).
 
 ```json
 {
@@ -405,11 +393,11 @@ Sent in `response_format.schema`. It follows Aivana's limits: root is an object,
           },
           "feedback": { "type": ["string", "null"] },
           "action_item": {
-            "type": ["object", "null"],
+            "type": "object",
             "additionalProperties": false,
             "required": ["task", "deadline_text", "deadline_date"],
             "properties": {
-              "task":          { "type": "string" },
+              "task":          { "type": ["string", "null"] },
               "deadline_text": { "type": ["string", "null"] },
               "deadline_date": {
                 "type": ["string", "null"],
@@ -445,11 +433,11 @@ Extracted (abridged):
   "records": [
     { "target": { "scope": "player", "player_id": "P07", "mention": "JC", "match_method": "nickname", "group_label": null },
       "topic": "Football Skills", "skill": "Receiving", "feedback_type": "Praise",
-      "feedback": "Great hands today.", "action_item": null,
+      "feedback": "Great hands today.", "action_item": {"task": null, "deadline_text": null, "deadline_date": null},
       "source_text": "Great hands from JC today.", "confidence": "high" },
     { "target": { "scope": "player", "player_id": "P09", "mention": "#4", "match_method": "jersey_number", "group_label": null },
       "topic": "Football Skills", "skill": "Route Running", "feedback_type": "Improvement",
-      "feedback": "Drifting on slants; needs to stay on his landmark.", "action_item": null,
+      "feedback": "Drifting on slants; needs to stay on his landmark.", "action_item": {"task": null, "deadline_text": null, "deadline_date": null},
       "source_text": "#4 keeps drifting on his slants, needs to stay on his landmark.", "confidence": "high" },
     { "target": { "scope": "group", "player_id": null, "mention": "Both WRs", "match_method": "position_group", "group_label": "WR" },
       "topic": "Training & Conditioning", "skill": "Route Running", "feedback_type": null, "feedback": null,
@@ -477,18 +465,18 @@ Aivana checks the response's **shape and types**, not whether the facts are corr
 |---|---|
 | `player_id` exists in the roster and is a meeting attendee | Record set to `unmatched` and flagged for the coach. |
 | `topic`, `skill`, `feedback_type` are allowed values | Enforced by the schema; double-checked in Pydantic. |
-| `source_text` actually appears in the note (normalized whitespace, fuzzy match ≥ 0.9) | Record flagged `low` confidence with a "source not found" warning. |
+| Source evidence | Exact quotes pass; case/whitespace-only matches recover the original verbatim excerpt. Otherwise the draft is low confidence and cannot save until its quote is corrected or the record removed. Fuzzy matches are not silently accepted. |
 | `deadline_date` is a valid date and not before the meeting date | Cleared to `null` and flagged. |
 | Group label maps to a roster position group | Kept as one group record for the coach to assign. |
 
 ### Relative deadlines (done in code)
 
-`deadline_text` such as "by Friday", "next week", or "in 3 days" is resolved with the meeting date as the base date. The resolved date is shown next to the original phrase ("before Friday → Fri, Nov 20"). If the phrase cannot be resolved, the deadline stays empty and the review screen highlights it.
+`deadline_text` such as "by Friday", "tomorrow", or "in 3 days" is resolved with the meeting date as the base date. Vague phrases such as "next week"/"sometime next week" stay null for coach review; the app does not invent a Monday deadline. The resolved date is shown next to the original phrase ("before Friday → Fri, Nov 20"). If the phrase cannot be resolved, the deadline stays empty and the review screen highlights it.
 
 ### Validation loop
 
 1. Call Aivana with the schema.
-2. If the backend checks above find hard errors (for example, an unknown `player_id`), retry **once**, appending a short list of the errors to the prompt.
+2. For valid-shape drafts with hard content issues (unknown/ambiguous player, unsupported quote, invalid category), make at most **one** corrective model call with a short error list. HTTP/schema/auth/balance failures are not automatically retried; truncated extractions are rejected and must be shortened.
 3. If the retry still fails, show the **partial results** with the problem records highlighted. The extraction never silently fails, and the coach can always add records by hand.
 
 ### Confidence and review priority
@@ -497,11 +485,13 @@ The review screen sorts and colors records: `unmatched` and `low` first (red), t
 
 ### Edit tracking
 
-Before approval, the backend stores the AI's original record and the coach's final record. A field-level diff is logged in `record_edits`. This powers the "AI field accuracy" stat (section 14).
+Drafts and raw structured output are kept separately in `extraction_runs`; they never appear in approved history or prep context. Approval uses the extraction ID and verifies the meeting did not change, then saves records and `record_edits` atomically. The edit log records added/deleted/edited/unchanged drafts with field-level before/after values. Duplicate approval is rejected. A coach-edit rate is not a factual accuracy score; the Level 3 benchmark/stat remains planned.
 
 ---
 
 ## 10. Data model
+
+**Implemented storage:** `meetings(id, body)` holds approved meeting JSON, preserving legacy records. Schema-v2 items retain the existing UI fields plus topic/confidence/matching/deadline metadata. Shared team feedback uses one item with `player_ids`; explicit team tasks expand to per-player items. `extraction_runs(id, body, saved_meeting_id)` contains drafts/raw model output, and `record_edits` contains atomic field changes. The relational design below is a proposed future migration, not the current on-disk layout.
 
 SQLite tables (simplified):
 
@@ -577,39 +567,24 @@ record_edits
 
 ## 11. API endpoints
 
-All endpoints are served by FastAPI under `/api`. The browser never calls Aivana directly.
+The browser calls the local FastAPI backend through Vite’s `/api` proxy; it never calls Aivana directly.
 
-### Roster and meetings
-
-| Method | Path | Purpose |
-|---|---|---|
-| `GET` | `/api/players` | List roster (filter by `position_group`). |
-| `GET` | `/api/players/{id}/timeline` | Approved records for one player, newest first. Sensitive records shown only on this individual view. |
-| `POST` | `/api/meetings` | Create a meeting: type, date, attendee IDs, note text. |
-| `GET` | `/api/meetings/{id}` | Meeting details, note, and approved records. |
-
-### Extraction and review
+### Implemented routes
 
 | Method | Path | Purpose |
 |---|---|---|
-| `POST` | `/api/meetings/{id}/extract` | Run Aivana extraction. Returns draft records with confidence, warnings, and resolved deadlines. Nothing is saved as approved. |
-| `POST` | `/api/meetings/{id}/transcribe` | (Level 3) Upload a photo of handwritten notes. Returns a transcription for the coach to correct. |
-| `POST` | `/api/meetings/{id}/approve` | Save the coach-approved records. Logs edits against the AI draft. |
+| `GET` | `/api/health` | Backend/key-presence health; does not validate the key with Aivana. |
+| `GET` | `/api/meta/categories` | Shared topics, skills, match methods, confidence values, schema version. |
+| `GET` | `/api/meetings` | All approved meetings; frontend derives directory/timeline/action views. |
+| `POST` | `/api/extract` | `{title,date,meeting_type,attendees,note,mode}` → reviewable `items`, `warnings`, `origin`, `extraction_id`, `schema_version`. No approved records are saved. |
+| `POST` | `/api/meetings` | Approval/save, including `approved:true`, schema-v2 items, and the extraction ID when extracted. Manual additions are supported. |
+| `POST` | `/api/meetings/import` | Idempotent migration of older reviewed Demo browser history. |
+| `PATCH` | `/api/meetings/{meeting_id}/items/{item_id}` | Complete/reopen an action with `{completed: true/false}`. |
+| `GET` | `/api/players/{player_id}/prep` | SSE brief from up to ten non-sensitive approved records. |
 
-### Follow-up
+Separate roster/timeline endpoints, `/api/ask`, `/api/attention`, transcription, exports, and insights are planned. The current frontend reads the shared roster fixture and approved meetings. There is no public hosting/authentication boundary; run locally with synthetic data.
 
-| Method | Path | Purpose |
-|---|---|---|
-| `GET` | `/api/action-items?status=open\|overdue\|done&player_id=` | Action items; overdue computed in code. |
-| `PATCH` | `/api/action-items/{id}` | Mark done or change the due date. |
-| `GET` | `/api/attention` | (Level 2) Players not met with in `ATTENTION_DAYS`, with overdue items, or repeated improvement feedback in one skill. |
-| `POST` | `/api/ask` | (Level 2) Question box. Body: `{ "question": "...", "player_id": "P07" }`. Backend filters records first, then asks Aivana. Answer cites meeting dates and record IDs. |
-| `GET` | `/api/players/{id}/prep-brief` | (Level 2) **Streamed** (server-sent events) prep brief for the next one-on-one. |
-| `GET` | `/api/action-items/export.ics` | (Level 3) Calendar file of open action items with due dates. |
-| `GET` | `/api/insights/themes?from=&to=` | (Level 3) Weekly counts by skill, topic, and feedback type (computed in code) plus a short Aivana narrative. |
-| `GET` | `/api/insights/accuracy` | (Level 3) AI field accuracy from coach edits. |
-
-### Example: question box answer schema
+### Planned question box answer schema
 
 ```json
 {
@@ -649,17 +624,17 @@ The backend checks that every cited `record_id` was in the filtered set it sent.
 | 401 / 403 | Key missing, invalid, or revoked | Clear admin message: check `AIVANA_API_KEY`. Not retried. |
 | 402 | Token balance empty | Friendly banner: "AI is unavailable (token balance)". Manual entry still works. |
 | 413 | Request too large | Ask the coach to split the note or use a smaller photo. |
-| 429 | Rate limit | Wait for `Retry-After`, then retry. |
-| 502 / 504 | Aivana could not finish / timed out | Retry with backoff 1, 2, 4, 8 s plus jitter; stop after 3 attempts. 502 is not charged. |
-| Network error | Connection failed | Same backoff as 502. |
+| 429 | Rate limit | Surface a clear error; user deliberately retries later. No automatic HTTP retry loop. |
+| 502 / 504 | Aivana could not finish / timed out | Surface the error and allow manual entry. Invalid/truncated extraction is not approved. |
+| Network error | Connection failed | Surface the error; retain any prior drafts. No automatic HTTP retry. |
 
-Every call logs `request_id`, `usage.input_tokens`, `usage.output_tokens`, and `usage.credits` in `extraction_runs`. If `finish_reason` is `length`, the app warns that the extraction may be incomplete.
+Raw structured extraction output and normalized drafts are logged separately from approved records. Detailed transport usage/request-ID logging remains planned. `finish_reason: length` is rejected rather than saved as partial output. At most one corrective call is used for valid-shape drafts with content-validation failures; it is not a general retry policy.
 
 ### Bad input
 
 - Empty or very short notes are rejected before any API call.
-- Notes longer than a set limit (for example 8,000 characters) are rejected with a request to split them.
-- Unknown attendees or dates in the future beyond a set range are rejected by Pydantic.
+- Notes over 12,000 characters are rejected; long output may still require much shorter notes under the workspace’s 2048-token cap.
+- Unknown/duplicate attendees and invalid date formats are rejected. Bad model targets become unmatched drafts for coach review.
 
 ### Token management
 
@@ -668,7 +643,7 @@ Every call logs `request_id`, `usage.input_tokens`, `usage.output_tokens`, and `
 - The question box sends only **filtered** records (by player, skill, topic, date), capped at about 30 entries.
 - Prep briefs use only the player's last N records and open action items.
 - No PDFs. Photos are resized before upload. Text is extracted in the app wherever possible.
-- No AI calls inside render loops; results are cached per meeting.
+- No AI calls inside render loops. Extraction runs retain drafts for approval, but a new deliberate extraction makes a new call.
 - Token use per call is shown in a small admin panel.
 
 ---
@@ -694,25 +669,25 @@ Every call logs `request_id`, `usage.input_tokens`, `usage.output_tokens`, and `
 
 - Records with topic `Health & Injury Follow-up` or `Insurance & Administration` are tagged `sensitive`.
 - Sensitive records store only what the coach wrote, with no AI-added detail.
-- Sensitive records are hidden from group and team views, team summaries, and the themes dashboard. They appear only on the individual player's timeline, behind a "show sensitive" toggle.
-- Sensitive records are excluded from question-box context unless the coach asks about that specific player and topic.
+- Sensitive record content is hidden from directory snapshots/radar, and from timelines/action lists until the coach selects the explicit show-sensitive toggle. Full source notes containing sensitive entries are withheld while that toggle is off. This is a local UI filter, not an access-control system.
+- Sensitive records are always excluded from preparation context. Question-box/theme policies are planned with those features.
 
 ---
 
 ## 14. Testing and accuracy measurement
 
-### Unit tests (`pytest`, no API calls)
+### Regression tests (offline, Aivana mocked)
 
 - Roster matching and `unmatched` handling
 - Relative deadline resolution ("by Friday" from a Tuesday meeting date)
 - Group fan-out into per-player action items
-- Overdue computation and "players needing attention"
+- Overdue computation, player summaries, and sensitive previews (attention flags remain planned)
 - Validation loop: unknown `player_id`, missing source text, bad dates
 - Error handling for mocked 402, 429, and 502 responses
 
 ### Extraction accuracy test (Level 3)
 
-`tests/labeled_notes/` holds 8 to 10 synthetic notes with hand-labeled expected records. `scripts/accuracy_test.py` runs the extraction and reports field-level precision and recall:
+**Planned.** Current author-written reference answers are in `data/synthetic/expected.json`; live spot checks are documented separately. A future accuracy runner should use independent labels and report:
 
 | Field | Metric |
 |---|---|
@@ -724,7 +699,7 @@ Every call logs `request_id`, `usage.input_tokens`, `usage.output_tokens`, and `
 
 ### Live accuracy from coach edits
 
-The `record_edits` log gives a real-world stat: "AI was right on X% of fields across Y approved records." The percentage is computed from actual edits during testing and the demo, not estimated.
+The `record_edits` log captures coach changes. A future edit-rate display must not call unchanged fields factually correct: coach edits are not an independently measured extraction-accuracy score.
 
 ### Tricky synthetic test notes
 
@@ -761,7 +736,7 @@ Backup plan: if the network or Aivana is down, show a saved extraction from a pr
 - Relative deadline phrases tied to events ("before the Michigan game") cannot be resolved without a schedule and are left for the coach to set.
 - Handwriting recognition may misread messy notes. The coach must correct the transcription before extraction.
 - Name matching depends on the nicknames and jersey numbers in the synthetic roster.
-- Single-user app: no login, roles, or multi-coach permissions.
+- Single-user app: demo/demo is a local access shortcut, not authentication; signup/other accounts are previews. No roles or multi-coach permissions.
 - SQLite is fine for a demo but is not set up for concurrent multi-user use.
 - Free-tier token budget (1M tokens per student) limits how many extractions and accuracy tests can run.
 - Not a travel planner: trip notes are recorded, but the app does not book or price travel.
@@ -774,10 +749,10 @@ Backup plan: if the network or Aivana is down, show a saved extraction from a pr
 
 | Status | Item | Level |
 |---|---|---|
-| Planned | Meeting form, note entry, structured extraction, review and approve, timelines, open and overdue items | 1 |
-| Planned | Confidence flags, name-matching rules, relative deadlines, group fan-out, validation loop, edit tracking | 1 |
+| Implemented; full browser/organizer-data QA pending | Meeting form, structured extraction, source highlighting, manual/edit/remove/approve, shared SQLite, timelines, open/overdue actions | 1 |
+| Implemented; live spot checks passed | Confidence/unmatched flags, attendee name/nickname/jersey matching, Python deadlines, group/team expansion, bounded correction, edit audit | 1 |
 | Planned | Question box with filtered records and citations | 2 |
-| Planned | Streamed one-on-one prep brief with follow-up questions | 2 |
+| Implemented; live stream checked | Streamed one-on-one prep brief from approved non-sensitive context | 2 |
 | Planned | Players needing attention (computed in code) | 2 |
 | Stretch | Handwritten note photos | 3 |
 | Stretch | `.ics` follow-up reminders | 3 |
@@ -804,38 +779,28 @@ Backup plan: if the network or Aivana is down, show a saved extraction from a pr
 
 ## 19. Project structure
 
-```
-coach-meeting-tracker/
-├── app/
-│   ├── main.py              # FastAPI app and routes
-│   ├── aivana_client.py     # All Aivana calls, retries, usage logging
-│   ├── prompts.py           # System instructions and prompt builders
-│   ├── schemas/
-│   │   ├── extraction.json  # Section 8 schema
-│   │   └── ask.json         # Question box schema
-│   ├── validation.py        # Roster checks, source-text check, validation loop
-│   ├── dates.py             # Relative deadline resolution
-│   ├── fanout.py            # Group → per-player records
-│   ├── insights.py          # Overdue, attention, themes, timing (all in code)
-│   ├── ics_export.py
-│   ├── db.py                # SQLite setup and queries
-│   └── models.py            # Pydantic models
-├── static/                  # index.html, review.html, app.js, styles.css
-├── data/
-│   ├── roster.csv           # Synthetic roster from the organizers' data pack
-│   └── sample_notes/        # Synthetic meeting notes
-├── scripts/
-│   ├── seed.py
-│   └── accuracy_test.py
-├── tests/
-│   ├── labeled_notes/       # Synthetic notes with expected records
-│   └── test_*.py
-├── .env.example
-├── .gitignore               # includes .env and data/*.db
-├── requirements.txt
-└── README.md
+```text
+backend/
+  main.py                 # FastAPI routes, bounded corrective extraction, prep SSE
+  aivana.py               # Server-side HTTP/SSE adapter
+  config.py               # Explicit private backend/.env loading
+  core.py                 # Approved SQLite meetings, draft runs, field edit audit
+  extraction_schema.py    # Provider-compatible structured contract
+  extraction.py           # Matching, evidence checks, group/team normalization
+  dates.py                # Deterministic, conservative deadlines
+frontend/
+  src/                    # Vanilla JS, BGSU Sass, access/workspace/review views
+  test/                   # Node regression checks
+  vite.config.js          # Frontend 5174, backend proxy 8001
+data/
+  categories.json         # Shared frontend/backend enums
+  synthetic/              # Original football practice roster, notes and references
+  demo.json               # Generated shared app fixtures
+scripts/
+  build_demo_data.py
+  verify_backend.py       # Disposable no-AI checks; --live is explicit/paid
+sources/                  # Organizer briefs/emails/guide, NOT a player-data pack
+tests/                    # Python unittest suite with mocked AI
 ```
 
----
-
-*Built for the 2026 BGSU Hackathon presented by ACM & ACM-W. All data is synthetic.*
+*Built for the 2026 BGSU Hackathon by picInfiniti. Synthetic data only. No deployment or push is implied by local commits.*
