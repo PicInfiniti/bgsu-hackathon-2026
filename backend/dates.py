@@ -28,7 +28,13 @@ def _resolve_deadline(phrase, stated_date, meeting_date, source):
         resolved = base + timedelta(days=int(normalized.split()[1]))
     elif re.fullmatch(r'(?:next |this )?(?:' + '|'.join(WEEKDAYS) + ')', normalized):
         weekday = WEEKDAYS[normalized.split()[-1]]
-        resolved = base + timedelta(days=(weekday - base.weekday()) % 7 or 7)
+        offset = (weekday - base.weekday()) % 7
+        if normalized.startswith('this ') and weekday == base.weekday():
+            resolved = base
+        elif not offset and not normalized.startswith('next '):
+            warning = 'Same-day weekday deadline is ambiguous; choose today or next week manually.'
+        else:
+            resolved = base + timedelta(days=offset or 7)
     elif value:
         warning = 'Ambiguous deadline; choose a date or leave it unspecified.'
     # A model-supplied date is evidence only when those exact digits are in the quote.

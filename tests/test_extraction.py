@@ -45,10 +45,15 @@ class SchemaContractTests(unittest.TestCase):
 
 
 class DeadlineTests(unittest.TestCase):
+    def test_explicit_this_weekday_can_be_today_and_bare_same_day_is_flagged(self):
+        self.assertEqual(resolve_deadline('this Friday',None,'2026-11-20','Do it this Friday.'),('2026-11-20',None))
+        self.assertIsNone(resolve_deadline('by Friday',None,'2026-11-20','Do it by Friday.')[0])
+        self.assertTrue(resolve_deadline('by Friday',None,'2026-11-20','Do it by Friday.')[1])
+        self.assertEqual(resolve_deadline('next Friday',None,'2026-11-20','Do it next Friday.'),('2026-11-27',None))
     def test_dates_are_computed_from_meeting_date(self):
         for phrase, expected in [('by Friday','2026-11-20'), ('Thursday','2026-11-19'),
                                  ('tomorrow','2026-11-18'), ('today','2026-11-17'),
-                                 ('in 3 days','2026-11-20'), ('Tuesday','2026-11-24'),
+                                 ('in 3 days','2026-11-20'),
                                  ('by 2026-11-23','2026-11-23')]:
             with self.subTest(phrase=phrase):
                 due, warning = resolve_deadline(phrase, None, '2026-11-17', f'Complete the task {phrase}.')
@@ -72,6 +77,13 @@ class DeadlineTests(unittest.TestCase):
 
 
 class ExtractionTests(unittest.TestCase):
+    def test_target_must_be_present_in_its_evidence_not_elsewhere_in_note(self):
+        raw = record('Avery')
+        raw['source_text'] = 'Jordan: Complete footwork practice tomorrow.'
+        meeting = meeting_for('Avery: Your passing was accurate. ' + raw['source_text'], ('p01','p02'), 'group')
+        items, _, errors = self.normalize(raw,meeting)
+        self.assertIsNone(items[0]['player_id'])
+        self.assertTrue(errors)
     def normalize(self, raw, meeting, players=None):
         players = players or [p for p in DEMO['players'] if p['id'] in meeting['attendees']]
         return normalize_records({'records':[raw], 'warnings':[]},meeting,players)

@@ -96,20 +96,20 @@ def normalize_records(payload, meeting, players):
             claimed = target.get('player_id')
             if claimed is not None and (claimed not in attendee_ids or claimed != player_id):
                 player_id, method = None, 'unmatched'
-            if not mention_present(mention, meeting['note']):
+            if not source_valid or not mention_present(mention, quote) or not mention_present(mention, meeting['note']):
                 player_id, method = None, 'unmatched'
             targets = [player_id]
         elif scope == 'group':
             group = str(group_label or '').upper()
             cleaned = re.sub(r'^(?:all|the)\s+', '', normalized(mention))
             collective_pair = normalized(mention) in ('both players', 'both attendees') and len(players) == 2 and all(p.get('position_group') == group for p in players)
-            if (cleaned in GROUP_ALIASES.get(group, ()) or collective_pair) and mention_present(mention, meeting['note']):
+            if (cleaned in GROUP_ALIASES.get(group, ()) or collective_pair) and mention_present(mention, quote):
                 targets = [p['id'] for p in players if p.get('position_group') == group]
                 method = 'position_group'
                 group_label = group
             group_id = str(uuid.uuid4())
         elif scope == 'team':
-            if meeting['meeting_type'] == 'team' and normalized(mention) in ('all attendees', 'all players', 'everyone', 'whole team', 'the team', 'team') and mention_present(mention, meeting['note']):
+            if meeting['meeting_type'] == 'team' and normalized(mention) in ('all attendees', 'all players', 'everyone', 'whole team', 'the team', 'team') and mention_present(mention, quote):
                 targets, method = attendee_ids, 'team'
             group_id = str(uuid.uuid4())
         else:
