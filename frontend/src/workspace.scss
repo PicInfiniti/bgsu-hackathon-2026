@@ -467,3 +467,22 @@ $paper: #fcf8f1;
   .checkin-empty { background: #edf0e1; color: #58632e; border: 1px solid #dbe0c9; border-radius: 7px; padding: 14px; margin-top: 16px; font-size: .85rem; line-height: 1.7; }
 }
 @media (max-width:680px) { .workspace-app .checkin-player-list li { flex-wrap: wrap; .rail-link { margin-left: 47px; } } }
+
+.workspace-app {
+  .followup-heading-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: end; gap: 10px; >button { display: inline-flex; gap: 8px; align-items: center; white-space: nowrap; } }
+  .calendar-export-dialog { width: min(680px,calc(100vw - 32px)); max-height: calc(100dvh - 48px); overflow: auto; margin: auto; padding: 26px; border: 1px solid #dac5aa; border-radius: 13px; background: #fcf8f1; color: $ink; box-shadow: 0 20px 70px #33211340;
+    &::backdrop { background: #32261fd0; }
+    h2 { font-size: 1.5rem; margin: 7px 0 0; }
+    #calendar-export-help { font-size: .86rem; line-height: 1.8; color: #795f48; margin: 19px 0; }
+    .rail-link { padding: 0; font-size: .78rem; }
+  }
+  .calendar-export-heading { display: flex; justify-content: space-between; align-items: start; gap: 16px; >button { flex-shrink: 0; } }
+  .calendar-export-selection { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin: 18px 0 12px; >p { font-size: .82rem; color: #795436; margin: 0; } >div { display: flex; gap: 14px; } }
+  .calendar-export-choices { max-height: 300px; overflow-y: auto; border: 1px solid $line; border-radius: 9px; background: #fffaf3; }
+  .calendar-export-choice { display: flex; align-items: start; gap: 12px; padding: 16px; border-bottom: 1px solid $line; cursor: pointer; &:last-child { border-bottom: 0; } input { width: 17px; height: 17px; accent-color: #b94f16; margin: 3px 0 0; flex-shrink: 0; } >span { min-width: 0; } strong { display: block; color: $brown; font-size: .86rem; line-height: 1.7; overflow-wrap: anywhere; } span>span { display: block; margin-top: 4px; font-size: .79rem; color: #795436; } small { display: block; margin-top: 5px; font-size: .73rem; line-height: 1.7; color: $muted; } &:has(input:checked) { background: #fbefdf; } }
+  .calendar-export-empty { margin: 0; padding: 18px; color: #795f48; font-size: .85rem; line-height: 1.8; }
+  .calendar-export-reminder { display: block; margin-top: 18px; font-size: .8rem; select { display: block; width: 100%; margin: 7px 0 0; font-size: .85rem; } }
+  .calendar-export-note { color: $muted; font-size: .75rem; line-height: 1.8; margin: 15px 0; }
+  .calendar-export-footer { display: flex; justify-content: end; gap: 12px; border-top: 1px solid $line; padding-top: 18px; margin-top: 18px; }
+}
+@media (max-width:680px) { .workspace-app { .followup-heading-actions { justify-content: start; } .calendar-export-dialog { padding: 18px; width: calc(100vw - 24px); max-height: calc(100dvh - 24px); } .calendar-export-choice { padding: 13px; } .calendar-export-footer >button { flex: 1; } } }

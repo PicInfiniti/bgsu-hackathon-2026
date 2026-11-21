@@ -12,6 +12,7 @@ import { meetingTypeForAttendees } from './meeting-input.js';
 import { activityForDate, calendarGrid, calendarMeetings, playerCalendarMeetings } from './calendar-activity.js';
 import { upcomingActions } from './upcoming.js';
 import { filterActions } from './action-board.js';
+import { eligibleCalendarActions, buildCalendar, exportChoicesMarkup } from './calendar-export.js';
 import { assistantAnswerMarkup } from './assistant-view.js';
 import { groupRecords, meetingTypeLabel, meetingReviewFrame, meetingDisplayTitle } from './shared-groups.js';
 import { actionRows } from './action-board-view.js';
@@ -129,7 +130,7 @@ document.querySelector('#app').innerHTML = `
 
       </section>
       <section id="tasks" class="view" hidden>
-        <div class="section-heading action-heading"><div><p class="eyebrow">KEEP THE NEXT STEP IN SIGHT</p><h2>Follow-ups</h2><p class="action-caption">Find the meeting. Check the task. Keep the conversation moving.</p></div><button class="secondary assistant-action-entry" id="ask-actions" type="button">${icon('chat')} Ask assistant</button></div>
+        <div class="section-heading action-heading"><div><p class="eyebrow">KEEP THE NEXT STEP IN SIGHT</p><h2>Follow-ups</h2><p class="action-caption">Find the meeting. Check the task. Keep the conversation moving.</p></div><div class="followup-heading-actions"><button class="secondary" id="open-calendar-export" type="button">${icon('calendar')} Export calendar</button><button class="secondary assistant-action-entry" id="ask-actions" type="button">${icon('chat')} Ask assistant</button></div></div>
         <div class="action-followup-layout"><div class="action-followup-main">
         <select id="task-filter" hidden aria-label="Action status"><option value="open">Open actions</option><option value="overdue">Overdue</option><option value="done">Completed</option><option value="all">All actions</option></select>
         <div class="action-status-tabs" aria-label="Filter assignment status"><button type="button" data-action-status="open">Open</button><button type="button" data-action-status="overdue">Overdue</button><button type="button" data-action-status="done">Completed</button><button type="button" data-action-status="all">All</button></div>
@@ -166,6 +167,7 @@ document.querySelector('#app').innerHTML = `
           </div>
         </div>
       </section>
+      <dialog id="calendar-export-dialog" class="calendar-export-dialog" aria-labelledby="calendar-export-title" aria-describedby="calendar-export-help"><form id="calendar-export-form"><div class="calendar-export-heading"><div><p class="eyebrow">TAKE YOUR FOLLOW-UPS WITH YOU</p><h2 id="calendar-export-title">Export to calendar</h2></div><button class="icon-button" id="calendar-export-close" type="button" aria-label="Close calendar export">×</button></div><p id="calendar-export-help">Select open actions with deadlines from your current filters. Each player action becomes an all-day calendar entry on its due date. Sensitive actions and full source notes are excluded.</p><div class="calendar-export-selection"><p id="calendar-export-count" role="status"></p><div><button id="calendar-export-all" class="rail-link" type="button">Select all</button><button id="calendar-export-none" class="rail-link" type="button">Clear selection</button></div></div><div id="calendar-export-choices" class="calendar-export-choices"></div><label class="calendar-export-reminder">Alert<select id="calendar-export-reminder"><option value="none">No alert</option><option value="day-before">Day before the due date</option></select></label><p class="calendar-export-note">Import the .ics file into your calendar. Alert handling depends on that app. This is a snapshot: later action changes do not sync automatically.</p><p id="calendar-export-error" class="error" role="alert" hidden></p><div class="calendar-export-footer"><button class="secondary" id="calendar-export-cancel" type="button">Cancel</button><button class="primary" id="calendar-export-download" type="submit">Download .ics</button></div></form></dialog>
       <footer><span>FALCON FOLLOW-UP <b> / </b> picInfiniti</span><span>Every conversation deserves a next step. · Synthetic data only</span></footer>
     </main>
   </div>`;
@@ -290,6 +292,7 @@ $('#player-unit-tabs').addEventListener('click', e => {
 function render() {
   $('#assistant-mode-note').textContent = mode === 'demo' ? 'Demo shows matching saved excerpts. Switch to Live for an Aivana answer.' : 'Live · Aivana answers from matching records. Questions are not saved or sent with later questions.';
   $('#assistant-send').disabled = assistantPending || !connected;
+  $('#open-calendar-export').disabled = busy || !connected;
   const all = items(), actions = all.filter(i => i.kind === 'action'), open = actions.filter(i => !i.completed);
   $('#meeting-count').textContent = meetings.length; $('#open-count').textContent = open.length; $('#overdue-count').textContent = open.filter(overdue).length;
   $('#players-count').textContent = new Set(meetings.flatMap(m => m.attendees)).size; $('#nav-count').textContent = open.length;
@@ -380,7 +383,43 @@ function resetMeetingFilters() {
   $('#meeting-sort').value = 'recent'; $('#meeting-period').value = 'all';
 }
 $('#meeting-reset').addEventListener('click', () => { resetMeetingFilters(); renderMeetingLibrary(); });
+function actionBoardOptions() {
+  const sensitiveOnly = $('#show-sensitive-actions').checked;
+  return {status:$('#task-filter').value, search:$('#task-search').value, player:$('#task-player').value, category:$('#task-category').value, sort:$('#task-sort').value, showSensitive:sensitiveOnly, sensitiveOnly, today:today()};
+}
+function calendarExportCandidates() {
+  return filterActions(items(),demo.players,actionBoardOptions());
+}
+function updateCalendarExportSelection() {
+  const selected = $('#calendar-export-choices').querySelectorAll('[name="calendar-export-action"]:checked').length;
+  const total = $('#calendar-export-choices').querySelectorAll('[name="calendar-export-action"]').length;
+  $('#calendar-export-count').textContent = `${selected} of ${total} actions selected`;
+  $('#calendar-export-download').disabled = !selected || busy || !connected;
+}
+$('#open-calendar-export').addEventListener('click', () => {
+  if (busy || !connected) return;
+  $('#calendar-export-choices').innerHTML = exportChoicesMarkup(eligibleCalendarActions(calendarExportCandidates(),demo.players));
+  $('#calendar-export-reminder').value = 'none'; $('#calendar-export-error').hidden = true;
+  updateCalendarExportSelection(); $('#calendar-export-dialog').showModal();
+});
+for (const id of ['calendar-export-close','calendar-export-cancel']) $(`#${id}`).addEventListener('click', () => $('#calendar-export-dialog').close());
+$('#calendar-export-choices').addEventListener('change', updateCalendarExportSelection);
+for (const [id,checked] of [['calendar-export-all',true],['calendar-export-none',false]]) $(`#${id}`).addEventListener('click', () => {
+  $('#calendar-export-choices').querySelectorAll('[name="calendar-export-action"]').forEach(el => el.checked = checked); updateCalendarExportSelection();
+});
+$('#calendar-export-form').addEventListener('submit', e => {
+  e.preventDefault(); if (busy || !connected) return;
+  try {
+    const selectedKeys = [...$('#calendar-export-choices').querySelectorAll('[name="calendar-export-action"]:checked')].map(el => el.value);
+    const result = buildCalendar(calendarExportCandidates(),demo.players,{selectedKeys,reminder:$('#calendar-export-reminder').value});
+    const url = URL.createObjectURL(new Blob([result.content],{type:'text/calendar;charset=utf-8'}));
+    const link = document.createElement('a'); link.href = url; link.download = `falcon-follow-ups-${today()}.ics`;
+    document.body.append(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url),1000);
+    $('#calendar-export-dialog').close(); notify(`Calendar file prepared with ${result.count} action${result.count === 1 ? '' : 's'}. Import the .ics file into your calendar.`);
+  } catch (error) { $('#calendar-export-error').textContent = error.message; $('#calendar-export-error').hidden = false; }
+});
 function renderActionBoard(actions = items().filter(i => i.kind === 'action')) {
+  $('#open-calendar-export').disabled = busy || !connected;
   renderActionCalendar();
   const categorySelect = $('#task-category'), selectedCategory = categorySelect.value;
   const sensitiveOnly = $('#show-sensitive-actions').checked;
@@ -388,7 +427,7 @@ function renderActionBoard(actions = items().filter(i => i.kind === 'action')) {
   const categoryNames = [...new Set(available.flatMap(i => [i.skill, i.topic]).filter(Boolean))].sort();
   categorySelect.innerHTML = '<option value="">All categories</option>' + categoryNames.map(c => `<option value="${escape(c)}">${escape(c)}</option>`).join('');
   categorySelect.value = categoryNames.includes(selectedCategory) ? selectedCategory : '';
-  const options = {status: $('#task-filter').value, search: $('#task-search').value, player: $('#task-player').value, category: categorySelect.value, sort: $('#task-sort').value, showSensitive: sensitiveOnly, sensitiveOnly, today: today()};
+  const options = actionBoardOptions();
   const filtered = filterActions(actions, demo.players, options);
   const sensitiveTotal = actions.filter(i => i.sensitive).length;
   const matchingSensitive = filterActions(actions, demo.players, {...options, showSensitive:true, sensitiveOnly:true}).length;

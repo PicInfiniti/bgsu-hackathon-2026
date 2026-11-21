@@ -6,7 +6,7 @@
 
 ---
 
-**Current status:** Level 1 core and all three Level 2 feature options are implemented. The user reports completing browser checks for the existing workspace and has accepted our team-authored synthetic pack for this project. The newly added recent-check-in list has automated verification; those prior browser checks do not cover this new control. Level 3 features remain stretch work.
+**Current status:** Level 1 core and all three Level 2 feature options are implemented. The user reports completing browser checks for the existing workspace and has accepted our team-authored synthetic pack for this project. The newly added recent-check-in list has automated verification; those prior browser checks do not cover this new control. Level 3 calendar export is implemented; other advanced features remain stretch work.
 
 **Current practice pack:** `data/synthetic/` is now football version 2, revision 4: 25 fictional players with football positions/groups and nicknames, 19 scenarios, and 86 reference records. Regenerate app fixtures with `.venv/bin/python scripts/build_demo_data.py`, restart the backend, and refresh the frontend. Versioned football seeds are added once; existing saved notes and completion states remain unchanged as history. Login/signup and the workspace retain the BGSU notebook style with football positions, film-review copy, and play-diagram artwork. This is our team-authored synthetic pack, accepted by the user as the project dataset; it is not organizer-provided data. Football schema-v2 live spot checks are recorded in [the November 21 QA report](docs/qa-2026-11-21.md); these are not a general accuracy benchmark.
 
@@ -103,10 +103,10 @@ The Football Coach Meeting Tracker lets a coach paste meeting notes (photo input
 - **Streamed prep brief** for the next one-on-one. Summarizes past feedback, open action items, and suggests follow-up questions based only on documented feedback.
 - **Players not met recently:** Overview → Players to check in with. Code computes each player’s most recent approved meeting date, defaults to Individual / 14 days, and supports 7/14/30/60/90-day windows and Individual/Group/Team/Any type. Shows players with no past matching meeting first, then oldest saved dates, with timeline links. Today and the preceding N−1 days count as recent; future-dated plans do not count. Note-only meetings count; sensitive note/record text is never used or displayed. Existing overdue-action lists remain separate; repeated-improvement flags are future work.
 
-### Level 3: Advanced (planned stretch work)
+### Level 3: Advanced (calendar export implemented)
 
 - **Handwritten notes** as photo input (Aivana image attachment), with the transcription shown for the coach to correct before extraction.
-- **Follow-up reminders exported as an `.ics` file** for open action items with deadlines.
+- **Implemented: follow-up calendar export (`.ics`).** Actions → Export calendar previews eligible actions matching the board’s status/player/category/search filters. Select individual actions, optionally add a day-before alert, and download an all-day calendar entry per open action on its due date. Includes player, action, source meeting/date, skill and topic. Completed, undated, invalid, unapproved and sensitive records are excluded; full source notes and quotes are never copied. Shared assignments retain separate player records. Import the file into a calendar app; it is a snapshot and later completion/edits do not sync. Alert handling and repeated-import behavior depend on the receiving app. No calendar account, Aivana request, new dependency or database change is required.
 - **Team themes over time:** counts of praise and improvement by skill and topic per week, computed in code and charted; Aivana writes a short narrative from those counts only.
 - **Extraction accuracy test** against synthetic notes with known answers, plus a separately labeled coach-edit rate; edits are not an accuracy measurement.
 - **Action-item timing:** average days open and days to completion per player and per skill, computed in code.
@@ -124,7 +124,7 @@ The Football Coach Meeting Tracker lets a coach paste meeting notes (photo input
 | Date handling | Standard-library `datetime` | Resolves supported unambiguous phrases against the meeting date; vague/event-relative deadlines remain for coach review. |
 | Frontend | Vanilla JavaScript + Sass + Vite | Existing BGSU notebook UI; port 5174 proxies `/api` to FastAPI on 8001. No React/TypeScript. |
 | Charts (planned) | Not installed | Team-theme and trend charts remain stretch work. |
-| Calendar export (planned) | Not installed | Level 3 reminders remain stretch work. |
+| Calendar export | Native JavaScript / Blob download | Client-side `.ics` serializer; no added runtime dependency. |
 | Tests | Python `unittest` + Node test runner | Offline regression checks; separate opt-in live verification. |
 
 ---
@@ -609,7 +609,7 @@ The browser calls the local FastAPI backend through Vite’s `/api` proxy; it ne
 | `GET` | `/api/players/{player_id}/prep` | SSE brief from up to ten non-sensitive approved records. |
 | `POST` | `/api/assistant` | Individual, group or team question with optional meeting-type/skill/topic/date/action/search filters; returns checked citations and supporting records. |
 
-Separate roster/timeline endpoints, transcription, exports, and insights are planned. Recent-check-in calculations run locally in JavaScript over the shared approved meetings; no additional API endpoint or Aivana call is needed. The current frontend reads the shared roster fixture and approved meetings. There is no public hosting/authentication boundary; run locally with synthetic data.
+Separate roster/timeline endpoints, transcription and insights are planned. Calendar export runs client-side and uses no additional endpoint. Recent-check-in calculations run locally in JavaScript over the shared approved meetings; no additional API endpoint or Aivana call is needed. The current frontend reads the shared roster fixture and approved meetings. There is no public hosting/authentication boundary; run locally with synthetic data.
 
 ### AI Assistant
 
@@ -703,6 +703,10 @@ Raw structured extraction output and normalized drafts are logged separately fro
 - Validation loop: unknown `player_id`, missing source text, bad dates
 - Error handling for mocked 402, 429, and 502 responses
 
+### Calendar export verification
+
+`frontend/test/calendar-export.test.js` covers eligibility and sensitive-topic exclusion, current action filters, explicit selection, independent shared-player records, stable source/action UIDs, RFC text escaping and injection prevention, UTF-8 75-octet line folding, CRLF output, all-day dates/exclusive end dates, leap/year/DST boundaries, optional alarms, escaped previews and nonmutation. The serializer follows [RFC 5545](https://www.rfc-editor.org/rfc/rfc5545.html). A separate temporary `icalendar` parser check accepted the 30-event synthetic-pack export and a Unicode/leap-day fixture. Browser download interaction and real calendar-client import/alert handling have not yet been verified for this new feature.
+
 ### Extraction accuracy test (Level 3)
 
 **Planned.** Current author-written reference answers are in `data/synthetic/expected.json`; live spot checks are documented separately. A future accuracy runner should use independent labels and report:
@@ -773,11 +777,11 @@ Backup plan: if the network or Aivana is down, show a saved extraction from a pr
 | Implemented; live stream checked | Streamed one-on-one prep brief from approved non-sensitive context | 2 |
 | Implemented; automated recency checks passed | Players not met recently, with lookback/type controls and timeline links | 2 |
 | Stretch | Handwritten note photos | 3 |
-| Stretch | `.ics` follow-up reminders | 3 |
+| Implemented; unit tests and independent parser checks passed; calendar-app import unverified | Selected open-action `.ics` export with optional day-before alerts | 3 |
 | Stretch | Team themes dashboard and action-item timing analysis | 3 |
 | Stretch | Extraction accuracy test on labeled notes | 3 |
 | Future | Player progress stages per skill (for example, Introduced → Practicing → Consistent) set by the coach | Beyond |
-| Future | Voice dictation of notes | Beyond |
+| Stretch | Voice dictation of notes | 3 |
 | Future | Multi-coach accounts with role-based access to sensitive records | Beyond |
 
 ---
@@ -788,7 +792,7 @@ Backup plan: if the network or Aivana is down, show a saved extraction from a pr
 |---|---|
 | Core functionality (30) | Section 2, Level 1: full note → extraction → review → save → timeline → action items flow on the data pack. |
 | Use of Aivana (20) | Sections 6 and 8: strict JSON Schema for extraction/assistant, streaming prep brief, `max_tokens`, no calculations left to the model. |
-| Depth (15) | All three Level 2 options: individual/group/team assistant, streamed prep brief, and code-computed recent-check-in list. Level 3 features remain planned. |
+| Depth (15) | All three Level 2 options: individual/group/team assistant, streamed prep brief, and code-computed recent-check-in list. Level 3 calendar export is implemented; other advanced features remain planned. |
 | Reliability and data handling (15) | Sections 9 and 12: validation loop, roster checks, error handling for 401/402/429/502, coach approval, no invented facts. |
 | Usability (10) | Side-by-side review with highlighted source text, confidence colors, dropdowns for unmatched players. |
 | Demo and documentation (10) | Section 15 demo script; this README covers running the app, Aivana features, and known limits; key kept out of the repo. |
