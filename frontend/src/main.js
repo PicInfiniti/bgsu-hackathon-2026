@@ -4,6 +4,7 @@ import demo from '../../data/demo.json';
 import { extractDemo } from './demo-extraction.js';
 import { workspaceMode } from './access.js';
 import { loadSharedNotebook } from './shared-notebook.js';
+import { formatBrief } from './brief-format.js';
 
 const $ = (s) => document.querySelector(s);
 const escape = (s = '') => String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -83,7 +84,7 @@ document.querySelector('#app').innerHTML = `
           </aside>
         </div>
       </section>
-      <section id="players" class="view" hidden><div class="section-heading"><div><p class="eyebrow">THE PLAYER NOTEBOOK</p><h2>Player timelines</h2></div></div><div class="player-layout"><div class="panel roster" id="roster"></div><div class="panel"><div id="player-heading"></div><div id="timeline"></div><div class="prep-box"><h3>Prepare for the next conversation</h3><p>Build a brief from this player's approved records.</p><button id="prep" class="secondary">Build preparation brief</button><pre id="prep-text" aria-live="polite"></pre></div></div></div></section>
+      <section id="players" class="view" hidden><div class="section-heading"><div><p class="eyebrow">THE PLAYER NOTEBOOK</p><h2>Player timelines</h2></div></div><div class="player-layout"><div class="panel roster" id="roster"></div><div class="panel"><div id="player-heading"></div><div id="timeline"></div><div class="prep-box"><h3>Prepare for the next conversation</h3><p>Build a brief from this player's approved records.</p><button id="prep" class="secondary">Build preparation brief</button><div id="prep-text" class="prep-content" aria-live="polite"></div></div></div></div></section>
       <section id="tasks" class="view" hidden><div class="section-heading"><div><p class="eyebrow">A LITTLE FOLLOW-THROUGH</p><h2>Action board</h2></div><label>Show <select id="task-filter"><option value="open">Open actions</option><option value="overdue">Overdue</option><option value="done">Completed</option><option value="all">All actions</option></select></label></div><div id="task-list"></div></section>
       <footer><span>FALCON FOLLOW-UP <b> / </b> picInfiniti</span><span>Every conversation deserves a next step. · Synthetic data only</span></footer>
     </main>
@@ -304,14 +305,14 @@ $('#prep').addEventListener('click', () => {
   const records = items().filter(i => i.player_id === selectedPlayer);
   if (!records.length) { notify('Save a reviewed meeting for this player first.',true); return; }
   if (mode === 'demo') {
-    $('#prep-text').textContent = `DEMO · Application-generated checklist, not Aivana output.\n\n${records.map(i => `[${i.meeting.date}] ${i.kind.toUpperCase()}: ${i.text}${i.kind === 'action' ? ` (${i.completed ? 'complete' : 'open'}${i.due_date ? `; due ${i.due_date}`:''})`:''}`).join('\n\n')}\n\nSuggested discussion: Ask the player for an update on open actions.`;
+    $('#prep-text').innerHTML = formatBrief(`## Preparation checklist\n\nDemo · Application-generated checklist, not Aivana output.\n\n${records.map(i => `- **${i.kind[0].toUpperCase()+i.kind.slice(1)}** · ${i.meeting.date}: ${i.text}${i.kind === 'action' ? ` (${i.completed ? 'complete' : 'open'}${i.due_date ? `; due ${i.due_date}`:''})`:''}`).join('\n')}\n\n### Suggested discussion\n\nAsk the player for an update on open actions.`);
     return;
   }
   $('#prep').disabled = true; $('#prep-text').textContent = 'Connecting to Aivana…'; let content = '';
   prepSource = new EventSource(`/api/players/${encodeURIComponent(selectedPlayer)}/prep`);
-  prepSource.addEventListener('delta', e => { try { content += JSON.parse(e.data).text || ''; $('#prep-text').textContent = content; } catch { notify('Unreadable preparation event.',true); prepSource?.close(); $('#prep').disabled = false; } });
+  prepSource.addEventListener('delta', e => { try { content += JSON.parse(e.data).text || ''; $('#prep-text').innerHTML = formatBrief(content); } catch { notify('Unreadable preparation event.',true); prepSource?.close(); $('#prep').disabled = false; } });
   prepSource.addEventListener('done', e => { const data = JSON.parse(e.data); prepSource?.close(); prepSource = null; $('#prep').disabled = false; if (data.finish_reason === 'length') notify('The brief was cut short. Treat this as an incomplete draft.',true); });
-  prepSource.addEventListener('error', e => { let message = 'Preparation stream failed. Check your backend, key, balance, and connection.'; try { message = JSON.parse(e.data).message || message; } catch {} notify(message,true); prepSource?.close(); prepSource = null; $('#prep').disabled = false; $('#prep-text').textContent = content || 'No brief was generated.'; });
+  prepSource.addEventListener('error', e => { let message = 'Preparation stream failed. Check your backend, key, balance, and connection.'; try { message = JSON.parse(e.data).message || message; } catch {} notify(message,true); prepSource?.close(); prepSource = null; $('#prep').disabled = false; $('#prep-text').innerHTML = formatBrief(content || 'No brief was generated.'); });
 });
 loadSample('individual'); $('#mode').value = mode; render(); switchView('desk');
 async function initializeNotebook() {
