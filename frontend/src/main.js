@@ -120,7 +120,7 @@ document.querySelector('#app').innerHTML = `
         <div class="action-status-tabs" aria-label="Filter assignment status"><button type="button" data-action-status="open">Open</button><button type="button" data-action-status="overdue">Overdue</button><button type="button" data-action-status="done">Completed</button><button type="button" data-action-status="all">All</button></div>
         <div class="action-tools"><label class="action-quick-search"><span class="sr-only">Search assignments</span><input id="task-search" type="search" placeholder="Search assignments or players…"></label><label><span class="sr-only">Filter by player</span><select id="task-player"><option value="">All players</option>${demo.players.map(p => `<option value="${escape(p.id)}">#${p.number} ${escape(p.name)}</option>`).join('')}</select></label><details class="action-more-filters"><summary>More filters</summary><div><label>Category<select id="task-category"><option value="">All categories</option></select></label><label>Sort meetings by<select id="task-sort"><option value="due">Next deadline</option><option value="player">Player name</option><option value="recent">Newest meeting</option></select></label></div></details></div>
         <div class="action-results-bar"><p id="task-results" role="status"></p><button id="reset-task-filters" class="rail-link" type="button">Reset filters</button></div><div id="task-list" class="action-meeting-grid"></div>
-        <label class="sensitive-toggle"><input id="show-sensitive-actions" type="checkbox" aria-describedby="task-hidden-note"> Show sensitive actions <span id="sensitive-action-count"></span></label><p id="task-hidden-note" class="sensitive-notice" role="status" hidden></p>
+        <label class="sensitive-toggle"><input id="show-sensitive-actions" type="checkbox" aria-describedby="task-hidden-note"> Show sensitive actions only <span id="sensitive-action-count"></span></label><p id="task-hidden-note" class="sensitive-notice" role="status" hidden></p>
         </div><aside class="action-calendar-rail"><section class="calendar-panel panel"><div class="calendar-heading"><h3 id="action-calendar-title"></h3><div><button class="icon-button" id="action-calendar-prev" aria-label="Previous action calendar month">${icon('chevron')}</button><button class="icon-button" id="action-calendar-next" aria-label="Next action calendar month">${icon('chevron')}</button></div></div><p class="calendar-caption">Meetings & action deadlines</p><label class="action-calendar-filter"><span class="sr-only">Calendar meeting type</span><select id="action-calendar-type"><option value="">All meeting types</option><option value="individual">Individual</option><option value="group">Group</option><option value="team">Full team</option></select></label><div id="action-calendar" class="calendar-grid"></div><div class="calendar-key"><span class="meeting-individual">Individual</span><span class="meeting-group">Group</span><span class="meeting-team">Full team</span><span class="deadline-dot">Action due</span></div><div id="action-calendar-activities" class="calendar-activities" aria-live="polite"></div></section></aside></div>
       </section>
       <section id="assistant" class="view" hidden>
@@ -289,25 +289,26 @@ function render() {
 function renderActionBoard(actions = items().filter(i => i.kind === 'action')) {
   renderActionCalendar();
   const categorySelect = $('#task-category'), selectedCategory = categorySelect.value;
-  const available = actions.filter(i => !i.sensitive || $('#show-sensitive-actions').checked);
+  const sensitiveOnly = $('#show-sensitive-actions').checked;
+  const available = actions.filter(i => sensitiveOnly ? Boolean(i.sensitive) : !i.sensitive);
   const categoryNames = [...new Set(available.flatMap(i => [i.skill, i.topic]).filter(Boolean))].sort();
   categorySelect.innerHTML = '<option value="">All categories</option>' + categoryNames.map(c => `<option value="${escape(c)}">${escape(c)}</option>`).join('');
   categorySelect.value = categoryNames.includes(selectedCategory) ? selectedCategory : '';
-  const options = {status: $('#task-filter').value, search: $('#task-search').value, player: $('#task-player').value, category: categorySelect.value, sort: $('#task-sort').value, showSensitive: $('#show-sensitive-actions').checked, today: today()};
+  const options = {status: $('#task-filter').value, search: $('#task-search').value, player: $('#task-player').value, category: categorySelect.value, sort: $('#task-sort').value, showSensitive: sensitiveOnly, sensitiveOnly, today: today()};
   const filtered = filterActions(actions, demo.players, options);
   const sensitiveTotal = actions.filter(i => i.sensitive).length;
-  const matchingSensitive = filterActions(actions, demo.players, {...options, showSensitive:true}).filter(i => i.sensitive).length;
+  const matchingSensitive = filterActions(actions, demo.players, {...options, showSensitive:true, sensitiveOnly:true}).length;
   $('#sensitive-action-count').textContent = `(${sensitiveTotal} saved)`;
   $('#task-hidden-note').hidden = !options.showSensitive && !matchingSensitive;
   $('#task-hidden-note').textContent = options.showSensitive
     ? !sensitiveTotal ? 'There are no sensitive actions in your saved meetings.'
-      : matchingSensitive ? `Showing ${matchingSensitive} sensitive action${matchingSensitive === 1 ? '' : 's'} matching your filters.`
+      : matchingSensitive ? `Showing only ${matchingSensitive} sensitive action${matchingSensitive === 1 ? '' : 's'} matching your filters.`
       : `${sensitiveTotal} sensitive action${sensitiveTotal === 1 ? ' is' : 's are'} saved, but none match your current filters.`
     : `${matchingSensitive} sensitive action${matchingSensitive === 1 ? '' : 's'} hidden in this view.`;
   const expandedMeetings = new Set([...$('#task-list').querySelectorAll('[data-meeting-card]')].filter(card => card.querySelector('[data-meeting-expansion]')?.open).map(card => card.dataset.meetingCard));
   const expandedTasks = new Map([...$('#task-list').querySelectorAll('[data-action-key]')].map(task => [task.dataset.actionKey,[...task.querySelectorAll('details')].map(d => d.open)]));
   const {rows, count, meetingCount} = actionRows(filtered, available, demo.players, {today:today(), busy, showSensitive:options.showSensitive});
-  $('#task-results').textContent = `${meetingCount} meeting${meetingCount === 1 ? '' : 's'} · ${count} assignment${count === 1 ? '' : 's'}`;
+  $('#task-results').textContent = `${sensitiveOnly ? 'Sensitive only · ' : ''}${meetingCount} meeting${meetingCount === 1 ? '' : 's'} · ${count} assignment${count === 1 ? '' : 's'}`;
   $('#task-list').innerHTML = rows;
   $('#task-list').querySelectorAll('[data-meeting-card]').forEach(card => { if (expandedMeetings.has(card.dataset.meetingCard)) card.querySelector('[data-meeting-expansion]').open = true; });
   $('#task-list').querySelectorAll('[data-action-key]').forEach(task => { const states = expandedTasks.get(task.dataset.actionKey); if (states) task.querySelectorAll('details').forEach((detail,n) => detail.open = states[n] || false); });
@@ -346,11 +347,13 @@ $('#player-calendar-type').addEventListener('change',renderPlayerCalendar);
 $('#player-calendar').addEventListener('click',e => { const day = e.target.closest('[data-calendar-date]'); if (!day) return; playerCalendarDate = day.dataset.calendarDate; renderPlayerCalendar(); if (e.detail===0) $('#player-calendar').querySelector(`[data-calendar-date="${playerCalendarDate}"]`)?.focus({preventScroll:true}); });
 $('#player-calendar-activities').addEventListener('click',e => { const target = e.target.closest('[data-player-meeting]'); if (!target) return; const meeting = document.getElementById(`timeline-meeting-${target.dataset.playerMeeting}`); if (meeting) { meeting.focus({preventScroll:true}); meeting.scrollIntoView({block:'start',behavior:'smooth'}); } });
 function renderActionCalendar() {
-  const source = calendarMeetings(meetings,$('#action-calendar-type').value);
+  const sensitiveOnly = $('#show-sensitive-actions').checked;
+  const calendarSource = sensitiveOnly ? meetings.filter(m => m.items.some(i => i.kind === 'action' && i.sensitive)).map(m => ({...m,items:m.items.filter(i => i.kind === 'action' && i.sensitive)})) : meetings;
+  const source = calendarMeetings(calendarSource,$('#action-calendar-type').value);
   const [year,month] = actionCalendarMonth.split('-').map(Number);
   $('#action-calendar-title').textContent = new Date(year,month-1,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
   $('#action-calendar').innerHTML = calendarGrid(source,actionCalendarMonth,today(),actionCalendarDate,true);
-  const activity = activityForDate(source,actionCalendarDate);
+  const activity = activityForDate(source,actionCalendarDate,{showSensitive:sensitiveOnly});
   const label = new Date(`${actionCalendarDate}T12:00:00`).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   const meetingRows = activity.meetings.map(m => `<details class="date-meeting"><summary><strong>${escape(m.title)}</strong><small>${escape(meetingTypeLabel(m.meeting_type))} · ${m.attendees.length} attendees</small></summary>${m.items.some(i => i.sensitive) ? '<p>Full note contains sensitive content. Review it in the player timeline with sensitive records enabled.</p>' : `<p>${escape(m.note)}</p>`}</details>`).join('');
   const actions = groupRecords(activity.actions).map(group => { const i = group.item; return `<button type="button" class="date-action" data-player="${escape(i.player_id)}"><span><strong>${group.shared ? `${escape(group.label)} · ${group.allMembers.length} players` : escape(name(i.player_id))}</strong><small>${escape(i.text)}</small></span><em class="${i.completed?'done':overdue(i)?'late':''}">${i.completed?'Complete':overdue(i)?'Overdue':'Open'}</em></button>`; }).join('');
@@ -533,7 +536,7 @@ $('.action-status-tabs').addEventListener('click', e => { const button = e.targe
 $('#task-filter').addEventListener('change', () => renderActionBoard());
 $('#task-search').addEventListener('input', () => renderActionBoard());
 ['#task-player','#task-category','#task-sort'].forEach(id => $(id).addEventListener('change', () => renderActionBoard()));
-$('#reset-task-filters').addEventListener('click', () => { $('#task-filter').value = 'open'; $('#task-search').value = ''; $('#task-player').value = ''; $('#task-category').value = ''; $('#task-sort').value = 'due'; renderActionBoard(); });
+$('#reset-task-filters').addEventListener('click', () => { $('#show-sensitive-actions').checked = false; $('#task-filter').value = 'open'; $('#task-search').value = ''; $('#task-player').value = ''; $('#task-category').value = ''; $('#task-sort').value = 'due'; renderActionBoard(); });
 $('#show-sensitive').addEventListener('change',render);
 $('#show-sensitive-actions').addEventListener('change',render);
 $('#mode').addEventListener('change', e => {

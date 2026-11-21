@@ -20,13 +20,13 @@ export function calendarGrid(meetings, monthValue, today, selectedDate, typed = 
 export const calendarMeetings = (meetings, type) => type ? meetings.filter(m => m.meeting_type === type) : meetings;
 export const playerCalendarMeetings = (meetings, playerId) => meetings.filter(m => m.attendees.includes(playerId)).map(m => ({...m,items:m.items.filter(i => appliesTo(i,playerId))}));
 
-export function activityForDate(meetings, date) {
+export function activityForDate(meetings, date, {showSensitive = false} = {}) {
   const due = meetings.flatMap(meeting => meeting.items
     .filter(item => item.kind === 'action' && item.due_date === date)
     .map(item => ({...item, meeting})));
   return {
     meetings: meetings.filter(meeting => meeting.date === date),
-    actions: due.filter(item => !item.sensitive),
-    hiddenActionCount: due.filter(item => item.sensitive).length,
+    actions: due.filter(item => showSensitive || !item.sensitive),
+    hiddenActionCount: showSensitive ? 0 : due.filter(item => item.sensitive).length,
   };
 }

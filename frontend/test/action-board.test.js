@@ -31,3 +31,10 @@ test('sensitive actions require explicit reveal, player and recent sorting are d
   assert.equal(select({sort:'player'})[0],'today');
   assert.equal(select({sort:'recent'})[0],'today');
 });
+test('sensitive-only mode excludes ordinary actions and respects other filters',()=> {
+  assert.deepEqual(select({sensitiveOnly:true}),['sensitive']);
+  assert.deepEqual(select({sensitiveOnly:true,player:'p1'}),[]);
+  assert.deepEqual(select({sensitiveOnly:true,status:'done'}),[]);
+  assert.deepEqual(select({sensitiveOnly:true,search:'private'}),['sensitive']);
+  assert.deepEqual(select({sensitiveOnly:true,search:'coverage'}),[]);
+});

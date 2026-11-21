@@ -15,6 +15,9 @@ test('selected date includes its meetings and actions due that day, including co
   assert.equal(result.actions.length,2);
   assert.equal(result.actions[1].completed,true);
   assert.equal(result.hiddenActionCount,1);
+  const revealed=activityForDate(meetings,'2026-11-21',{showSensitive:true});
+  assert.equal(revealed.actions.length,3);
+  assert.equal(revealed.hiddenActionCount,0);
   assert.deepEqual(activityForDate(meetings,'2026-12-01'),{meetings:[],actions:[],hiddenActionCount:0});
 });
 
