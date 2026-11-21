@@ -1,0 +1,608 @@
+{
+  "hotels": [
+    {
+      "hotel_id": "hotel-01-economy",
+      "night": "2026-12-03",
+      "available_rooms": 40
+    },
+    {
+      "hotel_id": "hotel-01-standard",
+      "night": "2026-12-03",
+      "available_rooms": 40
+    },
+    {
+      "hotel_id": "hotel-01-comfort",
+      "night": "2026-12-03",
+      "available_rooms": 40
+    },
+    {
+      "hotel_id": "hotel-03-economy",
+      "night": "2026-12-17",
+      "available_rooms": 40
+    },
+    {
+      "hotel_id": "hotel-03-standard",
+      "night": "2026-12-17",
+      "available_rooms": 40
+    },
+    {
+      "hotel_id": "hotel-03-comfort",
+      "night": "2026-12-17",
+      "available_rooms": 40
+    },
+    {
+      "hotel_id": "hotel-04-economy",
+      "night": "2027-01-06",
+      "available_rooms": 40
+    },
+    {
+      "hotel_id": "hotel-04-economy",
+      "night": "2027-01-07",
+      "available_rooms": 40
+    },
+    {
+      "hotel_id": "hotel-04-standard",
+      "night": "2027-01-06",
+      "available_rooms": 40
+    },
+    {
+      "hotel_id": "hotel-04-standard",
+      "night": "2027-01-07",
+      "available_rooms": 40
+    },
+    {
+      "hotel_id": "hotel-04-comfort",
+      "night": "2027-01-06",
+      "available_rooms": 40
+    },
+    {
+      "hotel_id": "hotel-04-comfort",
+      "night": "2027-01-07",
+      "available_rooms": 40
+    },
+    {
+      "hotel_id": "hotel-05-economy",
+      "night": "2027-01-14",
+      "available_rooms": 40
+    },
+    {
+      "hotel_id": "hotel-05-standard",
+      "night": "2027-01-14",
+      "available_rooms": 40
+    },
+    {
+      "hotel_id": "hotel-05-comfort",
+      "night": "2027-01-14",
+      "available_rooms": 40
+    },
+    {
+      "hotel_id": "hotel-06-economy",
+      "night": "2027-01-21",
+      "available_rooms": 12
+    },
+    {
+      "hotel_id": "hotel-06-standard",
+      "night": "2027-01-21",
+      "available_rooms": 14
+    },
+    {
+      "hotel_id": "hotel-06-comfort",
+      "night": "2027-01-21",
+      "available_rooms": 40
+    },
+    {
+      "hotel_id": "hotel-07-economy",
+      "night": "2027-01-28",
+      "available_rooms": 40
+    },
+    {
+      "hotel_id": "hotel-07-standard",
+      "night": "2027-01-28",
+      "available_rooms": 40
+    },
+    {
+      "hotel_id": "hotel-07-comfort",
+      "night": "2027-01-28",
+      "available_rooms": 40
+    },
+    {
+      "hotel_id": "hotel-08-economy",
+      "night": "2027-02-04",
+      "available_rooms": 40
+    },
+    {
+      "hotel_id": "hotel-08-standard",
+      "night": "2027-02-04",
+      "available_rooms": 40
+    },
+    {
+      "hotel_id": "hotel-08-comfort",
+      "night": "2027-02-04",
+      "available_rooms": 40
+    }
+  ],
+  "restaurants": [
+    {
+      "restaurant_id": "restaurant-01-economy",
+      "date": "2026-12-03",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-01-economy",
+      "date": "2026-12-04",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-01-standard",
+      "date": "2026-12-03",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-01-standard",
+      "date": "2026-12-04",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-01-comfort",
+      "date": "2026-12-03",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-01-comfort",
+      "date": "2026-12-04",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-02-economy",
+      "date": "2026-12-11",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-02-standard",
+      "date": "2026-12-11",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-02-comfort",
+      "date": "2026-12-11",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-03-economy",
+      "date": "2026-12-17",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-03-economy",
+      "date": "2026-12-18",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-03-standard",
+      "date": "2026-12-17",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-03-standard",
+      "date": "2026-12-18",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-03-comfort",
+      "date": "2026-12-17",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-03-comfort",
+      "date": "2026-12-18",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-04-economy",
+      "date": "2027-01-06",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-04-economy",
+      "date": "2027-01-07",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-04-economy",
+      "date": "2027-01-08",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-04-standard",
+      "date": "2027-01-06",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-04-standard",
+      "date": "2027-01-07",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-04-standard",
+      "date": "2027-01-08",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-04-comfort",
+      "date": "2027-01-06",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-04-comfort",
+      "date": "2027-01-07",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-04-comfort",
+      "date": "2027-01-08",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-05-economy",
+      "date": "2027-01-14",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-05-economy",
+      "date": "2027-01-15",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-05-standard",
+      "date": "2027-01-14",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-05-standard",
+      "date": "2027-01-15",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-05-comfort",
+      "date": "2027-01-14",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-05-comfort",
+      "date": "2027-01-15",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-06-economy",
+      "date": "2027-01-21",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-06-economy",
+      "date": "2027-01-22",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-06-standard",
+      "date": "2027-01-21",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-06-standard",
+      "date": "2027-01-22",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-06-comfort",
+      "date": "2027-01-21",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-06-comfort",
+      "date": "2027-01-22",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-07-economy",
+      "date": "2027-01-28",
+      "group_orders_accepted": false
+    },
+    {
+      "restaurant_id": "restaurant-07-economy",
+      "date": "2027-01-29",
+      "group_orders_accepted": false
+    },
+    {
+      "restaurant_id": "restaurant-07-standard",
+      "date": "2027-01-28",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-07-standard",
+      "date": "2027-01-29",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-07-comfort",
+      "date": "2027-01-28",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-07-comfort",
+      "date": "2027-01-29",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-08-economy",
+      "date": "2027-02-04",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-08-economy",
+      "date": "2027-02-05",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-08-standard",
+      "date": "2027-02-04",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-08-standard",
+      "date": "2027-02-05",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-08-comfort",
+      "date": "2027-02-04",
+      "group_orders_accepted": true
+    },
+    {
+      "restaurant_id": "restaurant-08-comfort",
+      "date": "2027-02-05",
+      "group_orders_accepted": true
+    }
+  ],
+  "buses": [
+    {
+      "bus_rate_id": "bus-compact",
+      "date": "2026-12-03",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-compact",
+      "date": "2026-12-04",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-compact",
+      "date": "2026-12-11",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-compact",
+      "date": "2026-12-17",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-compact",
+      "date": "2026-12-18",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-compact",
+      "date": "2027-01-06",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-compact",
+      "date": "2027-01-07",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-compact",
+      "date": "2027-01-08",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-compact",
+      "date": "2027-01-14",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-compact",
+      "date": "2027-01-15",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-compact",
+      "date": "2027-01-21",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-compact",
+      "date": "2027-01-22",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-compact",
+      "date": "2027-01-28",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-compact",
+      "date": "2027-01-29",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-compact",
+      "date": "2027-02-04",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-compact",
+      "date": "2027-02-05",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-standard",
+      "date": "2026-12-03",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-standard",
+      "date": "2026-12-04",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-standard",
+      "date": "2026-12-11",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-standard",
+      "date": "2026-12-17",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-standard",
+      "date": "2026-12-18",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-standard",
+      "date": "2027-01-06",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-standard",
+      "date": "2027-01-07",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-standard",
+      "date": "2027-01-08",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-standard",
+      "date": "2027-01-14",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-standard",
+      "date": "2027-01-15",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-standard",
+      "date": "2027-01-21",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-standard",
+      "date": "2027-01-22",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-standard",
+      "date": "2027-01-28",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-standard",
+      "date": "2027-01-29",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-standard",
+      "date": "2027-02-04",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-standard",
+      "date": "2027-02-05",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-comfort",
+      "date": "2026-12-03",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-comfort",
+      "date": "2026-12-04",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-comfort",
+      "date": "2026-12-11",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-comfort",
+      "date": "2026-12-17",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-comfort",
+      "date": "2026-12-18",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-comfort",
+      "date": "2027-01-06",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-comfort",
+      "date": "2027-01-07",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-comfort",
+      "date": "2027-01-08",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-comfort",
+      "date": "2027-01-14",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-comfort",
+      "date": "2027-01-15",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-comfort",
+      "date": "2027-01-21",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-comfort",
+      "date": "2027-01-22",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-comfort",
+      "date": "2027-01-28",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-comfort",
+      "date": "2027-01-29",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-comfort",
+      "date": "2027-02-04",
+      "available_buses": 3
+    },
+    {
+      "bus_rate_id": "bus-comfort",
+      "date": "2027-02-05",
+      "available_buses": 3
+    }
+  ]
+}

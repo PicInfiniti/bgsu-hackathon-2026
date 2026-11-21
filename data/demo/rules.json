@@ -1,0 +1,37 @@
+{
+  "currency": "USD",
+  "money_storage": "integer_cents",
+  "tax_and_fees_included": true,
+  "timezone": "America/New_York",
+  "all_prices_are_estimates": true,
+  "defaults": {
+    "seats_per_bus": 50,
+    "room_occupancy": 2,
+    "meal_allowance_cents": 2000
+  },
+  "traveler_count": "players + coaches + staff; include every traveler in buses, lodging, and paid meals",
+  "bus_capacity": "min(request.seats_per_bus, selected_bus.passenger_seats); driver has a separate seat",
+  "bus_count": "ceil(total_travelers / effective_bus_capacity)",
+  "bus_cost_cents": "bus_count * billable_bus_days * daily_rate_cents",
+  "bus_days": "Use scheduled billable calendar days, not elapsed 24-hour periods. Reject custom durations without supported data.",
+  "room_groups": [
+    "players",
+    "coaches",
+    "staff"
+  ],
+  "room_count": "Sum ceil(role_count / room_occupancy) for each role separately; zero-count roles use zero rooms. Same-day trips use zero rooms.",
+  "room_restrictions": "No cross-role room sharing. All hotels must support the requested occupancy; reject that hotel if it exceeds max_people_per_room. No room-level accessibility or gender assignments are modeled.",
+  "lodging_cost_cents": "room_count * hotel_nights * room_rate_cents",
+  "meal_cost_cents": "total_travelers * paid_meals_per_person * meal_rate_cents",
+  "meal_allowance": "Maximum allowed price per person per paid meal; compare inclusive meal_rate_cents with the user allowance. It is a cap, not an extra cost.",
+  "meals": "Use the explicit scheduled paid meal count. Every traveler receives the same number. No free breakfasts or extra allowances are added.",
+  "availability": "Require enough rooms on every occupied night, buses on every billable day, and accepted restaurant orders on every trip day. Missing availability means unsupported, not unlimited. No reservations are created.",
+  "restaurant_capacity": "All travelers must fit in a single group order; no split orders or extra fees are modeled.",
+  "package_selection": "For each template, match hotel and restaurant tiers at the selected game's destination, plus its bus_rate_id. Same-day trips skip hotel selection and checks.",
+  "trip_dates": "Use the game schedule's suggested departure/return and durations only. Departure is on the hotel check-in day when lodging is required. Check-in is after 15:00; checkout is by 11:00 on game day. Meals/itinerary times still need application scheduling.",
+  "total_cost_cents": "bus_cost_cents + lodging_cost_cents + meal_cost_cents",
+  "budget_check": "total_cost_cents <= request budget converted exactly to cents",
+  "rounding": "Round capacities upward with integer arithmetic; sum prices in cents. Reject monetary inputs with more than two decimal places.",
+  "count_only_requests": "Aggregate requests may exceed the 30-person sample roster for capacity stress demos. Individual room assignments require actual roster IDs and cannot invent additional people.",
+  "unsupported": "Do not extrapolate prices, dates, routes, hotel inventory, or service availability. Explain missing information or infeasible constraints."
+}

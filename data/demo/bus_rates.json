@@ -1,0 +1,42 @@
+[
+  {
+    "id": "bus-compact",
+    "name": "Demo Compact Coach",
+    "passenger_seats": 40,
+    "daily_rate_cents": 72000,
+    "amenities": [
+      "air_conditioning"
+    ],
+    "rate_unit": "USD cents per bus per billable calendar day; tax, fuel, driver, driver lodging/meals, parking, and tolls included",
+    "distance_surcharge_cents": 0,
+    "notes": "Flat fictional daily quote, independent of mileage; no extra driver or overtime charge."
+  },
+  {
+    "id": "bus-standard",
+    "name": "Demo Standard Coach",
+    "passenger_seats": 50,
+    "daily_rate_cents": 90000,
+    "amenities": [
+      "air_conditioning",
+      "restroom"
+    ],
+    "rate_unit": "USD cents per bus per billable calendar day; tax, fuel, driver, driver lodging/meals, parking, and tolls included",
+    "distance_surcharge_cents": 0,
+    "notes": "Flat fictional daily quote, independent of mileage; no extra driver or overtime charge."
+  },
+  {
+    "id": "bus-comfort",
+    "name": "Demo Comfort Coach",
+    "passenger_seats": 56,
+    "daily_rate_cents": 125000,
+    "amenities": [
+      "air_conditioning",
+      "restroom",
+      "wifi",
+      "power_outlets"
+    ],
+    "rate_unit": "USD cents per bus per billable calendar day; tax, fuel, driver, driver lodging/meals, parking, and tolls included",
+    "distance_surcharge_cents": 0,
+    "notes": "Flat fictional daily quote, independent of mileage; no extra driver or overtime charge."
+  }
+]

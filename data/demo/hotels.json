@@ -1,0 +1,474 @@
+[
+  {
+    "id": "hotel-01-economy",
+    "destination_id": "destination-01",
+    "name": "Maplebridge Trail Lodge",
+    "tier": "economy",
+    "room_rate_cents": 9500,
+    "rate_unit": "USD cents per room per night; tax and fees included",
+    "distance_to_stadium_miles": 8,
+    "drive_to_stadium_minutes": 26,
+    "max_people_per_room": 4,
+    "breakfast_included": false,
+    "check_in_local": "15:00",
+    "check_out_local": "11:00",
+    "amenities": [
+      "bus_parking",
+      "wifi"
+    ],
+    "accessibility": "Step-free entry and accessible rooms in this fictional fixture; accessible-room inventory is not modeled."
+  },
+  {
+    "id": "hotel-01-standard",
+    "destination_id": "destination-01",
+    "name": "Maplebridge Team Inn",
+    "tier": "standard",
+    "room_rate_cents": 13900,
+    "rate_unit": "USD cents per room per night; tax and fees included",
+    "distance_to_stadium_miles": 4,
+    "drive_to_stadium_minutes": 14,
+    "max_people_per_room": 4,
+    "breakfast_included": false,
+    "check_in_local": "15:00",
+    "check_out_local": "11:00",
+    "amenities": [
+      "bus_parking",
+      "wifi",
+      "meeting_room"
+    ],
+    "accessibility": "Step-free entry and accessible rooms in this fictional fixture; accessible-room inventory is not modeled."
+  },
+  {
+    "id": "hotel-01-comfort",
+    "destination_id": "destination-01",
+    "name": "Maplebridge Stadium Suites",
+    "tier": "comfort",
+    "room_rate_cents": 19900,
+    "rate_unit": "USD cents per room per night; tax and fees included",
+    "distance_to_stadium_miles": 1,
+    "drive_to_stadium_minutes": 5,
+    "max_people_per_room": 4,
+    "breakfast_included": false,
+    "check_in_local": "15:00",
+    "check_out_local": "11:00",
+    "amenities": [
+      "bus_parking",
+      "wifi",
+      "meeting_room"
+    ],
+    "accessibility": "Step-free entry and accessible rooms in this fictional fixture; accessible-room inventory is not modeled."
+  },
+  {
+    "id": "hotel-02-economy",
+    "destination_id": "destination-02",
+    "name": "Cedarvale Trail Lodge",
+    "tier": "economy",
+    "room_rate_cents": 10000,
+    "rate_unit": "USD cents per room per night; tax and fees included",
+    "distance_to_stadium_miles": 8,
+    "drive_to_stadium_minutes": 26,
+    "max_people_per_room": 4,
+    "breakfast_included": false,
+    "check_in_local": "15:00",
+    "check_out_local": "11:00",
+    "amenities": [
+      "bus_parking",
+      "wifi"
+    ],
+    "accessibility": "Step-free entry and accessible rooms in this fictional fixture; accessible-room inventory is not modeled."
+  },
+  {
+    "id": "hotel-02-standard",
+    "destination_id": "destination-02",
+    "name": "Cedarvale Team Inn",
+    "tier": "standard",
+    "room_rate_cents": 14400,
+    "rate_unit": "USD cents per room per night; tax and fees included",
+    "distance_to_stadium_miles": 4,
+    "drive_to_stadium_minutes": 14,
+    "max_people_per_room": 4,
+    "breakfast_included": false,
+    "check_in_local": "15:00",
+    "check_out_local": "11:00",
+    "amenities": [
+      "bus_parking",
+      "wifi",
+      "meeting_room"
+    ],
+    "accessibility": "Step-free entry and accessible rooms in this fictional fixture; accessible-room inventory is not modeled."
+  },
+  {
+    "id": "hotel-02-comfort",
+    "destination_id": "destination-02",
+    "name": "Cedarvale Stadium Suites",
+    "tier": "comfort",
+    "room_rate_cents": 20400,
+    "rate_unit": "USD cents per room per night; tax and fees included",
+    "distance_to_stadium_miles": 1,
+    "drive_to_stadium_minutes": 5,
+    "max_people_per_room": 4,
+    "breakfast_included": false,
+    "check_in_local": "15:00",
+    "check_out_local": "11:00",
+    "amenities": [
+      "bus_parking",
+      "wifi",
+      "meeting_room"
+    ],
+    "accessibility": "Step-free entry and accessible rooms in this fictional fixture; accessible-room inventory is not modeled."
+  },
+  {
+    "id": "hotel-03-economy",
+    "destination_id": "destination-03",
+    "name": "Pinehaven Trail Lodge",
+    "tier": "economy",
+    "room_rate_cents": 10500,
+    "rate_unit": "USD cents per room per night; tax and fees included",
+    "distance_to_stadium_miles": 8,
+    "drive_to_stadium_minutes": 26,
+    "max_people_per_room": 4,
+    "breakfast_included": false,
+    "check_in_local": "15:00",
+    "check_out_local": "11:00",
+    "amenities": [
+      "bus_parking",
+      "wifi"
+    ],
+    "accessibility": "Step-free entry and accessible rooms in this fictional fixture; accessible-room inventory is not modeled."
+  },
+  {
+    "id": "hotel-03-standard",
+    "destination_id": "destination-03",
+    "name": "Pinehaven Team Inn",
+    "tier": "standard",
+    "room_rate_cents": 14900,
+    "rate_unit": "USD cents per room per night; tax and fees included",
+    "distance_to_stadium_miles": 4,
+    "drive_to_stadium_minutes": 14,
+    "max_people_per_room": 4,
+    "breakfast_included": false,
+    "check_in_local": "15:00",
+    "check_out_local": "11:00",
+    "amenities": [
+      "bus_parking",
+      "wifi",
+      "meeting_room"
+    ],
+    "accessibility": "Step-free entry and accessible rooms in this fictional fixture; accessible-room inventory is not modeled."
+  },
+  {
+    "id": "hotel-03-comfort",
+    "destination_id": "destination-03",
+    "name": "Pinehaven Stadium Suites",
+    "tier": "comfort",
+    "room_rate_cents": 20900,
+    "rate_unit": "USD cents per room per night; tax and fees included",
+    "distance_to_stadium_miles": 1,
+    "drive_to_stadium_minutes": 5,
+    "max_people_per_room": 4,
+    "breakfast_included": false,
+    "check_in_local": "15:00",
+    "check_out_local": "11:00",
+    "amenities": [
+      "bus_parking",
+      "wifi",
+      "meeting_room"
+    ],
+    "accessibility": "Step-free entry and accessible rooms in this fictional fixture; accessible-room inventory is not modeled."
+  },
+  {
+    "id": "hotel-04-economy",
+    "destination_id": "destination-04",
+    "name": "Silverbrook Trail Lodge",
+    "tier": "economy",
+    "room_rate_cents": 11000,
+    "rate_unit": "USD cents per room per night; tax and fees included",
+    "distance_to_stadium_miles": 8,
+    "drive_to_stadium_minutes": 26,
+    "max_people_per_room": 4,
+    "breakfast_included": false,
+    "check_in_local": "15:00",
+    "check_out_local": "11:00",
+    "amenities": [
+      "bus_parking",
+      "wifi"
+    ],
+    "accessibility": "Step-free entry and accessible rooms in this fictional fixture; accessible-room inventory is not modeled."
+  },
+  {
+    "id": "hotel-04-standard",
+    "destination_id": "destination-04",
+    "name": "Silverbrook Team Inn",
+    "tier": "standard",
+    "room_rate_cents": 15400,
+    "rate_unit": "USD cents per room per night; tax and fees included",
+    "distance_to_stadium_miles": 4,
+    "drive_to_stadium_minutes": 14,
+    "max_people_per_room": 4,
+    "breakfast_included": false,
+    "check_in_local": "15:00",
+    "check_out_local": "11:00",
+    "amenities": [
+      "bus_parking",
+      "wifi",
+      "meeting_room"
+    ],
+    "accessibility": "Step-free entry and accessible rooms in this fictional fixture; accessible-room inventory is not modeled."
+  },
+  {
+    "id": "hotel-04-comfort",
+    "destination_id": "destination-04",
+    "name": "Silverbrook Stadium Suites",
+    "tier": "comfort",
+    "room_rate_cents": 21400,
+    "rate_unit": "USD cents per room per night; tax and fees included",
+    "distance_to_stadium_miles": 1,
+    "drive_to_stadium_minutes": 5,
+    "max_people_per_room": 4,
+    "breakfast_included": false,
+    "check_in_local": "15:00",
+    "check_out_local": "11:00",
+    "amenities": [
+      "bus_parking",
+      "wifi",
+      "meeting_room"
+    ],
+    "accessibility": "Step-free entry and accessible rooms in this fictional fixture; accessible-room inventory is not modeled."
+  },
+  {
+    "id": "hotel-05-economy",
+    "destination_id": "destination-05",
+    "name": "Willowcrest Trail Lodge",
+    "tier": "economy",
+    "room_rate_cents": 11500,
+    "rate_unit": "USD cents per room per night; tax and fees included",
+    "distance_to_stadium_miles": 8,
+    "drive_to_stadium_minutes": 26,
+    "max_people_per_room": 4,
+    "breakfast_included": false,
+    "check_in_local": "15:00",
+    "check_out_local": "11:00",
+    "amenities": [
+      "bus_parking",
+      "wifi"
+    ],
+    "accessibility": "Step-free entry and accessible rooms in this fictional fixture; accessible-room inventory is not modeled."
+  },
+  {
+    "id": "hotel-05-standard",
+    "destination_id": "destination-05",
+    "name": "Willowcrest Team Inn",
+    "tier": "standard",
+    "room_rate_cents": 15900,
+    "rate_unit": "USD cents per room per night; tax and fees included",
+    "distance_to_stadium_miles": 4,
+    "drive_to_stadium_minutes": 14,
+    "max_people_per_room": 4,
+    "breakfast_included": false,
+    "check_in_local": "15:00",
+    "check_out_local": "11:00",
+    "amenities": [
+      "bus_parking",
+      "wifi",
+      "meeting_room"
+    ],
+    "accessibility": "Step-free entry and accessible rooms in this fictional fixture; accessible-room inventory is not modeled."
+  },
+  {
+    "id": "hotel-05-comfort",
+    "destination_id": "destination-05",
+    "name": "Willowcrest Stadium Suites",
+    "tier": "comfort",
+    "room_rate_cents": 21900,
+    "rate_unit": "USD cents per room per night; tax and fees included",
+    "distance_to_stadium_miles": 1,
+    "drive_to_stadium_minutes": 5,
+    "max_people_per_room": 4,
+    "breakfast_included": false,
+    "check_in_local": "15:00",
+    "check_out_local": "11:00",
+    "amenities": [
+      "bus_parking",
+      "wifi",
+      "meeting_room"
+    ],
+    "accessibility": "Step-free entry and accessible rooms in this fictional fixture; accessible-room inventory is not modeled."
+  },
+  {
+    "id": "hotel-06-economy",
+    "destination_id": "destination-06",
+    "name": "Ashford Glen Trail Lodge",
+    "tier": "economy",
+    "room_rate_cents": 12000,
+    "rate_unit": "USD cents per room per night; tax and fees included",
+    "distance_to_stadium_miles": 8,
+    "drive_to_stadium_minutes": 26,
+    "max_people_per_room": 4,
+    "breakfast_included": false,
+    "check_in_local": "15:00",
+    "check_out_local": "11:00",
+    "amenities": [
+      "bus_parking",
+      "wifi"
+    ],
+    "accessibility": "Step-free entry and accessible rooms in this fictional fixture; accessible-room inventory is not modeled."
+  },
+  {
+    "id": "hotel-06-standard",
+    "destination_id": "destination-06",
+    "name": "Ashford Glen Team Inn",
+    "tier": "standard",
+    "room_rate_cents": 16400,
+    "rate_unit": "USD cents per room per night; tax and fees included",
+    "distance_to_stadium_miles": 4,
+    "drive_to_stadium_minutes": 14,
+    "max_people_per_room": 4,
+    "breakfast_included": false,
+    "check_in_local": "15:00",
+    "check_out_local": "11:00",
+    "amenities": [
+      "bus_parking",
+      "wifi",
+      "meeting_room"
+    ],
+    "accessibility": "Step-free entry and accessible rooms in this fictional fixture; accessible-room inventory is not modeled."
+  },
+  {
+    "id": "hotel-06-comfort",
+    "destination_id": "destination-06",
+    "name": "Ashford Glen Stadium Suites",
+    "tier": "comfort",
+    "room_rate_cents": 22400,
+    "rate_unit": "USD cents per room per night; tax and fees included",
+    "distance_to_stadium_miles": 1,
+    "drive_to_stadium_minutes": 5,
+    "max_people_per_room": 4,
+    "breakfast_included": false,
+    "check_in_local": "15:00",
+    "check_out_local": "11:00",
+    "amenities": [
+      "bus_parking",
+      "wifi",
+      "meeting_room"
+    ],
+    "accessibility": "Step-free entry and accessible rooms in this fictional fixture; accessible-room inventory is not modeled."
+  },
+  {
+    "id": "hotel-07-economy",
+    "destination_id": "destination-07",
+    "name": "Elmshore Trail Lodge",
+    "tier": "economy",
+    "room_rate_cents": 12500,
+    "rate_unit": "USD cents per room per night; tax and fees included",
+    "distance_to_stadium_miles": 8,
+    "drive_to_stadium_minutes": 26,
+    "max_people_per_room": 4,
+    "breakfast_included": false,
+    "check_in_local": "15:00",
+    "check_out_local": "11:00",
+    "amenities": [
+      "bus_parking",
+      "wifi"
+    ],
+    "accessibility": "Step-free entry and accessible rooms in this fictional fixture; accessible-room inventory is not modeled."
+  },
+  {
+    "id": "hotel-07-standard",
+    "destination_id": "destination-07",
+    "name": "Elmshore Team Inn",
+    "tier": "standard",
+    "room_rate_cents": 16900,
+    "rate_unit": "USD cents per room per night; tax and fees included",
+    "distance_to_stadium_miles": 4,
+    "drive_to_stadium_minutes": 14,
+    "max_people_per_room": 4,
+    "breakfast_included": false,
+    "check_in_local": "15:00",
+    "check_out_local": "11:00",
+    "amenities": [
+      "bus_parking",
+      "wifi",
+      "meeting_room"
+    ],
+    "accessibility": "Step-free entry and accessible rooms in this fictional fixture; accessible-room inventory is not modeled."
+  },
+  {
+    "id": "hotel-07-comfort",
+    "destination_id": "destination-07",
+    "name": "Elmshore Stadium Suites",
+    "tier": "comfort",
+    "room_rate_cents": 22900,
+    "rate_unit": "USD cents per room per night; tax and fees included",
+    "distance_to_stadium_miles": 1,
+    "drive_to_stadium_minutes": 5,
+    "max_people_per_room": 4,
+    "breakfast_included": false,
+    "check_in_local": "15:00",
+    "check_out_local": "11:00",
+    "amenities": [
+      "bus_parking",
+      "wifi",
+      "meeting_room"
+    ],
+    "accessibility": "Step-free entry and accessible rooms in this fictional fixture; accessible-room inventory is not modeled."
+  },
+  {
+    "id": "hotel-08-economy",
+    "destination_id": "destination-08",
+    "name": "Birch Hollow Trail Lodge",
+    "tier": "economy",
+    "room_rate_cents": 13000,
+    "rate_unit": "USD cents per room per night; tax and fees included",
+    "distance_to_stadium_miles": 8,
+    "drive_to_stadium_minutes": 26,
+    "max_people_per_room": 4,
+    "breakfast_included": false,
+    "check_in_local": "15:00",
+    "check_out_local": "11:00",
+    "amenities": [
+      "bus_parking",
+      "wifi"
+    ],
+    "accessibility": "Step-free entry and accessible rooms in this fictional fixture; accessible-room inventory is not modeled."
+  },
+  {
+    "id": "hotel-08-standard",
+    "destination_id": "destination-08",
+    "name": "Birch Hollow Team Inn",
+    "tier": "standard",
+    "room_rate_cents": 17400,
+    "rate_unit": "USD cents per room per night; tax and fees included",
+    "distance_to_stadium_miles": 4,
+    "drive_to_stadium_minutes": 14,
+    "max_people_per_room": 4,
+    "breakfast_included": false,
+    "check_in_local": "15:00",
+    "check_out_local": "11:00",
+    "amenities": [
+      "bus_parking",
+      "wifi",
+      "meeting_room"
+    ],
+    "accessibility": "Step-free entry and accessible rooms in this fictional fixture; accessible-room inventory is not modeled."
+  },
+  {
+    "id": "hotel-08-comfort",
+    "destination_id": "destination-08",
+    "name": "Birch Hollow Stadium Suites",
+    "tier": "comfort",
+    "room_rate_cents": 23400,
+    "rate_unit": "USD cents per room per night; tax and fees included",
+    "distance_to_stadium_miles": 1,
+    "drive_to_stadium_minutes": 5,
+    "max_people_per_room": 4,
+    "breakfast_included": false,
+    "check_in_local": "15:00",
+    "check_out_local": "11:00",
+    "amenities": [
+      "bus_parking",
+      "wifi",
+      "meeting_room"
+    ],
+    "accessibility": "Step-free entry and accessible rooms in this fictional fixture; accessible-room inventory is not modeled."
+  }
+]

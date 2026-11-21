@@ -1,0 +1,578 @@
+[
+  {
+    "id": "restaurant-01-economy",
+    "destination_id": "destination-01",
+    "name": "Maplebridge Team Kitchen",
+    "tier": "economy",
+    "meal_rate_cents": 1200,
+    "rate_unit": "USD cents per person per paid meal; tax, tip, and drinks included",
+    "distance_to_stadium_miles": 9,
+    "drive_to_stadium_minutes": 29,
+    "service_type": "preordered_group_meals",
+    "service_duration_minutes": 45,
+    "pickup_window_local": {
+      "opens": "06:00",
+      "closes": "22:00"
+    },
+    "max_people_per_order": 120,
+    "dietary_options": [
+      "standard",
+      "vegetarian",
+      "vegan",
+      "gluten_free"
+    ],
+    "dietary_note": "Options are fictional labels; no medical or allergen guarantees."
+  },
+  {
+    "id": "restaurant-01-standard",
+    "destination_id": "destination-01",
+    "name": "Maplebridge Harvest Table",
+    "tier": "standard",
+    "meal_rate_cents": 1800,
+    "rate_unit": "USD cents per person per paid meal; tax, tip, and drinks included",
+    "distance_to_stadium_miles": 5,
+    "drive_to_stadium_minutes": 17,
+    "service_type": "preordered_group_meals",
+    "service_duration_minutes": 45,
+    "pickup_window_local": {
+      "opens": "06:00",
+      "closes": "22:00"
+    },
+    "max_people_per_order": 120,
+    "dietary_options": [
+      "standard",
+      "vegetarian",
+      "vegan",
+      "gluten_free"
+    ],
+    "dietary_note": "Options are fictional labels; no medical or allergen guarantees."
+  },
+  {
+    "id": "restaurant-01-comfort",
+    "destination_id": "destination-01",
+    "name": "Maplebridge Victory Dining",
+    "tier": "comfort",
+    "meal_rate_cents": 2600,
+    "rate_unit": "USD cents per person per paid meal; tax, tip, and drinks included",
+    "distance_to_stadium_miles": 2,
+    "drive_to_stadium_minutes": 8,
+    "service_type": "preordered_group_meals",
+    "service_duration_minutes": 45,
+    "pickup_window_local": {
+      "opens": "06:00",
+      "closes": "22:00"
+    },
+    "max_people_per_order": 120,
+    "dietary_options": [
+      "standard",
+      "vegetarian",
+      "vegan",
+      "gluten_free"
+    ],
+    "dietary_note": "Options are fictional labels; no medical or allergen guarantees."
+  },
+  {
+    "id": "restaurant-02-economy",
+    "destination_id": "destination-02",
+    "name": "Cedarvale Team Kitchen",
+    "tier": "economy",
+    "meal_rate_cents": 1250,
+    "rate_unit": "USD cents per person per paid meal; tax, tip, and drinks included",
+    "distance_to_stadium_miles": 9,
+    "drive_to_stadium_minutes": 29,
+    "service_type": "preordered_group_meals",
+    "service_duration_minutes": 45,
+    "pickup_window_local": {
+      "opens": "06:00",
+      "closes": "22:00"
+    },
+    "max_people_per_order": 120,
+    "dietary_options": [
+      "standard",
+      "vegetarian",
+      "vegan",
+      "gluten_free"
+    ],
+    "dietary_note": "Options are fictional labels; no medical or allergen guarantees."
+  },
+  {
+    "id": "restaurant-02-standard",
+    "destination_id": "destination-02",
+    "name": "Cedarvale Harvest Table",
+    "tier": "standard",
+    "meal_rate_cents": 1850,
+    "rate_unit": "USD cents per person per paid meal; tax, tip, and drinks included",
+    "distance_to_stadium_miles": 5,
+    "drive_to_stadium_minutes": 17,
+    "service_type": "preordered_group_meals",
+    "service_duration_minutes": 45,
+    "pickup_window_local": {
+      "opens": "06:00",
+      "closes": "22:00"
+    },
+    "max_people_per_order": 120,
+    "dietary_options": [
+      "standard",
+      "vegetarian",
+      "vegan",
+      "gluten_free"
+    ],
+    "dietary_note": "Options are fictional labels; no medical or allergen guarantees."
+  },
+  {
+    "id": "restaurant-02-comfort",
+    "destination_id": "destination-02",
+    "name": "Cedarvale Victory Dining",
+    "tier": "comfort",
+    "meal_rate_cents": 2650,
+    "rate_unit": "USD cents per person per paid meal; tax, tip, and drinks included",
+    "distance_to_stadium_miles": 2,
+    "drive_to_stadium_minutes": 8,
+    "service_type": "preordered_group_meals",
+    "service_duration_minutes": 45,
+    "pickup_window_local": {
+      "opens": "06:00",
+      "closes": "22:00"
+    },
+    "max_people_per_order": 120,
+    "dietary_options": [
+      "standard",
+      "vegetarian",
+      "vegan",
+      "gluten_free"
+    ],
+    "dietary_note": "Options are fictional labels; no medical or allergen guarantees."
+  },
+  {
+    "id": "restaurant-03-economy",
+    "destination_id": "destination-03",
+    "name": "Pinehaven Team Kitchen",
+    "tier": "economy",
+    "meal_rate_cents": 1300,
+    "rate_unit": "USD cents per person per paid meal; tax, tip, and drinks included",
+    "distance_to_stadium_miles": 9,
+    "drive_to_stadium_minutes": 29,
+    "service_type": "preordered_group_meals",
+    "service_duration_minutes": 45,
+    "pickup_window_local": {
+      "opens": "06:00",
+      "closes": "22:00"
+    },
+    "max_people_per_order": 120,
+    "dietary_options": [
+      "standard",
+      "vegetarian",
+      "vegan",
+      "gluten_free"
+    ],
+    "dietary_note": "Options are fictional labels; no medical or allergen guarantees."
+  },
+  {
+    "id": "restaurant-03-standard",
+    "destination_id": "destination-03",
+    "name": "Pinehaven Harvest Table",
+    "tier": "standard",
+    "meal_rate_cents": 1900,
+    "rate_unit": "USD cents per person per paid meal; tax, tip, and drinks included",
+    "distance_to_stadium_miles": 5,
+    "drive_to_stadium_minutes": 17,
+    "service_type": "preordered_group_meals",
+    "service_duration_minutes": 45,
+    "pickup_window_local": {
+      "opens": "06:00",
+      "closes": "22:00"
+    },
+    "max_people_per_order": 120,
+    "dietary_options": [
+      "standard",
+      "vegetarian",
+      "vegan",
+      "gluten_free"
+    ],
+    "dietary_note": "Options are fictional labels; no medical or allergen guarantees."
+  },
+  {
+    "id": "restaurant-03-comfort",
+    "destination_id": "destination-03",
+    "name": "Pinehaven Victory Dining",
+    "tier": "comfort",
+    "meal_rate_cents": 2700,
+    "rate_unit": "USD cents per person per paid meal; tax, tip, and drinks included",
+    "distance_to_stadium_miles": 2,
+    "drive_to_stadium_minutes": 8,
+    "service_type": "preordered_group_meals",
+    "service_duration_minutes": 45,
+    "pickup_window_local": {
+      "opens": "06:00",
+      "closes": "22:00"
+    },
+    "max_people_per_order": 120,
+    "dietary_options": [
+      "standard",
+      "vegetarian",
+      "vegan",
+      "gluten_free"
+    ],
+    "dietary_note": "Options are fictional labels; no medical or allergen guarantees."
+  },
+  {
+    "id": "restaurant-04-economy",
+    "destination_id": "destination-04",
+    "name": "Silverbrook Team Kitchen",
+    "tier": "economy",
+    "meal_rate_cents": 1350,
+    "rate_unit": "USD cents per person per paid meal; tax, tip, and drinks included",
+    "distance_to_stadium_miles": 9,
+    "drive_to_stadium_minutes": 29,
+    "service_type": "preordered_group_meals",
+    "service_duration_minutes": 45,
+    "pickup_window_local": {
+      "opens": "06:00",
+      "closes": "22:00"
+    },
+    "max_people_per_order": 120,
+    "dietary_options": [
+      "standard",
+      "vegetarian",
+      "vegan",
+      "gluten_free"
+    ],
+    "dietary_note": "Options are fictional labels; no medical or allergen guarantees."
+  },
+  {
+    "id": "restaurant-04-standard",
+    "destination_id": "destination-04",
+    "name": "Silverbrook Harvest Table",
+    "tier": "standard",
+    "meal_rate_cents": 1950,
+    "rate_unit": "USD cents per person per paid meal; tax, tip, and drinks included",
+    "distance_to_stadium_miles": 5,
+    "drive_to_stadium_minutes": 17,
+    "service_type": "preordered_group_meals",
+    "service_duration_minutes": 45,
+    "pickup_window_local": {
+      "opens": "06:00",
+      "closes": "22:00"
+    },
+    "max_people_per_order": 120,
+    "dietary_options": [
+      "standard",
+      "vegetarian",
+      "vegan",
+      "gluten_free"
+    ],
+    "dietary_note": "Options are fictional labels; no medical or allergen guarantees."
+  },
+  {
+    "id": "restaurant-04-comfort",
+    "destination_id": "destination-04",
+    "name": "Silverbrook Victory Dining",
+    "tier": "comfort",
+    "meal_rate_cents": 2750,
+    "rate_unit": "USD cents per person per paid meal; tax, tip, and drinks included",
+    "distance_to_stadium_miles": 2,
+    "drive_to_stadium_minutes": 8,
+    "service_type": "preordered_group_meals",
+    "service_duration_minutes": 45,
+    "pickup_window_local": {
+      "opens": "06:00",
+      "closes": "22:00"
+    },
+    "max_people_per_order": 120,
+    "dietary_options": [
+      "standard",
+      "vegetarian",
+      "vegan",
+      "gluten_free"
+    ],
+    "dietary_note": "Options are fictional labels; no medical or allergen guarantees."
+  },
+  {
+    "id": "restaurant-05-economy",
+    "destination_id": "destination-05",
+    "name": "Willowcrest Team Kitchen",
+    "tier": "economy",
+    "meal_rate_cents": 1400,
+    "rate_unit": "USD cents per person per paid meal; tax, tip, and drinks included",
+    "distance_to_stadium_miles": 9,
+    "drive_to_stadium_minutes": 29,
+    "service_type": "preordered_group_meals",
+    "service_duration_minutes": 45,
+    "pickup_window_local": {
+      "opens": "06:00",
+      "closes": "22:00"
+    },
+    "max_people_per_order": 120,
+    "dietary_options": [
+      "standard",
+      "vegetarian",
+      "vegan",
+      "gluten_free"
+    ],
+    "dietary_note": "Options are fictional labels; no medical or allergen guarantees."
+  },
+  {
+    "id": "restaurant-05-standard",
+    "destination_id": "destination-05",
+    "name": "Willowcrest Harvest Table",
+    "tier": "standard",
+    "meal_rate_cents": 2000,
+    "rate_unit": "USD cents per person per paid meal; tax, tip, and drinks included",
+    "distance_to_stadium_miles": 5,
+    "drive_to_stadium_minutes": 17,
+    "service_type": "preordered_group_meals",
+    "service_duration_minutes": 45,
+    "pickup_window_local": {
+      "opens": "06:00",
+      "closes": "22:00"
+    },
+    "max_people_per_order": 120,
+    "dietary_options": [
+      "standard",
+      "vegetarian",
+      "vegan",
+      "gluten_free"
+    ],
+    "dietary_note": "Options are fictional labels; no medical or allergen guarantees."
+  },
+  {
+    "id": "restaurant-05-comfort",
+    "destination_id": "destination-05",
+    "name": "Willowcrest Victory Dining",
+    "tier": "comfort",
+    "meal_rate_cents": 2800,
+    "rate_unit": "USD cents per person per paid meal; tax, tip, and drinks included",
+    "distance_to_stadium_miles": 2,
+    "drive_to_stadium_minutes": 8,
+    "service_type": "preordered_group_meals",
+    "service_duration_minutes": 45,
+    "pickup_window_local": {
+      "opens": "06:00",
+      "closes": "22:00"
+    },
+    "max_people_per_order": 120,
+    "dietary_options": [
+      "standard",
+      "vegetarian",
+      "vegan",
+      "gluten_free"
+    ],
+    "dietary_note": "Options are fictional labels; no medical or allergen guarantees."
+  },
+  {
+    "id": "restaurant-06-economy",
+    "destination_id": "destination-06",
+    "name": "Ashford Glen Team Kitchen",
+    "tier": "economy",
+    "meal_rate_cents": 1450,
+    "rate_unit": "USD cents per person per paid meal; tax, tip, and drinks included",
+    "distance_to_stadium_miles": 9,
+    "drive_to_stadium_minutes": 29,
+    "service_type": "preordered_group_meals",
+    "service_duration_minutes": 45,
+    "pickup_window_local": {
+      "opens": "06:00",
+      "closes": "22:00"
+    },
+    "max_people_per_order": 120,
+    "dietary_options": [
+      "standard",
+      "vegetarian",
+      "vegan",
+      "gluten_free"
+    ],
+    "dietary_note": "Options are fictional labels; no medical or allergen guarantees."
+  },
+  {
+    "id": "restaurant-06-standard",
+    "destination_id": "destination-06",
+    "name": "Ashford Glen Harvest Table",
+    "tier": "standard",
+    "meal_rate_cents": 2050,
+    "rate_unit": "USD cents per person per paid meal; tax, tip, and drinks included",
+    "distance_to_stadium_miles": 5,
+    "drive_to_stadium_minutes": 17,
+    "service_type": "preordered_group_meals",
+    "service_duration_minutes": 45,
+    "pickup_window_local": {
+      "opens": "06:00",
+      "closes": "22:00"
+    },
+    "max_people_per_order": 120,
+    "dietary_options": [
+      "standard",
+      "vegetarian",
+      "vegan",
+      "gluten_free"
+    ],
+    "dietary_note": "Options are fictional labels; no medical or allergen guarantees."
+  },
+  {
+    "id": "restaurant-06-comfort",
+    "destination_id": "destination-06",
+    "name": "Ashford Glen Victory Dining",
+    "tier": "comfort",
+    "meal_rate_cents": 2850,
+    "rate_unit": "USD cents per person per paid meal; tax, tip, and drinks included",
+    "distance_to_stadium_miles": 2,
+    "drive_to_stadium_minutes": 8,
+    "service_type": "preordered_group_meals",
+    "service_duration_minutes": 45,
+    "pickup_window_local": {
+      "opens": "06:00",
+      "closes": "22:00"
+    },
+    "max_people_per_order": 120,
+    "dietary_options": [
+      "standard",
+      "vegetarian",
+      "vegan",
+      "gluten_free"
+    ],
+    "dietary_note": "Options are fictional labels; no medical or allergen guarantees."
+  },
+  {
+    "id": "restaurant-07-economy",
+    "destination_id": "destination-07",
+    "name": "Elmshore Team Kitchen",
+    "tier": "economy",
+    "meal_rate_cents": 1500,
+    "rate_unit": "USD cents per person per paid meal; tax, tip, and drinks included",
+    "distance_to_stadium_miles": 9,
+    "drive_to_stadium_minutes": 29,
+    "service_type": "preordered_group_meals",
+    "service_duration_minutes": 45,
+    "pickup_window_local": {
+      "opens": "06:00",
+      "closes": "22:00"
+    },
+    "max_people_per_order": 120,
+    "dietary_options": [
+      "standard",
+      "vegetarian",
+      "vegan",
+      "gluten_free"
+    ],
+    "dietary_note": "Options are fictional labels; no medical or allergen guarantees."
+  },
+  {
+    "id": "restaurant-07-standard",
+    "destination_id": "destination-07",
+    "name": "Elmshore Harvest Table",
+    "tier": "standard",
+    "meal_rate_cents": 2100,
+    "rate_unit": "USD cents per person per paid meal; tax, tip, and drinks included",
+    "distance_to_stadium_miles": 5,
+    "drive_to_stadium_minutes": 17,
+    "service_type": "preordered_group_meals",
+    "service_duration_minutes": 45,
+    "pickup_window_local": {
+      "opens": "06:00",
+      "closes": "22:00"
+    },
+    "max_people_per_order": 120,
+    "dietary_options": [
+      "standard",
+      "vegetarian",
+      "vegan",
+      "gluten_free"
+    ],
+    "dietary_note": "Options are fictional labels; no medical or allergen guarantees."
+  },
+  {
+    "id": "restaurant-07-comfort",
+    "destination_id": "destination-07",
+    "name": "Elmshore Victory Dining",
+    "tier": "comfort",
+    "meal_rate_cents": 2900,
+    "rate_unit": "USD cents per person per paid meal; tax, tip, and drinks included",
+    "distance_to_stadium_miles": 2,
+    "drive_to_stadium_minutes": 8,
+    "service_type": "preordered_group_meals",
+    "service_duration_minutes": 45,
+    "pickup_window_local": {
+      "opens": "06:00",
+      "closes": "22:00"
+    },
+    "max_people_per_order": 120,
+    "dietary_options": [
+      "standard",
+      "vegetarian",
+      "vegan",
+      "gluten_free"
+    ],
+    "dietary_note": "Options are fictional labels; no medical or allergen guarantees."
+  },
+  {
+    "id": "restaurant-08-economy",
+    "destination_id": "destination-08",
+    "name": "Birch Hollow Team Kitchen",
+    "tier": "economy",
+    "meal_rate_cents": 1550,
+    "rate_unit": "USD cents per person per paid meal; tax, tip, and drinks included",
+    "distance_to_stadium_miles": 9,
+    "drive_to_stadium_minutes": 29,
+    "service_type": "preordered_group_meals",
+    "service_duration_minutes": 45,
+    "pickup_window_local": {
+      "opens": "06:00",
+      "closes": "22:00"
+    },
+    "max_people_per_order": 120,
+    "dietary_options": [
+      "standard",
+      "vegetarian",
+      "vegan",
+      "gluten_free"
+    ],
+    "dietary_note": "Options are fictional labels; no medical or allergen guarantees."
+  },
+  {
+    "id": "restaurant-08-standard",
+    "destination_id": "destination-08",
+    "name": "Birch Hollow Harvest Table",
+    "tier": "standard",
+    "meal_rate_cents": 2150,
+    "rate_unit": "USD cents per person per paid meal; tax, tip, and drinks included",
+    "distance_to_stadium_miles": 5,
+    "drive_to_stadium_minutes": 17,
+    "service_type": "preordered_group_meals",
+    "service_duration_minutes": 45,
+    "pickup_window_local": {
+      "opens": "06:00",
+      "closes": "22:00"
+    },
+    "max_people_per_order": 120,
+    "dietary_options": [
+      "standard",
+      "vegetarian",
+      "vegan",
+      "gluten_free"
+    ],
+    "dietary_note": "Options are fictional labels; no medical or allergen guarantees."
+  },
+  {
+    "id": "restaurant-08-comfort",
+    "destination_id": "destination-08",
+    "name": "Birch Hollow Victory Dining",
+    "tier": "comfort",
+    "meal_rate_cents": 2950,
+    "rate_unit": "USD cents per person per paid meal; tax, tip, and drinks included",
+    "distance_to_stadium_miles": 2,
+    "drive_to_stadium_minutes": 8,
+    "service_type": "preordered_group_meals",
+    "service_duration_minutes": 45,
+    "pickup_window_local": {
+      "opens": "06:00",
+      "closes": "22:00"
+    },
+    "max_people_per_order": 120,
+    "dietary_options": [
+      "standard",
+      "vegetarian",
+      "vegan",
+      "gluten_free"
+    ],
+    "dietary_note": "Options are fictional labels; no medical or allergen guarantees."
+  }
+]

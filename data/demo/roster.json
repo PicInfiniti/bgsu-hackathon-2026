@@ -1,0 +1,212 @@
+[
+  {
+    "id": "player-01",
+    "display_name": "Demo Player 01",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "player-02",
+    "display_name": "Demo Player 02",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "player-03",
+    "display_name": "Demo Player 03",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "player-04",
+    "display_name": "Demo Player 04",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "player-05",
+    "display_name": "Demo Player 05",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "player-06",
+    "display_name": "Demo Player 06",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "player-07",
+    "display_name": "Demo Player 07",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "player-08",
+    "display_name": "Demo Player 08",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "player-09",
+    "display_name": "Demo Player 09",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "player-10",
+    "display_name": "Demo Player 10",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "player-11",
+    "display_name": "Demo Player 11",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "player-12",
+    "display_name": "Demo Player 12",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "player-13",
+    "display_name": "Demo Player 13",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "player-14",
+    "display_name": "Demo Player 14",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "player-15",
+    "display_name": "Demo Player 15",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "player-16",
+    "display_name": "Demo Player 16",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "player-17",
+    "display_name": "Demo Player 17",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "player-18",
+    "display_name": "Demo Player 18",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "player-19",
+    "display_name": "Demo Player 19",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "player-20",
+    "display_name": "Demo Player 20",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "player-21",
+    "display_name": "Demo Player 21",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "player-22",
+    "display_name": "Demo Player 22",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "player-23",
+    "display_name": "Demo Player 23",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "player-24",
+    "display_name": "Demo Player 24",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "player-25",
+    "display_name": "Demo Player 25",
+    "role": "player",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "coach-01",
+    "display_name": "Demo Coach 01",
+    "role": "coach",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "coach-02",
+    "display_name": "Demo Coach 02",
+    "role": "coach",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "coach-03",
+    "display_name": "Demo Coach 03",
+    "role": "coach",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "staff-01",
+    "display_name": "Demo Staff 01",
+    "role": "staff",
+    "team_id": "demo-team",
+    "active": true
+  },
+  {
+    "id": "staff-02",
+    "display_name": "Demo Staff 02",
+    "role": "staff",
+    "team_id": "demo-team",
+    "active": true
+  }
+]

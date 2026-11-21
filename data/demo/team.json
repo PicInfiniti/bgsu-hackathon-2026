@@ -1,0 +1,9 @@
+{
+  "id": "demo-team",
+  "name": "picInfiniti Demo Falcons",
+  "origin": {
+    "id": "home-campus",
+    "name": "Demo Home Campus",
+    "timezone": "America/New_York"
+  }
+}

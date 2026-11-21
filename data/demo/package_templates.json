@@ -1,0 +1,26 @@
+[
+  {
+    "id": "package-economy",
+    "label": "Economy",
+    "hotel_tier": "economy",
+    "restaurant_tier": "economy",
+    "bus_rate_id": "bus-standard",
+    "description": "Lower room and meal rates, with longer stadium transfers."
+  },
+  {
+    "id": "package-standard",
+    "label": "Standard",
+    "hotel_tier": "standard",
+    "restaurant_tier": "standard",
+    "bus_rate_id": "bus-standard",
+    "description": "Moderate room and meal rates, closer to the stadium."
+  },
+  {
+    "id": "package-comfort",
+    "label": "Comfort",
+    "hotel_tier": "comfort",
+    "restaurant_tier": "comfort",
+    "bus_rate_id": "bus-comfort",
+    "description": "Closest lodging and meals, with a comfort coach at a higher rate."
+  }
+]

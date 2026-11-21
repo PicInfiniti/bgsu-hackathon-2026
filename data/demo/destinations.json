@@ -1,0 +1,82 @@
+[
+  {
+    "id": "destination-01",
+    "name": "Maplebridge",
+    "stadium_name": "Maple Field",
+    "timezone": "America/New_York",
+    "origin_id": "home-campus",
+    "one_way_distance_miles": 145,
+    "one_way_drive_minutes": 170,
+    "route_note": "Invented direct route; not measured from a map. Breaks are not included."
+  },
+  {
+    "id": "destination-02",
+    "name": "Cedarvale",
+    "stadium_name": "Cedar Stadium",
+    "timezone": "America/New_York",
+    "origin_id": "home-campus",
+    "one_way_distance_miles": 82,
+    "one_way_drive_minutes": 100,
+    "route_note": "Invented direct route; not measured from a map. Breaks are not included."
+  },
+  {
+    "id": "destination-03",
+    "name": "Pinehaven",
+    "stadium_name": "Pine Arena",
+    "timezone": "America/New_York",
+    "origin_id": "home-campus",
+    "one_way_distance_miles": 230,
+    "one_way_drive_minutes": 255,
+    "route_note": "Invented direct route; not measured from a map. Breaks are not included."
+  },
+  {
+    "id": "destination-04",
+    "name": "Silverbrook",
+    "stadium_name": "Silver Park",
+    "timezone": "America/New_York",
+    "origin_id": "home-campus",
+    "one_way_distance_miles": 310,
+    "one_way_drive_minutes": 340,
+    "route_note": "Invented direct route; not measured from a map. Breaks are not included."
+  },
+  {
+    "id": "destination-05",
+    "name": "Willowcrest",
+    "stadium_name": "Willow Field",
+    "timezone": "America/New_York",
+    "origin_id": "home-campus",
+    "one_way_distance_miles": 190,
+    "one_way_drive_minutes": 215,
+    "route_note": "Invented direct route; not measured from a map. Breaks are not included."
+  },
+  {
+    "id": "destination-06",
+    "name": "Ashford Glen",
+    "stadium_name": "Glen Stadium",
+    "timezone": "America/New_York",
+    "origin_id": "home-campus",
+    "one_way_distance_miles": 165,
+    "one_way_drive_minutes": 185,
+    "route_note": "Invented direct route; not measured from a map. Breaks are not included."
+  },
+  {
+    "id": "destination-07",
+    "name": "Elmshore",
+    "stadium_name": "Elmshore Arena",
+    "timezone": "America/New_York",
+    "origin_id": "home-campus",
+    "one_way_distance_miles": 275,
+    "one_way_drive_minutes": 300,
+    "route_note": "Invented direct route; not measured from a map. Breaks are not included."
+  },
+  {
+    "id": "destination-08",
+    "name": "Birch Hollow",
+    "stadium_name": "Birch Park",
+    "timezone": "America/New_York",
+    "origin_id": "home-campus",
+    "one_way_distance_miles": 120,
+    "one_way_drive_minutes": 145,
+    "route_note": "Invented direct route; not measured from a map. Breaks are not included."
+  }
+]
