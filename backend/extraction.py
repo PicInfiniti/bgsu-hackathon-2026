@@ -4,6 +4,7 @@ import re
 import uuid
 
 from .dates import resolve_deadline
+from .core import DEMO
 from .extraction_schema import CATEGORIES, SENSITIVE_TOPICS
 
 GROUP_ALIASES = {
@@ -57,6 +58,60 @@ def source_quote(quote, note):
     return (match.group(), True) if match else (quote, False)
 
 
+def selected_attendee_reference(mention, quote, meeting, players):
+    """Resolve explicit collective references, never an unspecified subset."""
+    if meeting['meeting_type'] not in ('group', 'team') or len(players) < 2 or not mention_present(mention, quote):
+        return False
+    value = normalized(mention)
+    counts = {word: i for i, word in enumerate(('zero','one','two','three','four','five','six','seven','eight','nine','ten'))}
+    counted = re.fullmatch(r'(?:these|this) (\d{1,2}|' + '|'.join(counts) + r') (?:players?|attendees?)', value)
+    if counted:
+        number = counted.group(1)
+        valid = (int(number) if number.isdigit() else counts[number]) == len(players)
+    else:
+        valid = value in ('these players', 'these attendees', 'all selected players', 'all selected attendees', 'all attendees') or value in ('both players', 'both attendees') and len(players) == 2
+    # Keep exclusions, subsets and quotations containing individual assignments
+    # unresolved instead of broadcasting a task to unrelated attendees.
+    if not valid or re.search(r'\b(?:except|excluding|only|some|of these|of this|not all|other players)\b', quote, re.I):
+        return False
+    for person in DEMO['players']:
+        aliases = [person['name'], *person['name'].split(), person.get('nickname') or '', f"#{person['number']}"]
+        if any(alias and mention_present(alias, quote) for alias in aliases):
+            return False
+    return True
+
+
+def individual_continuation(mention, claimed, quote, meeting, players):
+    """A direct continuation under a sole-attendee header, not arbitrary prose."""
+    if meeting['meeting_type'] != 'individual' or len(players) != 1:
+        return False
+    person = players[0]
+    if claimed not in (None, person['id']):
+        return False
+    aliases = [person['name'], *person['name'].split(), person.get('nickname') or '', f"#{person['number']}"]
+    header = re.match(r'^\s*([^:\n]{1,100}):', meeting['note'])
+    if not header or normalized(header.group(1)) not in {normalized(a) for a in aliases if a}:
+        return False
+    if not re.match(r'^(?:you\b|your\b|work on\b|complete\b|practice\b|review\b|keep\b|improve\b|continue\b|focus on\b|remember\b|maintain\b)', quote.strip(), re.I):
+        return False
+    # Preserve the original correction for explicit conflicting player targets.
+    allowed_mentions = {normalized(a) for a in aliases if a} | {'', 'you', 'your', normalized(quote.split()[0])}
+    if normalized(mention) not in allowed_mentions:
+        return False
+    if re.search(r'\b(?:he|she|they|his|her|their|another|other|teammate)\b', quote, re.I):
+        return False
+    for other in DEMO['players']:
+        if other['id'] == person['id']:
+            continue
+        names = [other['name'], *other['name'].split(), other.get('nickname') or '', f"#{other['number']}"]
+        if any(a and mention_present(a, meeting['note']) for a in names):
+            return False
+    # An additional speaker/subject header can introduce someone outside the roster.
+    if ':' in meeting['note'][header.end():]:
+        return False
+    return True
+
+
 def normalize_records(payload, meeting, players):
     if not isinstance(payload, dict) or not isinstance(payload.get('records'), list) or len(payload['records']) > 80:
         raise ValueError('Expected a records array with at most 80 records.')
@@ -98,12 +153,19 @@ def normalize_records(payload, meeting, players):
                 player_id, method = None, 'unmatched'
             if not source_valid or not mention_present(mention, quote) or not mention_present(mention, meeting['note']):
                 player_id, method = None, 'unmatched'
+            if player_id is None and source_valid and individual_continuation(mention, claimed, quote, meeting, players):
+                player_id, method = players[0]['id'], 'individual_context'
+                mention = players[0]['name']
+                warnings.append(f'Attributed this continuation to {mention}, the sole attendee named at the start of the note. Confirm before approval.')
             targets = [player_id]
         elif scope == 'group':
             group = str(group_label or '').upper()
             cleaned = re.sub(r'^(?:all|the)\s+', '', normalized(mention))
             collective_pair = normalized(mention) in ('both players', 'both attendees') and len(players) == 2 and all(p.get('position_group') == group for p in players)
-            if (cleaned in GROUP_ALIASES.get(group, ()) or collective_pair) and mention_present(mention, quote):
+            if source_valid and selected_attendee_reference(mention, quote, meeting, players):
+                targets, method, group_label = attendee_ids, 'selected_attendees', 'Selected attendees'
+                warnings.append('Interpreted this reference as all selected attendees. Confirm the selected players before approval.')
+            elif (cleaned in GROUP_ALIASES.get(group, ()) or collective_pair) and mention_present(mention, quote):
                 targets = [p['id'] for p in players if p.get('position_group') == group]
                 method = 'position_group'
                 group_label = group

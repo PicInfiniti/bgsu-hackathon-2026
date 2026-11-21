@@ -77,6 +77,68 @@ class DeadlineTests(unittest.TestCase):
 
 
 class ExtractionTests(unittest.TestCase):
+    def test_individual_continuations_inherit_the_single_named_attendee(self):
+        sample=DEMO['samples'][0]
+        for mention,quote,kind in [('Work','Work on reading the coverage before releasing the ball.','Improvement'),
+                                   ('Avery','Your short passing was excellent today.','Praise')]:
+            raw=record(mention,'p01',source_text=quote,feedback_type=kind,feedback=quote,
+                       action_item={'task':None,'deadline_text':None,'deadline_date':None})
+            items,_,errors=self.normalize(raw,meeting_for(sample['note']))
+            self.assertFalse(errors)
+            self.assertEqual(items[0]['player_id'],'p01')
+            self.assertEqual(items[0]['match_method'],'individual_context')
+            self.assertEqual(items[0]['quote'],quote)
+            self.assertTrue(items[0]['warnings'])
+            validate_item(items[0],meeting_for(sample['note']))
+
+    def test_individual_context_does_not_override_conflicts_or_other_speakers(self):
+        quote='Work on reading the coverage before releasing the ball.'
+        raw=record('Work','p01',source_text=quote)
+        for note in [f'Jordan: {quote}',f'Avery: Passing review. Jordan: {quote}',
+                     f'Avery: Passing review. Chris: {quote}',f'Avery: Jordan was discussed. {quote}',
+                     f'Averyson: {quote}']:
+            items,_,errors=self.normalize(raw,meeting_for(note))
+            self.assertIsNone(items[0]['player_id'])
+            self.assertTrue(errors)
+        items,_,errors=self.normalize({**raw,'target':{**raw['target'],'player_id':'p02'}},meeting_for(f'Avery: {quote}'))
+        self.assertIsNone(items[0]['player_id'])
+        items,_,errors=self.normalize(raw,meeting_for(f'Avery: {quote}',('p01','p02'),'group'))
+        self.assertIsNone(items[0]['player_id'])
+    def test_selected_attendee_collective_reference_is_grounded_and_reviewable(self):
+        ids = ('p02','p11','p22')
+        for phrase in ('this 3 player','these three players','these players','all selected attendees'):
+            note = f'I want to talk with {phrase} next week about their performance.'
+            raw = record(phrase,None,'group','selected_attendees',source_text=note,
+                         action_item={'task':None,'deadline_text':None,'deadline_date':None},
+                         topic='Team Communication',skill='Not Applicable',
+                         feedback_type='Neutral/Observation',feedback='Coach intends to discuss performance next week.')
+            meeting = meeting_for(note,ids,'group')
+            items, _, errors = self.normalize(raw,meeting)
+            self.assertFalse(errors)
+            self.assertEqual({i['player_id'] for i in items},set(ids))
+            self.assertTrue(all(i['kind']=='observation' and i['due_date'] is None for i in items))
+            self.assertTrue(all(i['match_method']=='selected_attendees' and i['warnings'] for i in items))
+            for item in items: validate_item(item,meeting)
+
+    def test_collective_reference_never_guesses_a_count_subset_or_named_assignment(self):
+        ids=('p02','p11','p22')
+        for phrase,note in [
+            ('these two players','Work with these two players.'),
+            ('these three players','Only two of these three players should complete drills.'),
+            ('these three players','These three players except Jordan should complete drills.'),
+            ('these three players','Jordan: Complete drills. These three players attended.'),
+            ('these three players','Avery: Complete drills. These three players attended.'),
+            ('players','Discuss performance with players.'),
+        ]:
+            raw=record(phrase,None,'group','selected_attendees',source_text=note)
+            items,_,errors=self.normalize(raw,meeting_for(note,ids,'group'))
+            self.assertTrue(errors)
+            self.assertTrue(all(i['player_id'] is None for i in items))
+        raw=record('both players',None,'group','selected_attendees')
+        items,_,errors=self.normalize(raw,meeting_for(raw['source_text'],('p02','p11'),'group'))
+        self.assertFalse(errors)
+        self.assertEqual(len(items),2)
+
     def test_target_must_be_present_in_its_evidence_not_elsewhere_in_note(self):
         raw = record('Avery')
         raw['source_text'] = 'Jordan: Complete footwork practice tomorrow.'

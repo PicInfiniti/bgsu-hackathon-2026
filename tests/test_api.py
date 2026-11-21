@@ -10,6 +10,57 @@ AVAILABLE = all(importlib.util.find_spec(x) for x in ('fastapi', 'httpx'))
 
 @unittest.skipUnless(AVAILABLE, 'Install backend/requirements-dev.txt to run FastAPI route checks.')
 class ApiTests(unittest.TestCase):
+    def test_individual_continuation_can_be_approved_without_reselecting_player(self):
+        from fastapi.testclient import TestClient
+        from backend import main
+        from backend.core import DEMO, Store
+        from test_extraction import record
+        sample=copy.deepcopy(DEMO['samples'][0])
+        quote='Work on reading the coverage before releasing the ball.'
+        raw=record('Work','p01',source_text=quote,feedback_type='Improvement',feedback=quote,
+                   action_item={'task':None,'deadline_text':None,'deadline_date':None})
+        with tempfile.TemporaryDirectory() as directory, patch.object(main,'store',Store(os.path.join(directory,'individual.sqlite3'))):
+            with TestClient(main.app) as client, patch('backend.aivana.extract',return_value={'records':[raw],'warnings':[]}) as provider:
+                result=client.post('/api/extract',json={**sample,'mode':'live'})
+                self.assertEqual(result.status_code,200)
+                output=result.json()
+                provider.assert_called_once()
+                self.assertEqual(output['items'][0]['player_id'],'p01')
+                self.assertEqual(output['items'][0]['match_method'],'individual_context')
+                body={**sample,'items':output['items'],'origin':'aivana','extraction_id':output['extraction_id']}
+                self.assertEqual(client.post('/api/meetings',json=body).status_code,422)
+                self.assertEqual(client.post('/api/meetings',json={**body,'approved':True}).status_code,201)
+
+    def test_selected_attendees_are_sent_to_provider_and_collective_records_can_save(self):
+        import io
+        import json
+        from fastapi.testclient import TestClient
+        from backend import main
+        from backend.core import DEMO, Store
+        ids=[p['id'] for p in DEMO['players'] if p['name'] in ('Jordan Ellis','Sage Mercer','Peyton Lake')]
+        self.assertEqual(len(ids),3)
+        note='I want to talk with this 3 player next week about their performance.'
+        meeting={'title':'Selected attendees','date':'2026-11-21','meeting_type':'group','attendees':ids,'note':note}
+        raw={'target':{'scope':'group','player_id':None,'mention':'this 3 player','match_method':'selected_attendees','group_label':'selected_attendees'},
+             'topic':'Team Communication','skill':'Not Applicable','feedback_type':'Neutral/Observation','feedback':'Coach intends to discuss performance next week.',
+             'action_item':{'task':None,'deadline_text':None,'deadline_date':None},'source_text':note,'confidence':'medium'}
+        response={'structured':{'records':[raw],'warnings':[]},'finish_reason':'stop'}
+        with tempfile.TemporaryDirectory() as directory, patch.object(main,'store',Store(os.path.join(directory,'selected.sqlite3'))):
+            with TestClient(main.app) as client, patch('backend.aivana.open_request',return_value=io.BytesIO(json.dumps(response).encode())) as provider:
+                result=client.post('/api/extract',json={**meeting,'mode':'live'})
+                self.assertEqual(result.status_code,200)
+                prompt=json.loads(provider.call_args.args[1]['prompt'])
+                self.assertEqual({p['id'] for p in prompt['selected_attendees']},set(ids))
+                self.assertEqual(prompt['selected_attendee_count'],3)
+                self.assertEqual(provider.call_count,1)
+                extracted=result.json()
+                self.assertEqual(len(extracted['items']),3)
+                self.assertEqual(len({i['display_group']['id'] for i in extracted['items']}),1)
+                body={**meeting,'items':extracted['items'],'origin':'aivana','extraction_id':extracted['extraction_id']}
+                self.assertEqual(client.post('/api/meetings',json=body).status_code,422)
+                saved=client.post('/api/meetings',json={**body,'approved':True})
+                self.assertEqual(saved.status_code,201)
+                self.assertEqual(client.get('/api/meetings').json(),[saved.json()])
     @classmethod
     def setUpClass(cls):
         cls.bootstrap = tempfile.TemporaryDirectory()
