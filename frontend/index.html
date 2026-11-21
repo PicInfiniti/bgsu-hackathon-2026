@@ -3,66 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Plan team travel for away games with picInfiniti." />
-    <title>Away-Game Travel Planner · picInfiniti</title>
+    <meta name="theme-color" content="#4f2c1d" />
+    <title>Falcon Follow-up | Coach Meeting Prototype</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%234f2c1d'/%3E%3Cpath d='M17 15h32v9H27v8h18v9H27v12H17z' fill='%23fd5000'/%3E%3C/svg%3E" />
   </head>
-  <body>
-    <header class="topbar">
-      <a class="brand" href="/" aria-label="picInfiniti home"><span class="brand-mark" aria-hidden="true">∞</span> picInfiniti</a>
-      <span class="event">BGSU Hackathon 2026</span>
-    </header>
-    <main>
-      <section class="intro">
-        <p class="eyebrow">AWAY-GAME TRAVEL PLANNER</p>
-        <h1>Good games start<br />with a good plan.</h1>
-        <p>Bring your team together. Start with the trip details, then check who’s traveling and how many buses you’ll need.</p>
-        <p id="connection" class="connection" role="status">Connecting to the backend…</p>
-      </section>
-      <div class="workspace">
-        <section class="panel" aria-labelledby="trip-heading">
-          <div class="panel-heading"><div><p class="eyebrow">THE DETAILS</p><h2 id="trip-heading">Plan your trip</h2></div><span class="tag">Starter</span></div>
-          <form id="trip-form">
-            <div class="field-grid">
-              <label>Opponent<input name="opponent" required maxlength="120" placeholder="Opponent name" autocomplete="off" /></label>
-              <label>Game date<input name="game_date" type="date" required /></label>
-            </div>
-            <fieldset>
-              <legend>Who’s traveling?</legend>
-              <div class="field-grid three">
-                <label>Players<input name="players" type="number" min="0" max="500" step="1" required placeholder="0" /></label>
-                <label>Coaches<input name="coaches" type="number" min="0" max="500" step="1" required placeholder="0" /></label>
-                <label>Staff<input name="staff" type="number" min="0" max="500" step="1" required placeholder="0" /></label>
-              </div>
-            </fieldset>
-            <div class="field-grid">
-              <label>Trip budget (USD)<input name="budget" type="number" min="0.01" max="9999999999.99" step="0.01" required placeholder="e.g. 5000" /></label>
-              <label>Departure constraint<input name="departure_constraint" required maxlength="500" placeholder="e.g. Leave after 3 PM Friday" /></label>
-            </div>
-            <details class="settings" open>
-              <summary>Travel assumptions</summary>
-              <p class="help">Editable starting values, pending the organizers’ allocation rules.</p>
-              <div class="field-grid three">
-                <label>Seats per bus<input name="seats_per_bus" type="number" min="1" max="100" step="1" value="50" required /></label>
-                <label>People per room<input name="room_occupancy" type="number" min="1" max="8" step="1" value="2" required /></label>
-                <label>Meal allowance (USD)<input name="meal_allowance" type="number" min="0" max="999999.99" step="0.01" value="20" required /></label>
-              </div>
-            </details>
-            <p id="form-error" class="error" role="alert" hidden></p>
-            <button type="submit">Check trip details</button>
-            <p class="help">Use synthetic trip details only. This starter does not save submissions.</p>
-          </form>
-        </section>
-        <aside class="panel overview" aria-labelledby="overview-heading">
-          <p class="eyebrow">YOUR TRIP AT A GLANCE</p>
-          <h2 id="overview-heading">Trip preview</h2>
-          <div id="preview" aria-live="polite" aria-atomic="true">
-            <div class="empty-state"><span class="empty-icon" aria-hidden="true">∞</span><h3>A little planning goes a long way.</h3><p>Enter your trip details to check traveler totals and bus capacity.</p></div>
-          </div>
-          <div class="notice"><h3>Package estimates are next</h3><p>Hotel, meal, and bus pricing will come from the organizers’ synthetic data pack. Aivana parsing and recommendations are not connected yet.</p></div>
-        </aside>
-      </div>
-    </main>
-    <footer>picInfiniti <span>Built for the journey. Ready for the game.</span></footer>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+  <body><div id="app"></div><script type="module" src="/src/entry.js"></script></body>
 </html>
