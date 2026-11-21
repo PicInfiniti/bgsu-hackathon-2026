@@ -10,6 +10,7 @@ import { appliesTo, reviewIssues, reviewPriority, highlightSource } from './revi
 import { meetingTypeForAttendees } from './meeting-input.js';
 import { activityForDate } from './calendar-activity.js';
 import { upcomingActions } from './upcoming.js';
+import { filterActions } from './action-board.js';
 
 const $ = (s) => document.querySelector(s);
 const escape = (s = '') => String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -102,7 +103,17 @@ document.querySelector('#app').innerHTML = `
         </div>
         <div id="player-detail" hidden><button class="secondary back-to-roster" id="back-to-roster">Back to players</button><div class="panel player-detail-panel"><div id="player-heading"></div><label class="sensitive-toggle"><input id="show-sensitive" type="checkbox"> Show sensitive records</label><div id="timeline"></div><div class="prep-box"><h3>Prepare for the next conversation</h3><p>Build a brief from this player's approved records.</p><button id="prep" class="secondary">Build preparation brief</button><div id="prep-text" class="prep-content" aria-live="polite"></div></div></div></div>
       </section>
-      <section id="tasks" class="view" hidden><div class="section-heading"><div><p class="eyebrow">A LITTLE FOLLOW-THROUGH</p><h2>Action board</h2></div><label>Show <select id="task-filter"><option value="open">Open actions</option><option value="overdue">Overdue</option><option value="done">Completed</option><option value="all">All actions</option></select></label></div><label class="sensitive-toggle"><input id="show-sensitive-actions" type="checkbox"> Show sensitive actions</label><p id="task-hidden-note" class="sensitive-notice" hidden></p><div id="task-list"></div></section>
+      <section id="tasks" class="view" hidden>
+        <div class="section-heading action-heading"><div><p class="eyebrow">A LITTLE FOLLOW-THROUGH</p><h2>Action board</h2><p class="action-caption">Find a follow-up. Open its title for the source and details.</p></div><label>Status<select id="task-filter"><option value="open">Open actions</option><option value="overdue">Overdue</option><option value="done">Completed</option><option value="all">All actions</option></select></label></div>
+        <div class="panel action-board"><div class="action-filters">
+          <label>Search<input id="task-search" type="search" placeholder="Action, player, jersey, or category"></label>
+          <label>Player<select id="task-player"><option value="">All players</option>${demo.players.map(p => `<option value="${escape(p.id)}">#${p.number} ${escape(p.name)}</option>`).join('')}</select></label>
+          <label>Category<select id="task-category"><option value="">All categories</option></select></label>
+          <label>Sort by<select id="task-sort"><option value="due">Deadline · earliest first</option><option value="player">Player name</option><option value="recent">Newest meeting</option></select></label>
+        </div><div class="action-results-bar"><p id="task-results" role="status"></p><button id="reset-task-filters" class="rail-link" type="button">Reset filters</button></div>
+        <div class="action-table-wrap"><table class="action-table"><thead><tr><th scope="col">Action / source</th><th scope="col">Player</th><th scope="col">Category</th><th scope="col">Deadline</th><th scope="col">Status</th><th scope="col">Update</th></tr></thead><tbody id="task-list"></tbody></table></div></div>
+        <label class="sensitive-toggle"><input id="show-sensitive-actions" type="checkbox"> Show sensitive actions</label><p id="task-hidden-note" class="sensitive-notice" hidden></p>
+      </section>
       <footer><span>FALCON FOLLOW-UP <b> / </b> picInfiniti</span><span>Every conversation deserves a next step. · Synthetic data only</span></footer>
     </main>
   </div>`;
@@ -228,12 +239,27 @@ function render() {
   const hiddenCount = playerRecords.filter(i => i.sensitive && !$('#show-sensitive').checked).length;
   const history = playerRecords.filter(i => !i.sensitive || $('#show-sensitive').checked).sort((a,b) => b.meeting.date.localeCompare(a.meeting.date));
   $('#timeline').innerHTML = (hiddenCount ? `<p class="sensitive-notice">${hiddenCount} sensitive record${hiddenCount === 1 ? '' : 's'} hidden.</p>` : '') + (history.map(i => recordMarkup(i,i.meeting,$('#show-sensitive').checked)).join('') || (hiddenCount ? '<div class="empty">Enable sensitive records above to review the hidden entries.</div>' : '<div class="empty">No reviewed records yet. Save a meeting for this player to start their timeline.</div>'));
-  const filter = $('#task-filter').value;
-  const filtered = actions.filter(i => !i.sensitive || $('#show-sensitive-actions').checked).filter(i => filter === 'all' || (filter === 'open' && !i.completed) || (filter === 'done' && i.completed) || (filter === 'overdue' && overdue(i))).sort((a,b) => (a.due_date || '9999').localeCompare(b.due_date || '9999'));
-  const hiddenActions = actions.filter(i => i.sensitive && !$('#show-sensitive-actions').checked && (filter === 'all' || filter === 'open' && !i.completed || filter === 'done' && i.completed || filter === 'overdue' && overdue(i))).length;
+  renderActionBoard(actions);
+
+}
+function renderActionBoard(actions = items().filter(i => i.kind === 'action')) {
+  const categorySelect = $('#task-category'), selectedCategory = categorySelect.value;
+  const available = actions.filter(i => !i.sensitive || $('#show-sensitive-actions').checked);
+  const categoryNames = [...new Set(available.flatMap(i => [i.skill, i.topic]).filter(Boolean))].sort();
+  categorySelect.innerHTML = '<option value="">All categories</option>' + categoryNames.map(c => `<option value="${escape(c)}">${escape(c)}</option>`).join('');
+  categorySelect.value = categoryNames.includes(selectedCategory) ? selectedCategory : '';
+  const options = {status: $('#task-filter').value, search: $('#task-search').value, player: $('#task-player').value, category: categorySelect.value, sort: $('#task-sort').value, showSensitive: $('#show-sensitive-actions').checked, today: today()};
+  const filtered = filterActions(actions, demo.players, options);
+  const hiddenActions = filterActions(actions, demo.players, {...options, showSensitive:true}).filter(i => i.sensitive && !options.showSensitive).length;
   $('#task-hidden-note').hidden = !hiddenActions;
   $('#task-hidden-note').textContent = `${hiddenActions} sensitive action${hiddenActions === 1 ? '' : 's'} hidden in this view.`;
-  $('#task-list').innerHTML = filtered.map(i => recordMarkup(i,i.meeting,$('#show-sensitive-actions').checked)).join('') || '<div class="panel empty">No actions in this view.</div>';
+  $('#task-results').textContent = `${filtered.length} action${filtered.length === 1 ? '' : 's'} shown · ${available.filter(i => !i.completed).length} open · ${available.filter(overdue).length} overdue`;
+  $('#task-list').innerHTML = filtered.map(i => {
+    const m = i.meeting;
+    const sourceNote = m.items.some(item => item.sensitive) && !options.showSensitive ? 'Full note contains sensitive content. Enable sensitive actions to view it.' : m.note;
+    const ids = i.player_ids?.length ? i.player_ids : [i.player_id];
+    return `<tr><td class="action-description"><details><summary>${escape(i.text)}</summary><div class="action-source"><strong>${escape(m.title)}</strong><p>Meeting: ${escape(m.date)}${m.id.startsWith('m-seed-') ? ' · Earlier practice pack' : ''}</p><blockquote>${escape(i.quote)}</blockquote><details><summary>Full meeting note</summary><p class="action-note">${escape(sourceNote)}</p></details></div></details>${i.sensitive ? '<span class="badge sensitive">Sensitive</span>' : ''}</td><td><div class="action-players">${ids.map(id => `<button class="action-player-link" data-player="${escape(id)}">${escape(name(id))}<small>#${escape(player(id)?.number ?? '')} · ${escape(player(id)?.position ?? '')}</small></button>`).join('')}</div></td><td><span class="action-category">${escape(i.skill || 'Uncategorized')}</span>${i.topic && i.topic !== i.skill ? `<small class="action-topic">${escape(i.topic)}</small>` : ''}</td><td class="action-deadline ${overdue(i) ? 'late' : ''}">${i.due_date ? `<time datetime="${escape(i.due_date)}">${escape(new Date(i.due_date + 'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}))}</time>${i.due_date === today() && !i.completed ? '<small>Today</small>' : ''}` : '<span class="undated">No deadline</span>'}</td><td>${statusBadge(i)}</td><td><button class="secondary compact" data-meeting="${escape(m.id)}" data-item="${escape(i.id)}" aria-label="${i.completed ? 'Reopen' : 'Complete'} action: ${escape(i.text)}" ${busy ? 'disabled' : ''}>${i.completed ? 'Reopen' : 'Complete'}</button></td></tr>`;
+  }).join('') || '<tr><td colspan="6" class="empty">No matching actions. Try another search or reset the filters.</td></tr>';
 }
 function switchView(next) {
   view = next;
@@ -368,7 +394,7 @@ $('#review').addEventListener('click', async e => {
     meetings.unshift(meeting);
     draft = []; extractionId = null; extractionWarnings = []; renderReview(); cancelPrep(); render(); notify('Meeting approved and saved. Its records are now in player timelines and the action board.');
   } catch (error) { notify(error.message,true); if ($('#save')) $('#save').disabled = false; }
-  finally { busy = false; $('#extract').disabled = !connected; }
+  finally { busy = false; $('#extract').disabled = !connected; renderActionBoard(); }
 });
 document.addEventListener('click', async e => {
   const summary = e.target.closest('[data-stat]');
@@ -381,7 +407,7 @@ document.addEventListener('click', async e => {
     } else if (destination === 'players') {
       playerDetailOpen = false; render(); switchView('players'); target = $('#players-title');
     } else {
-      $('#task-filter').value = destination; render(); switchView('tasks'); target = $('#tasks h2');
+      $('#task-search').value = ''; $('#task-player').value = ''; $('#task-category').value = ''; $('#task-filter').value = destination; render(); switchView('tasks'); target = $('#tasks h2');
     }
     target.tabIndex = -1;
     target.focus({preventScroll: true});
@@ -401,10 +427,13 @@ document.addEventListener('click', async e => {
       meetings = meetings.map(m => m.id === updated.id ? updated : m);
       cancelPrep(); render(); notify('Action status updated.');
     } catch (error) { action.disabled = false; notify(error.message,true); }
-    finally { busy = false; $('#extract').disabled = !connected; }
+    finally { busy = false; $('#extract').disabled = !connected; renderActionBoard(); }
   }
 });
-$('#task-filter').addEventListener('change',render);
+$('#task-filter').addEventListener('change', () => renderActionBoard());
+$('#task-search').addEventListener('input', () => renderActionBoard());
+['#task-player','#task-category','#task-sort'].forEach(id => $(id).addEventListener('change', () => renderActionBoard()));
+$('#reset-task-filters').addEventListener('click', () => { $('#task-filter').value = 'open'; $('#task-search').value = ''; $('#task-player').value = ''; $('#task-category').value = ''; $('#task-sort').value = 'due'; renderActionBoard(); });
 $('#show-sensitive').addEventListener('change',render);
 $('#show-sensitive-actions').addEventListener('change',render);
 $('#mode').addEventListener('change', e => {
