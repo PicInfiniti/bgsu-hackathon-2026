@@ -104,6 +104,14 @@ def validate_item(raw, meeting):
         item['warnings'] = [str(w)[:500] for w in raw.get('warnings', [])][:20] if isinstance(raw.get('warnings'), list) else []
         if shared:
             item['player_ids'] = list(meeting['attendees'])
+    if raw.get('film_note_id') is not None:
+        if not isinstance(raw['film_note_id'],int) or isinstance(raw['film_note_id'],bool) or raw['film_note_id']<1:
+            raise ValueError('Invalid film source note.')
+        item['film_note_id']=raw['film_note_id']
+        tags=raw.get('tags',[])
+        if not isinstance(tags,list) or len(tags)>3 or any(not isinstance(tag,str) or len(tag)>40 for tag in tags):
+            raise ValueError('Film source tags must be up to three short labels.')
+        item['tags']=list(tags)
     item.update(id=str(uuid.uuid4()), completed=False)
     return item
 
@@ -141,6 +149,25 @@ class Store:
         meeting = validate_meeting(raw, require_items=True)
         meeting['id'] = str(uuid.uuid4())
         with self.connect() as db:
+            home_note_id = raw.get('home_note_id')
+            if home_note_id is not None:
+                if not isinstance(home_note_id, int) or isinstance(home_note_id, bool):
+                    raise ValueError('Invalid notebook note ID.')
+                source_note = db.execute('SELECT meeting_id FROM notes WHERE id=?', (home_note_id,)).fetchone()
+                if not source_note:
+                    raise ValueError('Notebook note not found.')
+                if source_note[0]:
+                    raise ValueError('This notebook note already has an approved meeting. Open the existing meeting.')
+            for item in meeting['items']:
+                if not item.get('film_note_id'): continue
+                if not db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='film_notes'").fetchone():
+                    raise ValueError('Film source note not found.')
+                source=db.execute('SELECT text FROM film_notes WHERE id=?',(item['film_note_id'],)).fetchone()
+                member=db.execute('SELECT 1 FROM film_note_players WHERE film_note_id=? AND player_id=?',(item['film_note_id'],item.get('player_id'))).fetchone()
+                if not source or not member or item['quote'] not in source[0]:
+                    raise ValueError('Film source changed. Review its text and selected players again.')
+                from .film import SENSITIVE_WORDS
+                item['sensitive']=bool(item.get('sensitive') or SENSITIVE_WORDS.search(source[0]+' '+' '.join(item.get('tags',[]))))
             extraction_id = raw.get('extraction_id')
             baseline = []
             if extraction_id:
@@ -162,7 +189,7 @@ class Store:
                     db.execute('INSERT INTO meeting_media VALUES (?, ?, ?, ?, ?)', (image_id, meeting['id'], kind, mime, data))
                     meeting['source_images'].append({'id': image_id, 'kind': kind})
             db.execute('INSERT INTO meetings VALUES (?, ?)', (meeting['id'], json.dumps(meeting)))
-            fields = ('player_id', 'player_ids', 'kind', 'text', 'topic', 'skill', 'quote', 'due_date', 'deadline_text', 'confidence', 'scope')
+            fields = ('player_id', 'player_ids', 'kind', 'text', 'topic', 'skill', 'quote', 'due_date', 'deadline_text', 'confidence', 'scope', 'film_note_id', 'tags')
             originals = {i['id']: i for i in baseline}
             seen = set()
             for original, saved in zip(raw['items'], meeting['items']):
@@ -184,6 +211,8 @@ class Store:
                     changes = {key: {'before': before.get(key), 'after': None} for key in fields if key in before}
                     db.execute('INSERT INTO record_edits VALUES (?, ?, ?, ?, ?, ?)',
                                (str(uuid.uuid4()), meeting['id'], extraction_id, draft_id, 'deleted', json.dumps(changes)))
+            if home_note_id is not None:
+                db.execute('UPDATE notes SET meeting_id=? WHERE id=?', (meeting['id'],home_note_id))
             if extraction_id:
                 db.execute('UPDATE extraction_runs SET saved_meeting_id = ? WHERE id = ?', (meeting['id'], extraction_id))
         meeting['items'] = annotate_shared_records(meeting['items'], meeting, DEMO['players'])

@@ -6,6 +6,10 @@ import './meeting-calendar.scss';
 import './tour.scss';
 import './workspace-header.scss';
 import './overview.scss';
+import './home-redesign.scss';
+import './film.scss';
+import { createFilmRoom } from './film-room.js';
+import { createHome } from './home.js';
 import './note-media.scss';
 import { mountNoteMedia } from './note-media.js';
 import './ask-panel.scss';
@@ -65,6 +69,7 @@ const icon = (name) => {
     search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',
     chat: '<path d="M21 11a8 8 0 0 1-8 8H7l-4 3V11a9 9 0 0 1 18 0Z"/><path d="M7 10h10M7 14h6"/>',
     team: '<circle cx="12" cy="7" r="3"/><path d="M7 21v-3a5 5 0 0 1 10 0v3M4 6a3 3 0 0 0 0 6M20 6a3 3 0 0 1 0 6M2 20v-3a4 4 0 0 1 3-4M22 20v-3a4 4 0 0 0-3-4"/>',
+    film: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M3 15h18M7 5v4M12 5v4M17 5v4M7 15v4M12 15v4M17 15v4"/>',
     football: '<path d="M2 12C6.5 3 17.5 3 22 12c-4.5 9-15.5 9-20 0Z" fill="currentColor" fill-opacity=".08"/><path d="M6 6.9a11 11 0 0 1 0 10.2M18 6.9a11 11 0 0 0 0 10.2"/><path d="M9 12h6m-5-1.6v3.2m2-3.2v3.2m2-3.2v3.2" stroke-width="1.4"/>',
     dashboard: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="11" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="18" width="7" height="3" rx="1"/>',
     home: '<path d="m3 10 9-7 9 7v10H3z"/><path d="M9 20v-7h6v7"/>',
@@ -85,8 +90,9 @@ document.querySelector('#app').innerHTML = `
     <div class="workspace-label">THE FOOTBALL NOTEBOOK</div>
     <nav aria-label="Main navigation">
       <button data-view="home" class="active">${icon('home')} Home</button>
-      <button data-view="desk">${icon('dashboard')} Overview</button>
+      <button data-view="desk" hidden>${icon('dashboard')} Overview</button>
       <button data-view="meeting-library">${icon('note')} Meetings</button>
+      <button data-view="film">${icon('film')} Film room</button>
       <button data-view="players">${icon('people')} Players</button>
       <button data-view="tasks">${icon('check')} Actions <b id="nav-count"></b></button>
       <button data-view="strategy">${icon('football')} Strategy</button>
@@ -95,26 +101,43 @@ document.querySelector('#app').innerHTML = `
     <div class="sidebar-bottom"><span class="team-avatar">pi</span><div>picInfiniti<small>Football Meeting Tracker</small></div></div>
   </aside>
   <div class="shell">
-    <header class="topbar"><div class="header-context"><p class="header-eyebrow">COACH’S NOTEBOOK</p><h1 id="page-title">Home</h1><p id="page-date"></p></div><div class="header-actions"><label class="mode-control">Mode <select id="mode"><option value="demo">Demo · prepared samples</option><option value="live">Live · Aivana</option></select></label><button class="header-ask" id="header-ask" type="button" aria-label="Ask Aivana about a player"><span aria-hidden="true">✦</span><span>Ask Aivana</span></button><button class="secondary tour-replay" id="replay-tour" type="button" aria-label="Replay welcome tour">? <span>Tour</span></button><button class="primary" id="new-meeting" type="button" aria-label="Create a new meeting">${icon('plus')} New meeting</button><a class="profile-link" href="/login" aria-label="Open coach sign-in preview">${icon('user')}</a></div></header>
+    <header class="topbar"><div class="header-context"><p class="header-eyebrow">COACH’S NOTEBOOK</p><h1 id="page-title">Home</h1><p id="page-date"></p></div><div class="header-actions"><label class="mode-control">Mode <select id="mode"><option value="demo">Demo · prepared samples</option><option value="live">Live · Aivana</option></select></label><button class="header-ask" id="header-ask" type="button" aria-label="Ask Aivana about a player"><span aria-hidden="true">✦</span><span>Ask Aivana</span></button><button class="secondary tour-replay" id="replay-tour" type="button" aria-label="Replay welcome tour"><span>Tour</span> ?</button><button class="primary" id="new-meeting" type="button" aria-label="Create a new meeting">${icon('plus')} New meeting</button><a class="profile-link" href="/login" aria-label="Open coach sign-in preview">${icon('user')}</a></div></header>
     <div id="status-toast" class="status-toast" role="status" aria-live="polite" hidden><span id="status-toast-text"></span><button class="icon-button" id="close-status-toast" aria-label="Dismiss notification">×</button></div>
     <main>
 
       <div id="message" role="status" aria-live="polite" hidden></div>
       <section id="home" class="view">
         <div class="home-grid">
-          <aside class="home-col home-left"><section class="panel overview-types"><div class="section-heading"><h2>Coach’s notebook</h2><span class="muted">Saved meetings</span></div><form id="overview-search-form" class="overview-search"><label for="overview-search">Search saved meetings</label><div><input id="overview-search" type="search" placeholder="Search notes or players…" maxlength="300"><button class="secondary" type="submit" aria-label="Search saved meetings">${icon('search')}</button></div></form><div id="overview-meeting-types"></div></section><section class="panel overview-conversations"><div id="recent-heading" class="section-heading"><div><p class="eyebrow">THE RUNNING RECORD</p><h2>Recent conversations</h2><span id="overview-recent-count" class="recent-count"></span></div><button class="rail-link" data-view="meetings">Write a note</button></div><div id="recent" class="recent-list"></div></section><section class="panel overview-checkins"><div class="section-heading"><div><p class="eyebrow">KEEP THE CONNECTION</p><h2>Players to check in with</h2></div>${icon('people')}</div><div class="checkin-controls"><label>Look back<select id="checkin-window"><option value="7">7 days</option><option value="14" selected>14 days</option><option value="30">30 days</option><option value="60">60 days</option><option value="90">90 days</option></select></label><label>Count meetings<select id="checkin-type"><option value="individual">Individual</option><option value="">Any meeting type</option><option value="group">Group</option><option value="team">Team</option></select></label></div><div id="overview-checkins"></div><button class="rail-link" data-view="players">Browse the football roster</button></section></aside>
-          <div class="home-col home-center"><div id="overview-editor"></div><section class="stats" aria-label="Workspace summary"><a href="#meeting-library" data-stat="meetings"><strong id="meeting-count">0</strong><span>Saved meetings</span><small>Reviewed conversations</small></a><a href="#tasks" data-stat="open"><strong id="open-count">0</strong><span>Open actions</span><small>Ready to follow up</small></a><a href="#tasks" data-stat="overdue" class="urgent"><strong id="overdue-count">0</strong><span>Needs follow-up</span><small id="clock-note"></small></a><a href="#players" data-stat="players"><strong id="players-count">0</strong><span>Players reached</span><small>Of ${demo.players.length} fictional players</small></a></section></div>
-          <aside class="home-col home-right"><section class="calendar-panel panel"><div class="calendar-heading"><h2 id="calendar-title"></h2><div><button class="icon-button" id="calendar-prev" aria-label="Previous month">${icon('chevron')}</button><button class="icon-button" id="calendar-next" aria-label="Next month">${icon('chevron')}</button></div></div><p class="calendar-caption">Saved conversations & action deadlines</p><div class="calendar-grid" id="calendar"></div><div class="calendar-key"><span class="meeting-individual">Individual</span><span class="meeting-group">Group</span><span class="meeting-team">Team</span><span class="action-due-key">Action due</span></div><div id="calendar-activities" class="calendar-activities" aria-live="polite" hidden></div></section><section class="panel upcoming-panel"><div class="section-heading"><h2>Next up</h2>${icon('calendar')}</div><p class="upcoming-caption">Open actions due today or later</p><div id="upcoming-list"></div><button class="rail-link" data-stat="open">View all open actions</button></section><section class="followup-panel panel"><div class="section-heading"><h2>Needs attention</h2>${icon('check')}</div><div id="radar-list"></div><button class="rail-link" data-stat="overdue">Review overdue actions</button></section></aside>
+          <div class="home-col home-left">
+            <section class="panel notebooks-card"><div class="section-heading"><h2>Coach's notebook</h2></div><label class="notes-search"><span class="sr-only">Search all notes</span><input id="notes-search" type="search" placeholder="Search all notes" autocomplete="off"></label><div id="notebook-list" class="notebook-list"></div><div id="folder-list" class="folder-list"></div></section>
+            <section class="panel recent-card"><div class="section-heading"><h2 id="home-recent-heading">Recent notes</h2><span id="recent-count" class="muted"></span></div><div id="home-recent" class="recent-list"></div></section>
+          </div>
+          <div class="home-col home-center" id="note-editor-root"></div>
+          <div class="home-col home-right">
+            <section class="panel mini-cal-card"><div id="mini-calendar"></div></section>
+            <section class="panel next-up-card"><div class="section-heading"><h2>Next up</h2>${icon('calendar')}</div><div id="next-up"></div></section>
+            <section class="panel watch-card"><div class="section-heading"><h2>Needs attention</h2>${icon('check')}</div><div id="watch-list"></div><button class="rail-link" type="button" data-view="tasks">All homework →</button></section>
+          </div>
         </div>
       </section>
       <section id="desk" class="view" hidden>
         <div class="overview-lead"><div><p class="eyebrow">THE COACH'S DASHBOARD</p><h2>A clear view of your team.</h2><p>Conversations captured. Next steps ready.</p></div><button class="secondary" data-view="meetings">${icon('note')} Open meeting notebook</button></div>
-        <div class="dashboard-slot" data-dashboard-slot="stats"></div>
+            <section class="stats" aria-label="Workspace summary"><a href="#meeting-library" data-stat="meetings"><strong id="meeting-count">0</strong><span>Saved meetings</span><small>Reviewed conversations</small></a><a href="#tasks" data-stat="open"><strong id="open-count">0</strong><span>Open actions</span><small>Ready to follow up</small></a><a href="#tasks" data-stat="overdue" class="urgent"><strong id="overdue-count">0</strong><span>Needs follow-up</span><small id="clock-note"></small></a><a href="#players" data-stat="players"><strong id="players-count">0</strong><span>Players reached</span><small>Of ${demo.players.length} fictional players</small></a></section>
         <div class="overview-grid"><div class="overview-main">
-          <div class="panel overview-conversation-hub"><div class="dashboard-slot" data-dashboard-slot="upcoming"></div><div class="dashboard-slot" data-dashboard-slot="recent"></div></div>
-          <div class="dashboard-slot" data-dashboard-slot="checkins"></div><div class="dashboard-slot" data-dashboard-slot="types"></div>
-        </div><aside class="overview-aside"><div class="dashboard-slot" data-dashboard-slot="calendar"></div><div class="dashboard-slot" data-dashboard-slot="attention"></div></aside></div>
+          <div class="panel overview-conversation-hub">
+            <section class="upcoming-panel"><div class="section-heading"><h2>Upcoming</h2>${icon('calendar')}</div><p class="upcoming-caption">Open actions due today or later</p><div id="upcoming-list"></div><button class="rail-link" data-stat="open">View all open actions</button></section>
+          <section class="overview-conversations"><div id="recent-heading" class="section-heading"><div><p class="eyebrow">THE RUNNING RECORD</p><h2>Recent conversations</h2><span id="overview-recent-count" class="recent-count"></span></div><button class="rail-link" data-view="meetings">Write a note</button></div><div id="recent" class="recent-list"></div></section>
+          </div>
+          <section class="panel overview-checkins"><div class="section-heading"><div><p class="eyebrow">KEEP THE CONNECTION</p><h2>Players to check in with</h2></div>${icon('people')}</div><div class="checkin-controls"><label>Look back<select id="checkin-window"><option value="7">7 days</option><option value="14" selected>14 days</option><option value="30">30 days</option><option value="60">60 days</option><option value="90">90 days</option></select></label><label>Count meetings<select id="checkin-type"><option value="individual">Individual</option><option value="">Any meeting type</option><option value="group">Group</option><option value="team">Team</option></select></label></div><div id="overview-checkins"></div><button class="rail-link" data-view="players">Browse the football roster</button></section>
+          <section class="panel overview-types"><div class="section-heading"><h2>Your conversations</h2><span class="muted">All saved meetings</span></div><div id="overview-meeting-types"></div></section>
+        </div><aside class="overview-aside">
+
+            <section class="calendar-panel panel"><div class="calendar-heading"><h2 id="calendar-title"></h2><div><button class="icon-button" id="calendar-prev" aria-label="Previous month">${icon('chevron')}</button><button class="icon-button" id="calendar-next" aria-label="Next month">${icon('chevron')}</button></div></div><p class="calendar-caption">Saved conversations & action deadlines</p><div class="calendar-grid" id="calendar"></div><div class="calendar-key"><span class="meeting-individual">Individual</span><span class="meeting-group">Group</span><span class="meeting-team">Team</span><span class="action-due-key">Action due</span></div><div id="calendar-activities" class="calendar-activities" aria-live="polite" hidden></div></section>
+
+            <section class="followup-panel panel"><div class="section-heading"><h2>Needs follow-up</h2>${icon('check')}</div><div id="radar-list"></div><button class="rail-link" data-stat="overdue">Review overdue actions</button></section>
+        </aside></div>
       </section>
+      <section id="home-schedule" class="view" hidden><div id="home-schedule-root"></div></section>
       <section id="meeting-library" class="view" hidden>
         <div id="meeting-library-list"><h2 id="meetings-title" class="sr-only" tabindex="-1">Meetings</h2>
           <div class="library-layout"><div class="library-main"><div class="meeting-library-tools"><div class="meeting-type-chips" role="group" aria-label="Filter meetings by type">${[['','All types'],['individual','Individual'],['group','Group'],['team','Team']].map(([type,label])=>`<button type="button" data-calendar-type="${type}" aria-pressed="${!type}">${label}</button>`).join('')}</div><div class="meeting-search-row"><label class="meeting-page-search">${icon('search')}<span class="sr-only">Search meetings</span><input id="meeting-search" type="search" placeholder="Search meetings, players or notes…" autocomplete="off"></label><div class="meeting-calendar-filter-bar" id="meeting-calendar-filter-bar" hidden><button class="secondary" id="meeting-calendar-filter-toggle" type="button" aria-expanded="false" aria-controls="meeting-filter-panel">Filters</button><div id="meeting-calendar-filter-chips" class="meeting-calendar-filter-chips"></div></div></div></div><div class="panel library-filters" id="meeting-filter-panel"><label>Meeting type<select id="meeting-type-filter"><option value="">All types</option><option value="individual">Individual</option><option value="group">Group</option><option value="team">Team</option></select></label><label>Attendee<select id="meeting-player-filter"><option value="">All players</option>${demo.players.map(p => `<option value="${p.id}">#${p.number} ${escape(p.name)}</option>`).join('')}</select></label><label>From<input id="meeting-start" type="date"></label><label>Through<input id="meeting-end" type="date"></label><label class="meeting-sort-control">Sort<select id="meeting-sort"><option value="recent">Newest date</option><option value="oldest">Oldest date</option><option value="title">Meeting title</option></select></label></div>
@@ -137,6 +160,7 @@ document.querySelector('#app').innerHTML = `
         </div>
             <section id="review-panel" class="panel review-panel"><div class="panel-heading">${icon('check')}<div><h3>A second look, before you save.</h3><p>Check the player, the meaning, and the next step.</p></div></div><div id="review"></div></section>
         </div></section>
+      <section id="film" class="view" hidden><div id="film-root"></div></section>
       <section id="players" class="view" hidden>
         <div id="player-directory">
           <h2 id="players-title" class="sr-only" tabindex="-1">Players</h2>
@@ -192,32 +216,10 @@ document.querySelector('#app').innerHTML = `
     </main>
   </div>`;
 
-// Share the live notebook cards between layouts so filters and listeners stay intact.
-const dashboardCards = [
-  ['stats','#home .stats'], ['types','#home .overview-types'], ['recent','#home .overview-conversations'],
-  ['checkins','#home .overview-checkins'], ['calendar','#home .calendar-panel'],
-  ['upcoming','#home .upcoming-panel'], ['attention','#home .followup-panel'],
-].map(([key,selector]) => {
-  const node=$(selector), slot=document.createElement('div');
-  slot.className='dashboard-slot'; slot.dataset.homeSlot=key;
-  node.replaceWith(slot); slot.after(node);
-  return {key,node,home:slot,overview:$(`[data-dashboard-slot="${key}"]`)};
-});
-function mountDashboardCards(destination) {
-  for(const card of dashboardCards) {
-    const host=destination==='home'?card.home:card.overview;
-    if(host.nextElementSibling!==card.node)host.after(card.node);
-    if(['recent','upcoming'].includes(card.key))card.node.classList.toggle('panel',destination==='home');
-  }
-  $('.upcoming-panel h2').textContent=destination==='home'?'Next up':'Upcoming';
-  $('.followup-panel h2').textContent=destination==='home'?'Needs attention':'Needs follow-up';
-  $('.overview-types h2').textContent=destination==='home'?'Coach’s notebook':'Your conversations';
-}
-
 let noteMedia;
 const noteDictation = mountNoteDictation({
   textarea:$('#note'), button:$('#note-dictate'), status:$('#note-dictation-status'), preview:$('#note-dictation-preview'), form:$('#meeting-form'), review:$('#review'),
-  canStart:() => !busy && ['home','meetings'].includes(view),
+  canStart:() => !busy && view === 'meetings',
   onStateChange:active=>{noteMedia?.voiceState(active);if(active)askPanel.cancelVoice();}
 });
 
@@ -239,6 +241,29 @@ const askPanel = createAskPanel({
     const record=document.getElementById(`record-${source.meeting_id}-${source.record_id}`);
     if(record){const disclosure=record.closest('[data-meeting-disclosure]');if(disclosure)disclosure.open=true;const details=record.querySelector('details');if(details)details.open=true;record.focus({preventScroll:true});record.scrollIntoView({block:'center',behavior:'smooth'});}
     else notify('This record is no longer visible. Reload the notebook to check its latest state.',true);
+  },
+});
+let pendingHomeNote = null;
+const homeNotebook = createHome({api,notify,getMode:()=>mode,players:demo.players,getMeetings:()=>meetings,icon,
+  switchView,openMeeting,openPlayer:openPlayerTimeline,openFilm:(id,time)=>{switchView('film');filmRoom.openFilm(id,time);},
+  reviewNote:async note=>{
+    const existing=await api(`/notes/${note.id}/meeting`,undefined,'GET');
+    if(existing){openMeeting(existing.id);return;}
+    if(note.body.length>12000){notify('Shorten this note to 12,000 characters before sending it for meeting review.',true);return;}
+    newMeeting(); pendingHomeNote=note.id;
+    $('#title').value=note.title;$('#date').value=note.note_date;$('#note').value=note.body;
+    capture();invalidate();notify('Choose attendees, then extract or review this note. Coach approval is required to save meeting records.');
+  },
+});
+const filmRoom = createFilmRoom($('#film-root'),{api,notify,players:demo.players,getMode:()=>mode,openPlayer:openPlayerTimeline,onChanged:()=>homeNotebook.refresh(),
+  openReviewDraft:({meeting,items:records})=>{
+    if(busy)return;
+    newMeeting();current=clone(meeting);
+    $('#title').value=current.title;$('#date').value=current.date;$('#meeting-type').value=current.meeting_type;$('#note').value=current.note;
+    document.querySelectorAll('[name="attendee"]').forEach(el=>el.checked=current.attendees.includes(el.value));
+    updateAttendeeSummary();origin='manual';draft=records.map(item=>({...item,id:crypto.randomUUID(),completed:false}));
+    renderReview();switchView('meetings');$('#review-panel').scrollIntoView({block:'start',behavior:'smooth'});
+    notify('Review the player, source, category and deadline. Film homework is saved only after coach approval.');
   },
 });
 $('#header-ask').setAttribute('aria-controls','coach-side-chat');
@@ -283,6 +308,7 @@ function updateAttendeeSummary() {
   $('#attendee-summary').textContent = `Attendees · ${selected.length ? selected.length <= 2 ? selected.join(', ') : `${selected.length} players selected` : 'Choose players'}`;
 }
 function loadSample(id) {
+  pendingHomeNote=null;
   noteMedia.reset();
   noteDictation.cancel();
   reviewingNoteOnly = false;
@@ -364,6 +390,7 @@ $('#player-unit-tabs').addEventListener('click', e => {
 });
 
 function render() {
+  homeNotebook.render();
   askPanel.refresh();
   $('#assistant-mode-note').textContent = mode === 'demo' ? 'Demo shows matching saved excerpts. Switch to Live for an Aivana answer.' : 'Live · Aivana answers from matching records. Questions are not saved or sent with later questions.';
   $('#assistant-send').disabled = assistantPending || !connected;
@@ -586,19 +613,20 @@ function renderActionBoard(actions = items().filter(i => i.kind === 'action')) {
   document.querySelectorAll('[data-action-status]').forEach(button => { const active = button.dataset.actionStatus === options.status; button.classList.toggle('active',active); button.setAttribute('aria-pressed',String(active)); });
 }
 function switchView(next) {
+  const enteringHome=next==='home'&&view!=='home';
   askPanel.cancelVoice();
+  if(view==='film'&&next!=='film')filmRoom.hide();
   if (next !== view) noteMedia.cancel();
   if (next !== view) noteDictation.cancel();
-  const editor = $('.meeting-workspace');
-  const editorHost = next === 'home' ? $('#overview-editor') : $('#meetings');
-  if (editor.parentElement !== editorHost) editorHost.append(editor);
-  if (next === 'home' || next === 'desk') mountDashboardCards(next);
+  if (next !== 'home') homeNotebook.cancel();
   view = next;
-  $('#page-title').textContent = ({home:'Home',desk:'Overview','meeting-library':'Meetings',meetings:'New meeting',players:'Players',tasks:'Actions',strategy:'Strategy',assistant:'Coach assistant'})[next] || 'Falcon Follow-up';
+  $('#page-title').textContent = ({home:'Home',desk:'Overview',film:'Film room','home-schedule':'Schedule','meeting-library':'Meetings',meetings:'New meeting',players:'Players',tasks:'Actions',strategy:'Strategy',assistant:'Coach assistant'})[next] || 'Falcon Follow-up';
   $('#page-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
   if (next === 'strategy') strategyRoom.show();
+  if (next === 'film') filmRoom.show();
   document.querySelectorAll('.view').forEach(el => el.hidden = el.id !== view);
   noteMedia.refresh();
+  if(enteringHome)homeNotebook.refresh();
   document.querySelectorAll('[data-view]').forEach(el => { const active = el.dataset.view === view || el.closest('nav') && view === 'meetings' && el.dataset.view === 'meeting-library'; el.classList.toggle('active', Boolean(active)); if (active) el.setAttribute('aria-current','page'); else el.removeAttribute('aria-current'); });
 }
 function cancelPrep() { prepRevision++; prepSource?.close(); prepSource = null; $('#prep').disabled = !connected; $('#prep-text').textContent = ''; }
@@ -616,13 +644,6 @@ function renderCheckIns() {
     days:Number($('#checkin-window').value), type:$('#checkin-type').value,
   }));
 }
-$('#overview-search-form').addEventListener('submit', e => {
-  e.preventDefault();
-  selectedMeetingId = null; meetingLibrarySensitive = false;
-  resetMeetingFilters(); $('#meeting-search').value = $('#overview-search').value;
-  meetingCalendarView = 'list'; renderMeetingLibrary(); switchView('meeting-library');
-  $('#meetings-title').focus();
-});
 $('#checkin-window').addEventListener('change', renderCheckIns);
 $('#checkin-type').addEventListener('change', renderCheckIns);
 function renderPlayerCalendar() {
@@ -676,7 +697,7 @@ function renderPlanning() {
   $('#upcoming-list').innerHTML = upcoming.map(i => `<button class="upcoming-item" data-player="${escape(i.player_id)}"><span class="upcoming-date">${i.due_date === today() ? 'Today' : new Date(`${i.due_date}T12:00:00`).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span><span><strong>${escape(name(i.player_id))}</strong><small>${escape(i.text)}</small></span></button>`).join('') || '<p class="radar-empty">No upcoming dated actions. Approved tasks with future deadlines will appear here.</p>';
   $('#radar-list').innerHTML = pending.map(i => `<button class="radar-item" data-player="${escape(i.player_id)}">${icon(overdue(i) ? 'check' : 'people')}<span><strong>${escape(name(i.player_id))}</strong><small>${escape(i.text)}</small><em>${i.due_date ? `Due ${escape(i.due_date)}${overdue(i) ? ' · Overdue' : ''}` : 'No deadline set'}</em></span>${icon('chevron')}</button>`).join('') || (items().some(i => i.kind === 'action' && !i.completed && i.sensitive && overdue(i)) ? '<p class="radar-empty">Sensitive overdue actions are hidden here. Open the action board to review them.</p>' : '<p class="radar-empty">No overdue actions. Future deadlines appear in Upcoming.</p>');
 }
-function newMeeting() {
+function newMeeting(destination = 'meetings') {
   noteDictation.cancel();
   if (busy) return;
   noteMedia.reset();
@@ -686,10 +707,10 @@ function newMeeting() {
   $('#sample').selectedIndex = -1;
   document.querySelectorAll('[name="attendee"]').forEach(el => el.checked = false);
   updateAttendeeSummary(); $('.attendee-picker').open = true;
-  renderReview(); switchView('meetings'); $('#title').focus();
+  renderReview(); switchView(destination); $('#title').focus();
   notify('New meeting ready. Choose attendees and add your synthetic notes. Use live mode to extract custom notes.');
 }
-$('#new-meeting').addEventListener('click', newMeeting);
+$('#new-meeting').addEventListener('click', () => newMeeting('home'));
 $('#meeting-form').addEventListener('submit', e => {
   e.preventDefault();
   if (busy || !connected) return;
@@ -789,10 +810,10 @@ $('#review').addEventListener('click', async e => {
   try {
     validMeeting(current);
     if (draft.some(i => reviewIssues(i,current).length)) throw Error('Correct the highlighted record issues before approval.');
-    const body = {...clone(current), source_images:noteMedia.sources(), approved:true, origin, extraction_id:extractionId, items:clone(draft), ...(reviewingNoteOnly ? {note_only:true} : {})};
+    const body = {...clone(current), source_images:noteMedia.sources(), ...(pendingHomeNote?{home_note_id:pendingHomeNote}:{}), approved:true, origin, extraction_id:extractionId, items:clone(draft), ...(reviewingNoteOnly ? {note_only:true} : {})};
     busy = true; e.target.disabled = true;
     const meeting = await api('/meetings',body);
-    meetings.unshift(meeting); noteMedia.reset(); clearAssistant();
+    meetings.unshift(meeting); pendingHomeNote=null; homeNotebook.refresh(); noteMedia.reset(); clearAssistant();
     reviewingNoteOnly = false; draft = []; extractionId = null; extractionWarnings = []; renderReview(); cancelPrep(); render(); openMeeting(meeting.id); notify(meeting.note_only ? 'Meeting note saved. The original conversation is now in each attendee’s timeline.' : 'Meeting approved and saved. Its records are now in player timelines and the action board.');
   } catch (error) { notify(error.message,true); if ($('#save')) $('#save').disabled = false; }
   finally { busy = false; $('#extract').disabled = !connected; $('#review-meeting').disabled = !connected; renderActionBoard(); }
@@ -855,6 +876,8 @@ $('#reset-task-filters').addEventListener('click', () => { $('#show-sensitive-ac
 $('#show-sensitive').addEventListener('change',render);
 $('#show-sensitive-actions').addEventListener('change',render);
 $('#mode').addEventListener('change', e => {
+  filmRoom.cancelPending();
+  homeNotebook.cancel();
   noteMedia.cancel();
   noteDictation.cancel();
   if (busy) { e.target.value = mode; return; }

@@ -41,15 +41,15 @@
   .ask-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 16px; border-top: 1px solid #e9ded0;
     button { background: #fff9f1; border: 1px solid #e3d2ba; border-radius: 999px; padding: 5px 9px; font-size: .68rem; color: #936e4b; &:hover { background: #fff0de; } }
   }
-  .ask-form { padding: 0 16px; textarea { font-size: .82rem; resize: vertical; max-height: 130px; min-height: 64px; line-height: 1.5; } >div { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 7px; } [data-send-status] { font-size: .67rem; color: #9d785a; margin: 0; } [data-send] { background: #e87526; border: 1px solid #dc6c20; color: #351e0e; border-radius: 8px; font-size: .77rem; font-weight: 700; padding: 8px 13px; white-space: nowrap; } }
+  .ask-form { display: grid; grid-template-columns: minmax(0,1fr); gap: 6px; flex-shrink: 0; min-width: 0; padding: 0 16px; textarea { display: block; width: 100%; min-width: 0; margin: 0; font-size: .82rem; resize: vertical; max-height: 130px; min-height: 64px; line-height: 1.5; } >div { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 7px; } [data-send-status] { font-size: .67rem; color: #9d785a; margin: 0; } [data-send] { background: #e87526; border: 1px solid #dc6c20; color: #351e0e; border-radius: 8px; font-size: .77rem; font-weight: 700; padding: 8px 13px; white-space: nowrap; } }
   .ask-footer { padding: 10px 16px 14px; margin: 0; font-size: .61rem; line-height: 1.6; color: #ad957e; }
 }
 @media (min-width:1300px) { body.ask-open .workspace-app { .shell { margin-right: 410px; } } }
 @media (max-width:680px) { .ask-panel { width: 100%; } }
 
 .ask-panel .ask-form {
-  .ask-voice-controls { flex-wrap: wrap; }
-  .ask-mic { display: inline-flex; align-items: center; gap: 5px; border: 1px solid #dfc6a8; border-radius: 7px; background: #fff8ee; color: #8b5b36; font-size: .69rem; padding: 7px 9px;
+  .ask-voice-controls { width: 100%; min-width: 0; flex-wrap: wrap; [data-send] { margin-left: auto; } [data-send-status] { flex: 1; min-width: 0; overflow-wrap: anywhere; } }
+  .ask-mic { display: inline-flex; flex: 0 0 auto; white-space: nowrap; align-items: center; gap: 5px; border: 1px solid #dfc6a8; border-radius: 7px; background: #fff8ee; color: #8b5b36; font-size: .69rem; padding: 7px 9px;
     &.is-listening { background: #fce3d4; color: #a13f24; border-color: #c57956; }
   }
   .ask-voice-status,.ask-voice-privacy { font-size: .63rem; line-height: 1.5; margin: 7px 0 0; color: #a1846a; }

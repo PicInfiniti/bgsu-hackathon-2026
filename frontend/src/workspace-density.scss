@@ -34,25 +34,9 @@
     #note { padding: 14px 13px 14px 30px; min-height: 224px; line-height: 24px;
       background-image: linear-gradient(90deg,transparent 22px,#dc9c8373 22px,#dc9c8373 23px,transparent 23px),repeating-linear-gradient(transparent 0,transparent 23px,#c8c7bb8c 23px,#c8c7bb8c 24px);
     }
-    #home {
-      .home-grid, .home-col { gap: 14px; }
-      .panel { padding: 15px; border-radius: 10px; }
-      .meeting-workspace { gap: 14px; }
-      .overview-conversations .meeting-row { padding: 10px 0; }
-      .calendar-panel { padding: 13px; }
-      .note-label textarea { min-height: 224px; }
-      .overview-search input { margin: 0; }
-    }
     .note-input-tools { padding: 0; margin: 14px 0;
       .note-input-tabs button, .ink-tools button { padding: 6px 9px; }
       .note-ink-pad { height: 210px; }
     }
-  }
-}
-// Keep the three-column overview on laptop screens once the desktop controls are compact.
-@media (min-width: 1101px) and (max-width: 1200px) {
-  .workspace-app #home {
-    .home-grid { grid-template-columns: minmax(165px,.8fr) minmax(320px,2fr) minmax(205px,1fr); }
-    .home-left { grid-column: auto; grid-template-columns: minmax(0,1fr); }
   }
 }

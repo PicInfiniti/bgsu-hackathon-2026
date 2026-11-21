@@ -21,3 +21,6 @@ aivana.api
 
 # Organizer participant lists contain real names and contact information.
 sources/*Team_Roster*.pdf
+
+# Notebook photos, ink and Playboard previews (local runtime data)
+backend/*_files/

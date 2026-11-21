@@ -212,3 +212,14 @@ def strategy_update(board_id: str, body: dict):
 
 from .note_media import register as register_note_media
 register_note_media(app, store)
+
+
+from .home_notebook import Notebook
+from .film import FilmRoom
+from .home_routes import register as register_home
+home_notebook = Notebook(db_path)
+home_diagrams = FilmRoom(db_path, home_notebook.files / 'playboard')
+register_home(app, store, home_notebook, home_diagrams)
+
+from .film_routes import register as register_film
+register_film(app, store, home_notebook, home_diagrams)
